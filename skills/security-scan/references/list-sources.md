@@ -1,58 +1,58 @@
-# 要抓的清單與入口
+# Lists to Fetch and Their Entry Pages
 
-這些清單會改版，排名與項目都會變。每次掃描都從下列入口頁抓當下的最新版，不使用記憶中的版本，也不把年份寫死在網址裡。入口頁會轉址時跟著轉址走。
+These lists are revised, and their rankings and items change. On every scan, fetch the current latest edition from the entry pages below. Do not use an edition from memory, and do not hard-code a year in a URL. When an entry page redirects, follow the redirect.
 
-## 抓取規則
+## Fetch rules
 
-1. 依專案類型從下表選出適用的清單，「所有專案」那幾列每次都抓。
-2. 從入口頁找出最新的正式版，記下清單名稱、版本或年份、實際網址與抓取日期。候選版與草稿只在沒有正式版時使用，並在報告標明。
-3. 把清單上的每一項轉成本次的檢查項目，項目編號照原清單（例如 `CWE-79`、`A01`、`API1`）。
-4. 清單上有、[漏洞總表](vulnerability-catalog.md)沒有的項目，照清單原文的說明檢查，並在報告的「總表未涵蓋」列出。
-5. 抓不到時換一個可用的抓取工具再試一次。仍抓不到就只用漏洞總表，並在報告寫明哪幾份清單沒有更新到、原因是什麼。不得用記憶中的排名冒充最新版。
-6. 這裡沒列、但更貼近專案技術的清單（語言、框架、雲端平台、產業法規），找得到權威來源就加進來，並在報告列出來源。
+1. Select the applicable lists from the tables below by project type. Fetch the "All projects" rows every time.
+2. From the entry page, find the latest official edition, and record the list name, version or year, actual URL and fetch date. Use a candidate or draft edition only when there is no official edition, and say so in the report.
+3. Turn every item on a list into a check item for this scan, numbered as in the original list (for example `CWE-79`, `A01`, `API1`).
+4. For an item that is on a list but not in the [vulnerability catalog](vulnerability-catalog.md), check it according to the list's own description, and list it under "Not covered by the catalog" in the report.
+5. When a list cannot be fetched, try once more with another available fetch tool. When it still cannot be fetched, use only the vulnerability catalog, and state in the report which lists were not updated and why. A ranking from memory MUST NOT be passed off as the latest edition.
+6. When a list not given here is closer to the project's technology (language, framework, cloud platform, industry regulation) and an authoritative source can be found, add it, and list the source in the report.
 
-## 所有專案
+## All projects
 
-| 清單 | 入口 | 用途 |
+| List | Entry page | Purpose |
 |---|---|---|
-| CWE Top 25 Most Dangerous Software Weaknesses | https://cwe.mitre.org/top25/ | 最常見且危害最大的弱點類型 |
-| CWE Top 10 KEV Weaknesses | https://cwe.mitre.org/top25/ （同頁連結） | 實際被拿來攻擊的弱點類型，排修補順序時加權 |
-| CWE "On the Cusp" | https://cwe.mitre.org/top25/ （同頁連結） | 差一點進榜的弱點，補足 Top 25 |
-| OWASP Top 10 | https://owasp.org/www-project-top-ten/ | 網頁應用的主要風險類別 |
-| OWASP Top 10 Proactive Controls | https://owasp.org/www-project-proactive-controls/ | 修補時該採用的防護做法 |
-| OWASP Cheat Sheet Series | https://cheatsheetseries.owasp.org/ | 各類漏洞的具體修法 |
-| CISA Known Exploited Vulnerabilities Catalog | https://www.cisa.gov/known-exploited-vulnerabilities-catalog | 依賴套件的 CVE 是否已有人在利用 |
-| OSV | https://osv.dev/ | 依賴套件的已知漏洞 |
-| GitHub Advisory Database | https://github.com/advisories | 依賴套件的已知漏洞與修補版本 |
+| CWE Top 25 Most Dangerous Software Weaknesses | https://cwe.mitre.org/top25/ | The most common and most harmful weakness types |
+| CWE Top 10 KEV Weaknesses | https://cwe.mitre.org/top25/ (linked from the same page) | Weakness types actually used in attacks; weight them when ordering fixes |
+| CWE "On the Cusp" | https://cwe.mitre.org/top25/ (linked from the same page) | Weaknesses that narrowly missed the ranking; supplement the Top 25 |
+| OWASP Top 10 | https://owasp.org/www-project-top-ten/ | The main risk categories for web applications |
+| OWASP Top 10 Proactive Controls | https://owasp.org/www-project-proactive-controls/ | Protections to adopt when fixing |
+| OWASP Cheat Sheet Series | https://cheatsheetseries.owasp.org/ | Concrete fixes for each vulnerability type |
+| CISA Known Exploited Vulnerabilities Catalog | https://www.cisa.gov/known-exploited-vulnerabilities-catalog | Whether a dependency's CVE is already being exploited |
+| OSV | https://osv.dev/ | Known vulnerabilities in dependencies |
+| GitHub Advisory Database | https://github.com/advisories | Known vulnerabilities in dependencies and their fixed versions |
 
-## 依專案類型加選
+## Additional lists by project type
 
-| 專案有這個 | 清單 | 入口 |
+| The project has | List | Entry page |
 |---|---|---|
-| HTTP API、GraphQL、gRPC | OWASP API Security Top 10 | https://owasp.org/API-Security/ |
-| 瀏覽器端大量 JavaScript | OWASP Top 10 Client-Side Security Risks | https://owasp.org/www-project-top-10-client-side-security-risks/ |
-| 金流、點數、優惠、庫存等流程 | OWASP Top 10 for Business Logic Abuse | https://owasp.org/www-project-top-10-for-business-logic-abuse/ |
-| 呼叫 LLM、RAG、生成內容 | OWASP Top 10 for LLM Applications | https://genai.owasp.org/llm-top-10/ |
-| 會自己呼叫工具或執行動作的 agent | OWASP Top 10 for Agentic Applications | https://genai.owasp.org/initiatives/agentic-security-initiative/ |
-| 提供或使用 MCP server | OWASP MCP Top 10 | https://owasp.org/www-project-mcp-top-10/ |
-| 自己訓練或微調模型 | OWASP Machine Learning Security Top 10 | https://owasp.org/www-project-machine-learning-security-top-10/ |
-| iOS、Android app | OWASP Mobile Top 10、MASVS | https://owasp.org/www-project-mobile-top-10/ 、 https://owasp.org/www-project-mobile-app-security/ |
-| 桌面應用（含 Electron、Tauri） | OWASP Desktop App Security Top 10 | https://owasp.org/www-project-desktop-app-security-top-10/ |
-| CI/CD 設定檔 | OWASP Top 10 CI/CD Security Risks | https://owasp.org/www-project-top-10-ci-cd-security-risks/ |
-| Dockerfile、映像檔 | OWASP Docker Top 10 | https://owasp.org/www-project-docker-top-10/ |
-| Kubernetes 設定 | OWASP Kubernetes Top Ten | https://owasp.org/www-project-kubernetes-top-ten/ |
-| 無伺服器函式 | OWASP Serverless Top 10 | https://owasp.org/www-project-serverless-top-10/ |
-| 服務帳號、API 金鑰、機器對機器授權 | OWASP Non-Human Identities Top 10 | https://owasp.org/www-project-non-human-identities-top-10/ |
-| 自管主機、網路設備設定 | OWASP Top 10 Infrastructure Security Risks | https://owasp.org/www-project-top-10-infrastructure-security-risks/ |
-| 智慧合約 | OWASP Smart Contract Top 10 | https://owasp.org/www-project-smart-contract-top-10/ |
-| 韌體、硬體描述語言、驅動程式 | CWE Most Important Hardware Weaknesses | https://cwe.mitre.org/topHW/index.html |
+| HTTP API, GraphQL, gRPC | OWASP API Security Top 10 | https://owasp.org/API-Security/ |
+| A lot of browser-side JavaScript | OWASP Top 10 Client-Side Security Risks | https://owasp.org/www-project-top-10-client-side-security-risks/ |
+| Payment, points, discount, inventory or similar flows | OWASP Top 10 for Business Logic Abuse | https://owasp.org/www-project-top-10-for-business-logic-abuse/ |
+| LLM calls, RAG, generated content | OWASP Top 10 for LLM Applications | https://genai.owasp.org/llm-top-10/ |
+| Agents that call tools or take actions on their own | OWASP Top 10 for Agentic Applications | https://genai.owasp.org/initiatives/agentic-security-initiative/ |
+| Provides or uses an MCP server | OWASP MCP Top 10 | https://owasp.org/www-project-mcp-top-10/ |
+| Trains or fine-tunes its own models | OWASP Machine Learning Security Top 10 | https://owasp.org/www-project-machine-learning-security-top-10/ |
+| iOS or Android app | OWASP Mobile Top 10, MASVS | https://owasp.org/www-project-mobile-top-10/ , https://owasp.org/www-project-mobile-app-security/ |
+| Desktop application (including Electron, Tauri) | OWASP Desktop App Security Top 10 | https://owasp.org/www-project-desktop-app-security-top-10/ |
+| CI/CD configuration files | OWASP Top 10 CI/CD Security Risks | https://owasp.org/www-project-top-10-ci-cd-security-risks/ |
+| Dockerfile, images | OWASP Docker Top 10 | https://owasp.org/www-project-docker-top-10/ |
+| Kubernetes configuration | OWASP Kubernetes Top Ten | https://owasp.org/www-project-kubernetes-top-ten/ |
+| Serverless functions | OWASP Serverless Top 10 | https://owasp.org/www-project-serverless-top-10/ |
+| Service accounts, API keys, machine-to-machine authorization | OWASP Non-Human Identities Top 10 | https://owasp.org/www-project-non-human-identities-top-10/ |
+| Self-managed hosts, network device configuration | OWASP Top 10 Infrastructure Security Risks | https://owasp.org/www-project-top-10-infrastructure-security-risks/ |
+| Smart contracts | OWASP Smart Contract Top 10 | https://owasp.org/www-project-smart-contract-top-10/ |
+| Firmware, hardware description languages, drivers | CWE Most Important Hardware Weaknesses | https://cwe.mitre.org/topHW/index.html |
 
-## 需要逐條驗證時
+## When item-by-item verification is needed
 
-使用者要的是完整查核而不只是找漏洞時，改用驗證標準逐條對照：
+When the user wants a full verification rather than only a vulnerability hunt, check item by item against a verification standard instead:
 
-| 標準 | 入口 | 適用 |
+| Standard | Entry page | Applies to |
 |---|---|---|
-| OWASP ASVS | https://owasp.org/www-project-application-security-verification-standard/ | 網頁應用與 API 的逐條安全要求 |
-| OWASP MASVS | https://owasp.org/www-project-mobile-app-security/ | 行動 app 的逐條安全要求 |
-| OWASP Web Security Testing Guide | https://owasp.org/www-project-web-security-testing-guide/ | 每一類漏洞的測試方法 |
+| OWASP ASVS | https://owasp.org/www-project-application-security-verification-standard/ | Item-by-item security requirements for web applications and APIs |
+| OWASP MASVS | https://owasp.org/www-project-mobile-app-security/ | Item-by-item security requirements for mobile apps |
+| OWASP Web Security Testing Guide | https://owasp.org/www-project-web-security-testing-guide/ | Test methods for each vulnerability type |

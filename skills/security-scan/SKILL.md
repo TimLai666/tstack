@@ -16,152 +16,152 @@ metadata:
   version: "1.5.1"
 ---
 
-# 資安掃描
+# Security Scan
 
 ## Overview
 
-替使用者自己開發的程式找出安全漏洞並修補。檢查項目有兩個來源：掃描當下抓到的最新公開清單（CWE Top 25、OWASP 各清單等），以及這個 skill 附的[漏洞總表](references/vulnerability-catalog.md)。每個發現都要有程式碼位置與可重現的觸發方式，修完再驗證一次。
+Find and fix security vulnerabilities in code the user develops. Checks come from two sources: the latest public lists fetched at scan time (CWE Top 25, the OWASP lists and others), and this skill's [vulnerability catalog](references/vulnerability-catalog.md). Every finding needs a code location and a reproducible trigger. Verify again after the fix.
 
-有兩種模式：
+There are two modes:
 
-| 模式 | 什麼時候用 | 範圍 |
+| Mode | When to use | Scope |
 |---|---|---|
-| 全專案 | 使用者要求掃描或健檢 | 整個專案或指定的目錄 |
-| diff | **diff-review** 交接過來，或使用者要檢查某個 diff、PR、MR 的資安 | 這個 diff，加上它的輸入與輸出會經過的既有程式 |
+| Whole project | The user asks for a scan or a health check | The whole project or the specified directories |
+| diff | Handed over by **diff-review**, or the user wants the security of a diff, PR or MR checked | The diff, plus the existing code its inputs and outputs pass through |
 
-這個 skill 只管漏洞。邏輯錯誤、實作缺陷、效能與可維護性由 **diff-review** 審查，原因不明的錯誤用 **investigate**。
+This skill covers vulnerabilities only. Logic errors, implementation defects, performance and maintainability are reviewed by **diff-review**. Errors with an unknown cause go to **investigate**.
 
 ## Input Contract
 
-| 項目 | 取得方式 |
+| Item | How to determine it |
 |---|---|
-| 模式 | diff-review 交接，或使用者指名 diff、PR、MR 時用 diff 模式，其餘用全專案模式 |
-| 掃描範圍 | 全專案模式：使用者指定的目錄、服務或功能，沒指定就是整個專案。diff 模式：指定的 diff 與比較基準，不明確時依 git 狀態與 PR、MR 的目標分支判斷 |
-| 授權 | 程式是使用者自己的，或使用者說明有權測試。無法確認時先問，不開始掃描 |
-| 要不要直接修 | 使用者說「補」「修」就修；只說「掃」「檢查」就先交報告，修補等確認。diff 模式預設只回報 |
-| 可用的測試環境 | 從專案設定與文件找本機啟動方式。沒有可隔離的環境時，動態驗證改成靜態證據並在報告標明 |
+| Mode | diff mode when handed over by diff-review or when the user names a diff, PR or MR; whole-project mode otherwise |
+| Scan scope | Whole-project mode: the directories, services or features the user specifies; the whole project when none is specified. diff mode: the specified diff and comparison base; when unclear, determine them from the git state and the target branch of the PR or MR |
+| Authorization | The code is the user's own, or the user states they are authorized to test it. When this cannot be confirmed, ask first and do not start the scan |
+| Whether to fix directly | When the user says to patch or fix, fix. When the user only says to scan or check, deliver the report first and fix after confirmation. diff mode only reports by default |
+| Available test environment | Find how to start the project locally from its configuration and documentation. When no isolated environment is available, replace dynamic verification with static evidence and say so in the report |
 
 ## Workflow
 
-### 1. 確認範圍與邊界
+### 1. Confirm scope and boundaries
 
-- 讀專案的規則檔、架構文件與既有的安全相關紀錄。用 **project-memory** 載入本專案的記憶。
-- 只測使用者擁有或獲授權的程式與環境。重現漏洞只在本機或測試環境進行，不對正式環境與第三方服務送攻擊請求，不讀取、不帶出真實使用者的資料。
-- 掃描期間不改動程式。修補在步驟 6 進行。
-- 這段對話寫過或改過掃描範圍內的程式時，步驟 3 到 5 依核心的 [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review) 派給獨立的 reviewer 做，主對話只核對發現。修補之後的複查也一樣。被派來的 reviewer 自己完成掃描，不再派工。
+- Read the project's rule files, architecture documents and existing security records. Load this project's memory with **project-memory**.
+- Test only code and environments the user owns or is authorized to test. Reproduce vulnerabilities only locally or in a test environment. Do not send attack requests to production or to third-party services. Do not read or extract real users' data.
+- Do not change code during the scan. Fixes happen in step 6.
+- When this conversation wrote or changed code within the scan scope, dispatch steps 3 to 5 to an independent reviewer as the core [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review) requires; the main conversation only checks the findings. The same applies to the re-check after fixing. A dispatched reviewer does the scan itself and does not dispatch further.
 
-### 2. 抓最新清單
+### 2. Fetch the latest lists
 
-照 [references/list-sources.md](references/list-sources.md) 的規則，從入口頁抓出適用清單的最新版，記下每份清單的名稱、版本、網址與抓取日期。抓不到的清單依該檔的規則處理並記錄。
+Following the rules in [references/list-sources.md](references/list-sources.md), fetch the latest edition of each applicable list from its entry page, and record each list's name, version, URL and fetch date. Handle and record lists that cannot be fetched according to that file's rules.
 
-### 3. 盤點攻擊面
+### 3. Inventory the attack surface
 
-列出下面幾項，每項附檔案位置。這份盤點決定後面要檢查哪些地方。
+List the following, each with file locations. This inventory decides what the later steps check.
 
-- 入口：HTTP 路由、GraphQL 操作、RPC、WebSocket、CLI 參數、排程、訊息佇列消費者、webhook、檔案匯入、深層連結。
-- 信任邊界：哪些輸入來自匿名使用者、已登入使用者、其他租戶、第三方服務、模型輸出。
-- 敏感資產：帳密與金鑰、個資、金流、管理功能、檔案系統、對外發出的請求、可執行指令的地方。
-- 身分驗證與授權的實作位置，以及哪些入口沒有經過它。
-- 技術組成：語言、框架、資料庫、依賴套件與 lockfile、容器與部署設定、CI/CD 設定。
+- Entry points: HTTP routes, GraphQL operations, RPC, WebSocket, CLI arguments, scheduled jobs, message queue consumers, webhooks, file imports, deep links.
+- Trust boundaries: which inputs come from anonymous users, logged-in users, other tenants, third-party services, model output.
+- Sensitive assets: credentials and keys, personal data, payments, admin functions, the file system, outbound requests, places that can execute commands.
+- Where authentication and authorization are implemented, and which entry points do not pass through them.
+- Technology stack: languages, frameworks, databases, dependencies and lockfiles, container and deployment configuration, CI/CD configuration.
 
-### 4. 掃描
+### 4. Scan
 
-三條線都要做，結果合併後去重。
+Do all three tracks, then merge the results and remove duplicates.
 
-**4a 工具掃描。** 照 [references/scan-tools.md](references/scan-tools.md) 做：依專案實際有的檔案找出適用的工具，逐一確認能不能用，能用的都跑。沒有安裝的不自行安裝，列進報告的建議。工具的輸出是線索，每一筆都要回到程式碼確認。
+**4a Tool scan.** Follow [references/scan-tools.md](references/scan-tools.md): determine the applicable tools from the files the project actually has, confirm one by one whether each is usable, and run every usable one. Do not install a tool that is not installed yourself; list it in the report's recommendations. Tool output is a lead; confirm every item against the code.
 
-**4b 清單對照。** 步驟 2 抓到的每一項都要有結論：有發現、已檢查無發現（寫出看了哪些位置）、或不適用（寫出依據）。
+**4b List check.** Every item from the lists fetched in step 2 needs a conclusion: finding; checked with no finding (state which locations were examined); or not applicable (state the basis).
 
-**4c 總表對照。** 站在攻擊者那一邊看：假設每個輸入都由想突破系統的人控制，主動找出能繞過驗證、越權或濫用流程的路徑，不只確認防護存在。逐節走過[漏洞總表](references/vulnerability-catalog.md)。對步驟 3 的每個入口，從輸入一路追到它被使用的地方（查詢、指令、檔案、回應、對外請求），確認途中有沒有該節的防護。不要只搜尋危險函式名稱：授權缺失、邏輯漏洞與競態都搜尋不到，要讀流程。
+**4c Catalog check.** Take the attacker's side: assume every input is controlled by someone trying to break the system, and actively look for paths that bypass authentication, escalate privileges or abuse a flow, not only confirm that a protection exists. Go through the [vulnerability catalog](references/vulnerability-catalog.md) section by section. For each entry point from step 3, trace the input all the way to where it is used (query, command, file, response, outbound request) and confirm whether that section's protections are present along the way. Do not only search for dangerous function names: missing authorization, logic flaws and race conditions cannot be found by search; read the flow.
 
-範圍大時可以依節或依模組分派 subagent，照 **agent-delegation** 派工。每條派工劃定互不重疊的檔案範圍，prompt 寫明不得修改檔案、不得輸出秘密的值。回報要附檔案行號與判斷依據，由主 agent 回到程式碼核對後才採用。
+When the scope is large, you may dispatch subagents by section or by module, following **agent-delegation**. Each dispatch covers a set of files that does not overlap with the others, and its prompt states that files MUST NOT be modified and secret values MUST NOT be output. Reports include file line numbers and the basis for each judgment; the main agent adopts them only after checking them against the code.
 
-### 5. 確認與分級
+### 5. Confirm and assign levels
 
-每個候選發現先確認再列入：
+Confirm each candidate finding before listing it:
 
-1. 指出輸入從哪裡進來、經過哪些程式、在哪一行造成問題。
-2. 說明攻擊者需要什麼條件（匿名、已登入、特定角色、需要受害者互動）。
-3. 能安全重現的，在本機或測試環境重現並保留請求與結果。不能重現的，寫出缺少的條件，放進「待確認」。
+1. State where the input enters, which code it passes through, and which line causes the problem.
+2. State the conditions the attacker needs (anonymous, logged in, a specific role, victim interaction).
+3. When it can be reproduced safely, reproduce it locally or in a test environment and keep the request and the result. When it cannot be reproduced, state the missing conditions and put it under "Needs investigation".
 
-找不到可行的觸發路徑就不算漏洞，可以放進「強化建議」。
+When no workable trigger path is found, it is not a vulnerability; it may go under "Hardening recommendations".
 
-等級用核心 [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity) 的 P0 到 P3。資安發現的判定標準：
+Levels are P0 to P3 from the core [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity). Criteria for security findings:
 
-| 等級 | 判定 |
+| Level | Criteria |
 |---|---|
-| P0 | 不需登入或只需一般帳號，就能執行任意程式、取得或竄改大量資料、接管他人帳號或提升到管理員 |
-| P1 | 能存取或修改其他使用者的資料、繞過付款或關鍵流程，或需要的條件容易達成 |
-| P2 | 需要特定條件或受害者互動，影響限於單一使用者或有限的資料 |
-| P3 | 影響很小，或需要多個不容易同時成立的條件 |
+| P0 | Without logging in, or with only an ordinary account, an attacker can execute arbitrary code, obtain or tamper with large amounts of data, take over other people's accounts, or escalate to admin |
+| P1 | An attacker can access or modify other users' data or bypass payment or a critical flow, or the required conditions are easy to meet |
+| P2 | Requires specific conditions or victim interaction; impact is limited to a single user or to limited data |
+| P3 | Very small impact, or requires several conditions that are not easily true at the same time |
 
-依賴套件的漏洞另外確認兩件事：專案有沒有實際呼叫到受影響的功能，以及該 CVE 是否在 CISA KEV 清單上。在清單上的往上調一級。
+For dependency vulnerabilities, confirm two more things: whether the project actually calls the affected functionality, and whether the CVE is on the CISA KEV list. Raise one level when it is on the list.
 
-### 6. 修補
+### 6. Fix
 
-由 P0 到 P3 依序處理。修補照 **software-engineering-guidelines** 進行：
+Handle findings in order from P0 to P3. Fix following **software-engineering-guidelines**:
 
-- 修根因，並搜尋同一種寫法的其他位置一起修。
-- 優先用框架或函式庫提供的防護，不自己寫跳脫、加密或驗證。
-- 每個修補都要有核心 [Regression Tests](../software-engineering-guidelines/SKILL.md#regression-tests) 規定的回歸測試。
-- 發現外洩的秘密時，從程式移除不算修好。請使用者到發行該秘密的服務撤銷並重新產生，歷史紀錄的清理另外確認，不擅自改寫 git 歷史。
-- 會改變既有行為、介面或資料的修補，先說明影響並取得確認。
+- Fix the root cause, and search for other places with the same pattern and fix them together.
+- Prefer the protections the framework or library provides. Do not write your own escaping, encryption or validation.
+- Every fix needs the regression test required by the core [Regression Tests](../software-engineering-guidelines/SKILL.md#regression-tests).
+- When a leaked secret is found, removing it from the code does not count as fixed. Ask the user to revoke and regenerate it at the service that issued it. Confirm cleanup of the history separately, and do not rewrite git history on your own.
+- For a fix that changes existing behavior, interfaces or data, explain the impact first and get confirmation.
 
-### 7. 驗證與報告
+### 7. Verify and report
 
-- 重跑步驟 5 的重現步驟，確認已擋下。
-- 重跑步驟 4a 的工具與專案的完整測試，確認沒有引入新問題。
-- 依 Output Contract 交報告。
+- Rerun the reproduction steps from step 5 and confirm the attack is blocked.
+- Rerun the tools from step 4a and the project's full test suite, and confirm no new problems were introduced.
+- Deliver the report per the Output Contract.
 
-### diff 模式
+### diff mode
 
-步驟 1 到 7 照走，差別如下：
+Follow steps 1 to 7, with these differences:
 
-- **範圍（步驟 3）**：只盤點 diff 新增或改動的入口、資料流、設定與依賴。每一條都要追出 diff 之外：輸入從哪段既有程式進來，改過的值又流到哪裡。改動拿掉或繞過既有防護時（驗證、授權、跳脫、限速），列為候選發現。
-- **清單（步驟 2）**：這次對話已經抓過的清單直接沿用。還沒抓過時，抓 CWE Top 25、OWASP Top 10，以及 diff 碰到的技術對應的清單。
-- **掃描（步驟 4）**：依賴或 lockfile 有變動時，稽核新增與升降版的套件。diff 內新增的字串逐一檢查有沒有秘密。總表只對照 diff 碰到的那幾節，其餘各節不用列。
-- **修補（步驟 6）**：預設不修，把發現交回呼叫方。使用者或呼叫方要求修時才修。
-- **角度**：由 diff-review 交接的資安審查就是對抗式審查的資安部分。任務寫明要以攻擊者的角度進行時，對 diff 新增或改動的每個入口都實際設想一條攻擊路徑，再判斷它走不走得通。
-- **回報**：只交 Output Contract 的第 1 到 4 項，並附上實際檢查過的檔案與總表章節。由 diff-review 交接時，把發現與待確認項目原樣交回，由它合併。
-- diff 沒有碰到任何輸入、驗證、授權、檔案、對外請求、秘密、加密、依賴或部署設定時，回報「這個 diff 沒有資安相關的改動」並寫出判斷依據，不做完整流程。
+- **Scope (step 3)**: inventory only the entry points, data flows, configuration and dependencies the diff adds or changes. Trace each one beyond the diff: which existing code the input comes in through, and where the changed values flow to. When a change removes or bypasses an existing protection (authentication, authorization, escaping, rate limiting), list it as a candidate finding.
+- **Lists (step 2)**: reuse lists already fetched in this conversation. When none has been fetched, fetch the CWE Top 25, the OWASP Top 10, and the lists for the technologies the diff touches.
+- **Scan (step 4)**: when dependencies or lockfiles change, audit added packages and packages whose version went up or down. Check every string the diff adds for secrets. Check only the catalog sections the diff touches; the other sections need not be listed.
+- **Fix (step 6)**: do not fix by default; return the findings to the caller. Fix only when the user or the caller asks.
+- **Angle**: a security review handed over by diff-review is the security part of the adversarial review. When the task states that it is to be done from the attacker's point of view, actually work out an attack path for every entry point the diff adds or changes, then judge whether it works.
+- **Report**: deliver only items 1 to 4 of the Output Contract, plus the files and catalog sections actually checked. When handed over by diff-review, return the findings and needs-investigation items unchanged, for it to merge.
+- When the diff touches no input, authentication, authorization, files, outbound requests, secrets, cryptography, dependencies or deployment configuration, report "This diff has no security-relevant changes" with the basis for that judgment, and do not run the full workflow.
 
 ## Output Contract
 
-報告依序包含：
+The report contains, in order:
 
-1. **結論**：各等級的發現數、已修補數、仍待處理的最高等級。
-2. **範圍與依據**：掃了哪些目錄與服務、使用的清單（名稱、版本、網址、抓取日期）、執行的工具與版本、沒抓到或沒執行的項目與原因。
-3. **發現**：由 P0 到 P3，每筆用核心 [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity) 的格式，另附類別（清單項目編號與 CWE）、攻擊者需要的條件、修補內容與驗證結果。秘密的寫法照核心的 [Secrets](../software-engineering-guidelines/SKILL.md#secrets)。
-4. **待確認**：同一格式的 `NEEDS INVESTIGATION` 項目。
-5. **強化建議**：不構成漏洞但值得做的防護，以及建議安裝的掃描工具。
-6. **清單對照表**：每份清單逐項的結論，以及總表各節是否適用。
+1. **Conclusion**: the number of findings at each level, the number fixed, and the highest level still open.
+2. **Scope and basis**: the directories and services scanned; the lists used (name, version, URL, fetch date); the tools run and their versions; what was not fetched or not run, and why.
+3. **Findings**: from P0 to P3, each in the format of the core [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity), plus the category (list item ID and CWE), the conditions the attacker needs, the fix and the verification result. Write secrets as the core [Secrets](../software-engineering-guidelines/SKILL.md#secrets) requires.
+4. **Needs investigation**: `NEEDS INVESTIGATION` items in the same format.
+5. **Hardening recommendations**: protections worth adding that do not constitute vulnerabilities, and scan tools recommended for installation.
+6. **List checklist**: the conclusion for every item of every list, and whether each catalog section applies.
 
-報告預設放在對話裡。使用者要留存時，寫到專案既有的文件位置；沒有既定位置就寫到 `docs/security-scan/report.md`，再次掃描時就地更新。
+The report goes in the conversation by default. When the user wants to keep it, write it to the project's existing documentation location; when there is none, write it to `docs/security-scan/report.md`, and update it in place on later scans.
 
 ## Quality Rules
 
-- 沒有程式碼位置與觸發路徑的項目，不列為發現。
-- 「已檢查無發現」要寫出實際看過的位置。沒看過的寫「未檢查」。
-- 清單的版本以當次抓到的為準。沒有抓到最新版時明說，不寫成已對照最新版。
-- 不把掃描工具的輸出原樣當成結論，也不因為工具沒報就宣稱安全。
-- 掃描完成不等於系統安全。報告寫明這次沒有涵蓋的範圍，例如正式環境設定、第三方服務、實體與人員層面。
+- An item without a code location and a trigger path is not listed as a finding.
+- "Checked, no finding" states the locations actually examined. Write "not checked" for anything not examined.
+- List versions are those fetched in this scan. When the latest edition was not fetched, say so; do not write that the latest edition was checked.
+- Do not take scan tool output as a conclusion as it stands, and do not declare the code safe because a tool reported nothing.
+- A completed scan does not mean the system is secure. The report states what this scan did not cover, for example production configuration, third-party services, physical and personnel aspects.
 
 ## Common Mistakes
 
-| 錯誤 | 正確做法 |
+| Mistake | Correct approach |
 |---|---|
-| 只搜尋 `eval`、`exec` 這類關鍵字就交差 | 從每個入口追資料流，授權與邏輯問題要讀流程 |
-| 用記憶中的舊版排名 | 每次從入口頁抓當下的版本 |
-| 依賴稽核列出幾十筆就全部標成 P0 | 逐筆確認專案是否用到受影響的功能 |
-| 找到一處就修那一處 | 搜尋同樣的寫法，一次修完 |
-| 把秘密從程式刪掉就當作修好 | 請使用者撤銷並輪替 |
-| 在正式環境試攻擊請求 | 只在本機或測試環境重現 |
-| diff 模式只看 diff 裡的那幾行 | 追到 diff 之外的來源與去向，漏洞常在改動與既有程式的交界 |
-| 修完沒有重跑重現步驟 | 每個修補都要有修補前失敗、修補後通過的證據 |
+| Searching only for keywords like `eval` and `exec` and calling it done | Trace the data flow from every entry point; authorization and logic problems require reading the flow |
+| Using an old ranking from memory | Fetch the current edition from the entry page every time |
+| Marking all of dozens of dependency audit results as P0 | Confirm for each one whether the project uses the affected functionality |
+| Finding one instance and fixing only that one | Search for the same pattern and fix all of them at once |
+| Treating a secret as fixed once it is deleted from the code | Ask the user to revoke and rotate it |
+| Trying attack requests in production | Reproduce only locally or in a test environment |
+| In diff mode, looking only at the lines in the diff | Trace sources and destinations beyond the diff; vulnerabilities are often at the boundary between the change and existing code |
+| Not rerunning the reproduction steps after fixing | Every fix needs evidence that it fails before the fix and passes after it |
 
 ## Suggested Prompt
 
 ```text
-幫我對這個專案做資安掃描，找到的漏洞直接修，修完驗證。
-只掃 api/ 目錄，先給我報告，不要動程式。
+Run a security scan on this project, fix the vulnerabilities you find, and verify after fixing.
+Scan only the api/ directory, give me the report first, and do not change the code.
 ```

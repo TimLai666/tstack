@@ -1,49 +1,49 @@
-# 依症狀先查什麼
+# What to Check First, by Symptom
 
-症狀符合下表任一列時，先做該列的檢查，再列假設。表中只有方向，路徑、主機與安裝位置以當下環境實際查到的為準。
+When a symptom matches any row below, run that row's check first, then list hypotheses. The table gives directions only; paths, hosts and install locations are whatever is actually found in the current environment.
 
-## 執行環境
+## Runtime environment
 
-| 症狀 | 先查哪一類 | 做法 |
+| Symptom | What to check first | How |
 |---|---|---|
-| 亂碼、`UnicodeEncodeError`、`UnicodeDecodeError` | 執行環境的預設編碼 | 用環境變數或啟動參數讓直譯器與 shell 強制使用 UTF-8，並確認直譯器的隔離或安全模式會不會忽略這些環境變數。讀寫檔明確指定編碼。舊版 shell 需要 BOM 才認得 UTF-8 腳本時加上 |
-| 找不到直譯器或執行環境、套件裝不進系統環境 | 套件與執行環境的管理方式 | 先看專案指定的套件或環境管理器並用它執行，不先試系統直譯器與全域安裝 |
-| 直譯器路徑失效、目標目錄不存在 | 工具快取 | 清除該工具的快取，或停用快取重跑 |
-| 「這台機器沒裝 X」 | 安裝位置 | 查套件管理器的全域安裝目錄、使用者層執行檔目錄與 shell 的指令解析，不只查 PATH |
-| 指令逾時 | 工具的逾時設定 | 逾時只說明時間不夠，不能當成沒權限或查不到的證據，也不算可以重試的新證據。預期耗時長的工作改在背景執行 |
-| 腳本做完該做的事卻回傳非零 | 最後一個指令的退出碼 | 分開看每個指令的退出碼。管線只回報最後一段的結果 |
+| Garbled text, `UnicodeEncodeError`, `UnicodeDecodeError` | The runtime's default encoding | Force the interpreter and the shell to use UTF-8 with environment variables or startup options, and confirm whether the interpreter's isolated or safe mode ignores those environment variables. Specify the encoding explicitly when reading and writing files. Add a BOM when an older shell needs one to recognize a UTF-8 script |
+| Interpreter or runtime not found, packages cannot be installed into the system environment | How packages and runtimes are managed | First find the package or environment manager the project specifies and run with it; do not try the system interpreter or a global install first |
+| Interpreter path no longer valid, target directory does not exist | Tool cache | Clear that tool's cache, or rerun with the cache disabled |
+| "X is not installed on this machine" | Install location | Check the package manager's global install directory, the user-level executable directory and the shell's command resolution, not only PATH |
+| Command timed out | The tool's timeout setting | A timeout only shows that there was not enough time; it is not evidence of missing permission or of nothing being found, and it is not new evidence that justifies a retry. Run work that is expected to take long in the background |
+| A script did what it should but returned non-zero | Exit code of the last command | Look at each command's exit code separately. A pipeline reports only the result of its last stage |
 
-## 檔案與路徑
+## Files and paths
 
-| 症狀 | 先查哪一類 | 做法 |
+| Symptom | What to check first | How |
 |---|---|---|
-| `unexpected EOF`、檔案出現奇怪字元或反斜線消失 | 寫檔方式 | 多行內容，或含非 ASCII 字元、引號、反斜線的內容，用編輯工具寫入，不經 shell 跳脫 |
-| 寫到暫存路徑的檔案，別的程式讀不到 | 路徑對應 | 不同 shell 對同一路徑的解讀可能不同，例如 Windows 上 Git Bash 的 `/tmp`。跨程式交換檔案一律用絕對路徑 |
-| git 回報 dubious ownership | 檔案擁有者檢查，常見於網路磁碟與共用目錄 | 單次指令加 `-c safe.directory=<路徑>`，不改全域設定 |
-| 建置時檔案被鎖 | 執行中的程式 | 找出佔用該檔的程序，確認是不是自己啟動的 |
-| 排程讀檔要人工核准，或路徑不存在 | 排程裡的路徑寫法 | 排程內用相對於工作目錄的路徑，不寫磁碟代號或網路路徑。建立後試跑一次 |
+| `unexpected EOF`, odd characters in a file, or backslashes disappearing | How the file was written | Write multi-line content, or content containing non-ASCII characters, quotes or backslashes, with an editing tool, not through shell escaping |
+| A file written to a temporary path cannot be read by another program | Path mapping | Different shells can interpret the same path differently, for example `/tmp` in Git Bash on Windows. Files exchanged between programs MUST always use absolute paths |
+| git reports dubious ownership | File ownership check, common on network drives and shared directories | Add `-c safe.directory=<path>` to the single command; do not change the global configuration |
+| A file is locked during a build | A running program | Find the process holding the file, and confirm whether you started it |
+| A scheduled job needs manual approval to read a file, or the path does not exist | How paths are written in the scheduled job | Inside the scheduled job, use paths relative to the working directory; do not write drive letters or network paths. Do a trial run after creating it |
 
-## 服務、程序與畫面
+## Services, processes and screens
 
-| 症狀 | 先查哪一類 | 做法 |
+| Symptom | What to check first | How |
 |---|---|---|
-| 埠有回應，行為卻是舊的 | 埠被誰佔用 | 查佔用該埠的程序與它的啟動時間。改過生成碼或設定後重啟服務 |
-| 改了卻沒反應的網頁 | 瀏覽器是否真的重載 | 先放一個認得出來的記號，確認看到的是新版，必要時換瀏覽器。確認前不否定使用者看到的結果 |
-| 外部程式卡住或跳出錯誤視窗 | 殘留程序 | 看啟動時間與 CPU 是否還在增加，判斷是不是別的流程留下的。只結束自己啟動的 PID |
-| 「整合測試在本機跑不了」 | 容器環境 | 確認容器引擎在跑、連線端點設定（例如 `DOCKER_HOST`）指向正確、沒有殘留的 socket 檔 |
+| The port responds, but the behavior is old | What is holding the port | Check the process holding the port and its start time. Restart the service after changing generated code or configuration |
+| A web page that does not reflect a change | Whether the browser actually reloaded | First add a recognizable marker to confirm you are seeing the new version; switch browsers when needed. Do not dismiss what the user sees before confirming |
+| An external program hangs or pops up an error window | Leftover processes | Look at the start time and whether CPU time is still increasing to judge whether another flow left it behind. End only PIDs you started |
+| "Integration tests cannot run locally" | Container environment | Confirm the container engine is running, the connection endpoint setting (for example `DOCKER_HOST`) points to the right place, and there is no leftover socket file |
 
-## 測試與 CI
+## Tests and CI
 
-| 症狀 | 先查哪一類 | 做法 |
+| Symptom | What to check first | How |
 |---|---|---|
-| 本機全綠，CI 紅燈 | 本機與 CI 的環境差異 | 比對換行字元、被忽略的產生檔、是否依 lockfile 乾淨安裝、CI 的執行權限 |
-| 大量同型測試同時失敗 | 依賴與環境，不是個別測試 | 用套件管理器的依賴查詢，看同一套件有沒有被裝成多個版本 |
-| 端對端測試偶發失敗 | 時序 | 操作後等網路或畫面狀態穩定。記錄測試名稱、重跑次數與環境，不以重跑通過結案 |
+| All green locally, red in CI | Environment differences between local and CI | Compare line endings, ignored generated files, whether installs are clean from the lockfile, and CI execution permissions |
+| Many tests of the same kind fail at once | Dependencies and environment, not individual tests | Use the package manager's dependency query to see whether the same package was installed in several versions |
+| End-to-end tests fail intermittently | Timing | After an action, wait for the network or screen state to settle. Record the test name, the number of reruns and the environment; do not close the issue because a rerun passed |
 
-## 資料抓取與外部服務
+## Data fetching and external services
 
-| 症狀 | 先查哪一類 | 做法 |
+| Symptom | What to check first | How |
 |---|---|---|
-| 抓取結果 0 筆、全被去重、數字變少 | 指令本身是否成功、來源是否涵蓋 | 管線會吃掉前一個指令的退出碼。檢查狀態碼 200 的錯誤頁、302 轉址、時間範圍是否涵蓋、基準日有沒有被悄悄換掉。轉址與空結果都不等於查無資料 |
-| 「這網站要 JS 才能抓」 | 實際的資料請求 | 用瀏覽器開發者工具看頁面實際發出的 API 請求，不只看一次靜態頁面 |
-| 私有套件庫下載 401、404 | 權杖範圍 | 確認權杖設在正確的主機或 scope 層級 |
+| Fetch returns 0 rows, everything deduplicated away, counts drop | Whether the command itself succeeded and whether the source covers the range | A pipeline swallows the exit code of the earlier command. Check for error pages with status 200, 302 redirects, whether the time range is covered, and whether the reference date was silently changed. Neither a redirect nor an empty result means no data exists |
+| "This site needs JS to fetch" | The actual data requests | Use the browser's developer tools to see the API requests the page actually makes, not only one static page load |
+| Private package registry returns 401 or 404 on download | Token scope | Confirm the token is set at the right host or scope level |
