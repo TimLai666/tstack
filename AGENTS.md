@@ -8,6 +8,7 @@
 .claude-plugin/plugin.json        ← plugin 名稱、描述、版本
 .claude-plugin/marketplace.json   ← marketplace 宣告，只列 tstack 一個 plugin
 hooks/                            ← hooks.json、提醒與指令防護腳本、它們的測試
+scripts/                          ← check_stack.py 一致性檢查與它的測試
 skills/<skill>/                   ← skill 本體
 ```
 
@@ -66,9 +67,9 @@ tstack 只支援整組安裝，skill 可以直接依賴其他 skill 存在，不
 
 ## 收尾檢查
 
+- 每次改完都跑 `python3 scripts/check_stack.py`，結果必須是沒有問題。檢查項目見它的 `--help`。新增一條引用規則時，同步把它加進這支腳本與測試。
 - 動到 skill 的內容時，調升該 skill 的 `metadata.version`，並調升 `plugin.json` 的 `version`。只動 hook 或 repo 文件時調升 `plugin.json` 的 `version`。
 - 新增、刪除或改變 skill 定位時，更新 README 的 Skills 表格；plugin 的收納範圍變了，同步更新 `plugin.json` 與 `marketplace.json` 的 description。
-- 動過的 JSON 能解析，動過的 `SKILL.md` frontmatter 能通過 YAML parser，description 少於 1024 字元且含 `MUST`。
 - 改了腳本或 hook，跑 README「開發」段列出的對應測試與 `claude plugin validate .`。
 - 改變 skill 行為的修改，照 software-engineering-guidelines 的測試策略，在相同任務上比較新舊版本的實際表現。自動評審通過不等於使用者會接受。
 

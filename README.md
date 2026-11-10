@@ -66,7 +66,17 @@ tstack 是一個整體，只支援整組安裝。各個 skill 會直接引用彼
 
 ## 開發
 
-沒有建置流程。改了腳本或 hook 之後跑對應的測試：
+沒有建置流程。每次改完 skill 都跑一致性檢查，它會確認連結與錨點有效、引用方向沒有違反規則、每個 skill 都在核心的路由表裡、README 與設定檔同步：
+
+```bash
+python3 scripts/check_stack.py
+```
+
+改了腳本或 hook 之後另外跑對應的測試：
+
+```bash
+python3 -m unittest discover -s scripts -p 'test_*.py'
+```
 
 ```bash
 python3 -m unittest discover -s hooks -p 'test_*.py'
