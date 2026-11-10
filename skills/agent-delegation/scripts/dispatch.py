@@ -145,7 +145,7 @@ def validate_request(r, policy):
             raise DispatchError("sandbox_dir 必須是專用沙盒，不可包含整個專案")
         r["sandbox_dir"] = str(sandbox)
     elif r.get("sandbox_dir") is not None:
-        raise DispatchError("只有 research 接受 sandbox_dir")
+        raise DispatchError("只有帶沙盒的任務類型（research、acceptance）接受 sandbox_dir")
     paths = [scoped_path(p, project, sandbox) for p in r["allowed_files"]]
     tests = [scoped_path(p, project) for p in r.get("test_files", [])]
     if task["access"] == "implementation" and any(overlap(a, b) for a in paths for b in tests):
@@ -195,7 +195,7 @@ def build_prompt(r, task, state):
     scope = r["allowed_files"]
     lines = [MARKER, "角色設定：" + r["role"], "專案目錄：" + r["project_dir"]]
     if task["access"] == "sandbox":
-        lines += ["研究沙盒：" + r["sandbox_dir"], "專案檔一律不可修改。僅可在指定沙盒內試探，回報所有檔案、程序與設定副作用。"]
+        lines += ["沙盒目錄：" + r["sandbox_dir"], "專案檔一律不可修改。僅可在指定沙盒內試探，回報所有檔案、程序與設定副作用。"]
     if not scope and task["access"] != "sandbox":
         lines += ["可改與不可改的檔案：不得修改任何檔案。"]
     else:
@@ -1046,7 +1046,7 @@ def parser(policy):
 project_memory 必填陣列，每項含 condition/lesson/source，查過無經驗才填 []。
 allowed_files 為精確專案相對路徑，不接受萬用字元、.. 或 .git。唯讀任務必須 []。
 implementation 可另列 test_files 作為不可改的測試路徑；testing 只寫測試。
-research 必填 sandbox_dir，可用專案外的專用暫存目錄；allowed_files 非空時必須指向沙盒內。
+research 與 acceptance 必填 sandbox_dir，可用專案外的專用暫存目錄；allowed_files 非空時必須指向沙盒內。
 models 為已查證可用模型的工具名→名稱陣列，提供時必填 model_source。Claude 版本下限不能用別名推測。
 可選 effort 為 medium（預設）、high、xhigh，調高須附 effort_reason。
 免費模型、Copilot Auto、Gemini 與 agy Claude 不套 effort 覆寫，寫程式最後一檔 Opus 固定 low。

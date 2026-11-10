@@ -51,6 +51,8 @@ VALUE_OPTIONS = {"ssh": set("bcDEeFIiJLlmOopQRSWw"), "mosh": set("p"), "sftp": s
                  "scp": set("cDFiJloPSX"), "rsync": set("eMT")}
 LONG_VALUE_OPTIONS = {"--port", "--ssh", "--server", "--predict", "--family", "--bind-server", "--client", "--rsh"}
 WRAPPER_VALUE_OPTIONS = {"sudo": set("ughpCDRTU"), "env": set("uSC"), "time": set("fo"), "exec": set("a")}
+WRAPPER_LONG_VALUE_OPTIONS = {"--user", "--group", "--host", "--prompt", "--chdir", "--chroot", "--role", "--type",
+                              "--other-user", "--close-from", "--command-timeout", "--unset", "--split-string"}
 REMOTE_PATH = re.compile(r"^(?:[^@/\\:\s]+@)?([A-Za-z0-9][A-Za-z0-9._-]*):")
 REMOTE_URL = re.compile(r"^(?:ssh|sftp|scp|rsync)://(?:[^@/\s]+@)?([A-Za-z0-9][A-Za-z0-9._-]*)")
 
@@ -78,14 +80,14 @@ def segments(command):
         yield current
 
 
-def skip_options(args, value_options):
+def skip_options(args, value_options, long_value_options=LONG_VALUE_OPTIONS):
     """Index of the first word that is not an option or an option's value."""
     i = 0
     while i < len(args) and args[i].startswith("-") and args[i] != "-":
         word = args[i]
         if word == "--":
             return i + 1
-        takes_next = word in LONG_VALUE_OPTIONS
+        takes_next = word in long_value_options
         if not word.startswith("--"):
             # In a cluster such as -vp, only an option that ends the word takes the next word as its value.
             for position, letter in enumerate(word[1:], 1):
@@ -103,7 +105,9 @@ def strip_prefix(words):
         if re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", words[i]):
             i += 1
         elif words[i] in WRAPPERS:
-            i += 1 + skip_options(words[i + 1:], WRAPPER_VALUE_OPTIONS.get(words[i], set()))
+            if words[i] == "command" and words[i + 1:i + 2] in (["-v"], ["-V"]):
+                return []  # asks whether a command exists; nothing after it runs
+            i += 1 + skip_options(words[i + 1:], WRAPPER_VALUE_OPTIONS.get(words[i], set()), WRAPPER_LONG_VALUE_OPTIONS)
         else:
             break
     return words[i:]

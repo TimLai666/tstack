@@ -18,12 +18,13 @@
 - 表中只寫模型種類。script 輪到 OpenCode、agy 或 Codex 時，自行以 `opencode models`、`agy models` 或 `codex debug models` 查實際可用模型。agy 與 Codex 挑該種類中版本最新的；OpenCode 的免費模型有 `opencode/big-pickle` 就用它，沒有時取 `opencode/` 開頭的清單裡排序最後的一個。
 - Copilot 依本專案的免費版使用方式固定設 `--model auto`，不指定具體模型、推理強度或付費替代方案。`--allow-all-tools` 允許自動執行包含改檔在內的工具，`--trust-folder` 僅信任本次 prompt 模式的工作目錄設定。prompt 的可改範圍不變。Copilot 只用於決策表中明列 Auto 的任務，手動指定模型的種類限制不套用 Auto 的內部選擇，但 Auto 不作為 Fable、Opus 或 Astra 的指定模型諮詢。
 - opencode 只能用免費模型：`opencode models | grep opencode/` 查得到才算。
-- Codex 照表主動派。Review、深度研究與決策只用 GPT-6 以上、名稱含 sol 的模型。名稱含 luna 的模型只用於寫測試、填格子實作、照清單修 bug、快速唯讀探索、雜事與分類。
+- Codex 照表主動派。Review、驗收審查、深度研究與決策只用 GPT-6 以上、名稱含 sol 的模型。名稱含 luna 的模型只用於寫測試、填格子實作、照清單修 bug、快速唯讀探索、雜事與分類。
 - 深度研究分三層：
   1. 廣度層：照「快速唯讀探索」那列派（OpenCode、Gemini Flash、Copilot Auto、luna、Haiku），每條負責一個範圍，掃描並回報發現與線索，附出處。回報當成線索，不當成事實。
   2. 深度層：主 agent 從線索挑出值得深挖的項目，每個項目依深度研究那列先派 sol，失敗後才派 Opus，一次只專研一件事，prompt 只放那一件。回報系統結構、可行做法與每個結論的依據（檔案路徑、指令輸出、文件出處）。
   3. 統合層：主 agent 合併廣度與深度的全部結果，核對關鍵依據、前後對照、做出整體判斷，決定採用哪個做法並親自執行。執行者的結論不直接當成定論。
   廣度層沒挑出值得深挖的項目時，不派深度研究。
+- 驗收審查用 `acceptance` 類型，模型與接手順序同 `review`。執行者要實際操作成果來對照原始需求，所以另給沙盒目錄：成果產生的檔案與資料只寫進沙盒，專案檔一律不可改。它不需要先做廣度探索。
 - 深度研究的 agent 可實際試探系統，但可改檔案只列暫存目錄或沙盒，專案檔一律不可改。試探造成的副作用（建立的檔案、啟動的程序、改過的設定）一併寫進回報，由主 agent 決定保留或清掉。
 - 非免費模型的 effort 預設 `medium`，主 agent 判斷任務需要時才調高，最高 `xhigh`。agy 的 Gemini 選模型名結尾是 `-medium` 的版本，agy 的 Claude 不加 `--effort`，思考強度由模型名稱決定。Agent 工具沒有 effort 參數，不用設。
 - Haiku 與 Sonnet 只用 5.5 以上版本，所以 agy 的 Sonnet 4.6 不派。

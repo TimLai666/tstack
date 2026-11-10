@@ -75,6 +75,13 @@ class Rules(unittest.TestCase):
         for command in ("taskkill /PID 1234 /F", "Stop-Process -Id 1234", "kill 1234", "kill -9 1234", "kill -TERM -- -1234"):
             self.allowed(command)
 
+    def test_asking_whether_a_command_exists_is_not_running_it(self):
+        for command in ("command -v pkill", "command -V killall", "command -v git add -A", "which pkill", "type killall"):
+            self.allowed(command)
+        self.blocked("command pkill node", guard.KILL_BY_NAME)
+        self.blocked("sudo --user root git add -A", guard.ADD_ALL)
+        self.blocked("env --chdir /repo git commit -am x", guard.COMMIT_ALL)
+
     def test_tmp_is_blocked_only_on_windows(self):
         for command in ("echo x > /tmp/out.txt", "python make.py --out=/tmp/a.json", "cat '/tmp/a.json'"):
             self.blocked(command, guard.WINDOWS_TMP, windows=True)
@@ -149,6 +156,9 @@ class HostTargets(unittest.TestCase):
             "rsync -a rsync://devbox/module ./x": ["devbox"],
             "rsync -az -e 'ssh -p 2222' ./dist/ devbox:/srv/www/": ["devbox"],
             "scp -3 host-a:file host-b:file": ["host-a", "host-b"],
+            "sudo --user root ssh devbox": ["devbox"],
+            "sudo --user=root ssh devbox": ["devbox"],
+            "env --unset FOO ssh devbox": ["devbox"],
         }
         for command, expected in cases.items():
             self.assertEqual(self.targets(command), expected, command)
@@ -156,7 +166,7 @@ class HostTargets(unittest.TestCase):
     def test_local_commands_and_paths_name_no_host(self):
         for command in ("ls -la", "git push origin main", "scp a.txt b.txt", "rsync -a ./src/ ./backup/",
                         "cp C:/Users/me/a.txt D:/b.txt", "ssh", "ssh -V", "echo 'ssh devbox'", "ssh-keygen -t ed25519",
-                        "rsync -a /var/data/ /mnt/backup/", "scp ./a:b ./c"):
+                        "rsync -a /var/data/ /mnt/backup/", "scp ./a:b ./c", "command -v ssh", "command -V ssh devbox"):
             self.assertEqual(self.targets(command), [], command)
 
 

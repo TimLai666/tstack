@@ -225,6 +225,29 @@
         }
       ]
     },
+    "acceptance": {
+      "label": "驗收審查：對照原始需求實際操作成果",
+      "access": "sandbox",
+      "verification_retries": 1,
+      "levels": [
+        {
+          "tool": "agy",
+          "family": "opus",
+          "effort": null
+        },
+        {
+          "tool": "codex",
+          "family": "sol",
+          "effort": "medium",
+          "minimum": "6.0"
+        },
+        {
+          "tool": "claude",
+          "family": "opus",
+          "effort": "medium"
+        }
+      ]
+    },
     "research": {
       "label": "深度研究的深度層",
       "access": "sandbox",

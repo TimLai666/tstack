@@ -192,6 +192,19 @@ print('completed')"""
         after = (self.root / "calls").read_text() if (self.root / "calls").exists() else ""
         self.assertEqual(before, after)
 
+    def test_acceptance_review_gets_a_sandbox_and_the_review_levels(self):
+        refused = self.cli("dispatch", "--request", "-", "--state-dir", str(self.state),
+                           request=self.request(task_type="acceptance", allowed_files=[], sandbox_dir=None))
+        self.assertNotEqual(refused.returncode, 0)
+        sandbox = self.root / "acceptance-sandbox"
+        sandbox.mkdir()
+        result = self.dispatch(task_type="acceptance", allowed_files=[], sandbox_dir=str(sandbox))
+        self.assertIn(str(sandbox), result["prompt"])
+        self.assertIn("專案檔一律不可修改", result["prompt"])
+        levels = self.cli("list-levels", "--task-type", "acceptance", "--host", "codex", "--json")
+        review = self.cli("list-levels", "--task-type", "review", "--host", "codex", "--json")
+        self.assertEqual(levels.stdout, review.stdout.replace('"review"', '"acceptance"'))
+
     def test_research_scope_requires_sandbox_and_keeps_writes_inside(self):
         no_sandbox = self.cli("dispatch", "--request", "-", "--state-dir", str(self.state),
                               request=self.request(task_type="research", allowed_files=[],

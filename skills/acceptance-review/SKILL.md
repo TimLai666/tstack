@@ -37,7 +37,7 @@ This follows the core's [Independent Review](../software-engineering-guidelines/
 
 ## Dispatching the review
 
-Load **agent-delegation** and dispatch one reviewer, following its reuse rules. The reviewer has to run the result, and a result often writes something, so use the `research` task type: it gives the reviewer a sandbox directory outside the project and keeps the project's files read-only. The task states:
+Load **agent-delegation** and dispatch one reviewer, following its reuse rules. Use the `acceptance` task type: the reviewer has to run the result, and a result often writes something, so this type gives the reviewer a sandbox directory outside the project and keeps the project's files read-only. The task states:
 
 - **The request in the user's own words.** Quote the original message, and every later message in which the user corrected, added to or narrowed it. Do not paraphrase and do not merge them into a tidy list.
 - **The agreed acceptance criteria**, when some were set.

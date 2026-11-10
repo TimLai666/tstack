@@ -14,7 +14,7 @@ description: >-
   Dispatched workers MUST NOT apply this skill or delegate. Ordinary prompts MUST
   carry project lessons; workers MUST report lessons for verification and recording.
 metadata:
-  version: "2.26.1"
+  version: "2.27.0"
 ---
 
 # Agent 派工規範
@@ -27,7 +27,7 @@ metadata:
 
 一般新派工使用 [scripts/dispatch.py](scripts/dispatch.py)，先執行無參數總覽或 `--help`，再讀相關子指令的 `--help`。使用 `list-types` 選擇任務類型，使用 `list-levels` 核對該類型的層級與宿主交接方式；混合任務先拆開，分類與雜事或探索重疊時選分類。
 
-主 agent 提供宿主、任務類型、專案目錄、角色、任務與驗收、可改檔案、驗證指令及篩選後的 Project Memory。記憶欄位必填，查過沒有適用經驗才填空陣列；空 context 可讀性審查依該節隔離規則填空陣列。提供實際可用模型與查證來源，不用別名推測版本下限。實作任務另列不可修改的測試檔；深度研究先完成廣度探索，只允許在指定沙盒試探。
+主 agent 提供宿主、任務類型、專案目錄、角色、任務與驗收、可改檔案、驗證指令及篩選後的 Project Memory。記憶欄位必填，查過沒有適用經驗才填空陣列；空 context 可讀性審查依該節隔離規則填空陣列。提供實際可用模型與查證來源，不用別名推測版本下限。實作任務另列不可修改的測試檔；深度研究先完成廣度探索，只允許在指定沙盒試探。驗收審查另提供沙盒目錄，成果的寫入只限沙盒。
 
 ## 0. 先辨識自己
 
@@ -66,6 +66,7 @@ Copilot 宿主依當前執行環境判定，不把登入、模型設定或繼承
 | `chores` | 機械性文件段落、證據整理、大量套版改寫 | 5 | 1. opencode / free → 2. agy / gemini-flash-medium → 3. copilot / auto → 4. codex / luna → 5. claude / haiku |
 | `classification` | 分類、打標籤、編碼 | 3 | 1. copilot / auto → 2. codex / luna → 3. claude / haiku |
 | `review` | 審 diff、找漏洞、對契約 | 3 | 1. agy / opus → 2. codex / sol → 3. claude / opus |
+| `acceptance` | 驗收審查：對照原始需求實際操作成果 | 3 | 1. agy / opus → 2. codex / sol → 3. claude / opus |
 | `research` | 深度研究的深度層 | 2 | 1. codex / sol → 2. claude / opus |
 | `decision` | 方案取捨、技術選型、單一模組設計 | 3 | 1. agy / opus → 2. codex / sol → 3. claude / opus |
 | `rules` | 寫 skill、prompt、規則與複雜架構 | 2 | 1. agy / opus → 2. claude / opus |
