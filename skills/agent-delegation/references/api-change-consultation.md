@@ -1,18 +1,18 @@
-# 既有 API 變更的諮詢流程
+# Consultation flow for changes to an existing API
 
-啟動條件見 [SKILL.md](../SKILL.md) 的「既有 API 變更」。
+The trigger condition is in "Changes to an existing API" in [SKILL.md](../SKILL.md).
 
-- 變更包括函數／方法的名稱、簽名、參數、回傳值、錯誤與副作用，以及變數、欄位、結構體、Enum 的名稱、結構或使用方式。不以私有、內部使用、改動小或由主 agent 親自實作為豁免理由。
-- 在修改受影響的骨架、測試或實作前，先查閱現有定義、呼叫處、測試與文件，整理初案、改動理由及相容性影響，再交給獨立模型諮詢。主 agent 自己的推理不算諮詢。
+- Changes include the name, signature, parameters, return value, errors and side effects of a function or method, and the name, structure or usage of a variable, field, struct or Enum. Being private, internal, small, or implemented by the main agent itself is not an exemption.
+- Before modifying the affected skeleton, tests or implementation, first review the existing definitions, call sites, tests and documentation, prepare a first draft, the reasons for the change and the compatibility impact, then hand them to an independent model for consultation. The main agent's own reasoning does not count as consultation.
 
-| 主 agent 環境 | 諮詢模型 |
+| Main agent environment | Consultation model |
 | --- | --- |
-| Claude | Fable 5.1 以上，沒有可用的合格 Fable 時，改用 Opus 5.5 以上 |
+| Claude | Fable 5.1 or later; when no qualifying Fable is available, Opus 5.5 or later |
 | GPT | Astra |
 
-依主 agent 實際使用的模型系列選擇，不由 CLI 名稱猜測。在其他模型環境中，先請使用者指定諮詢模型。用目前工具實際提供的模型識別與版本，別名不足以證明版本下限時先查證。沿用宿主內建 subagent 或外部 CLI 的執行規則。指定模型無法使用時，僅能採用表中明列的替代模型。仍無可用模型就回報證據，暫停該介面變更並請使用者決定，其他獨立工作可繼續。
+Choose by the model family the main agent actually uses; do not guess from the CLI name. In any other model environment, first ask the user to name the consultation model. Use the model identifier and version the current tool actually provides; when an alias is not enough to prove the minimum version, verify first. Follow the execution rules of the host's built-in subagent or the external CLI. When the designated model cannot be used, only the alternative listed in the table may be used. When there is still no usable model, report the evidence, pause that interface change and ask the user to decide; other independent work may continue.
 
-1. **諮詢**：提供現有程式與使用範例、初案、改動原因、限制及待決策事項。要求顧問檢查命名與用法、行為差異、相容性及替代方案，附依據並標明不確定處。諮詢任務不得修改任何檔案。
-2. **修正初案**：主 agent 核對意見與原始內容，採納有依據的建議並修正方案。未採納的重要建議簡述理由，不直接轉貼模型回覆，也不為了顯示有修改而硬改合理的初案。
-3. **交由使用者決定**：把修正後的方案與原本就需要使用者決定的事項合併提出。呈現現況與建議改法、最小使用範例、相容性與遷移影響、推薦選項及主要取捨。行為變更用相同輸入對照改前與改後的結果，不能只列函數簽名。範例格式見 [介面變更提案示例](api-change-examples.md)。
-4. **依決定實作**：取得使用者對具體方案的確認後，接回原本的實作與驗證流程。已確認且未變動的部分不重問。諮詢後新增或改變的待決策事項須先確認。派工涉及這些介面時，在 prompt 列出核准範圍。執行者若發現還需要其他介面變更，先回報主 agent，由主 agent 依本節處理。
+1. **Consult**: provide the existing code and usage examples, the first draft, the reasons for the change, constraints and the open decisions. Ask the consultant to check naming and usage, behavior differences, compatibility and alternatives, with the basis for each point and uncertainties marked. The consultation task MUST NOT modify any file.
+2. **Revise the first draft**: the main agent checks the feedback against the original content, adopts suggestions that have a basis and revises the plan. Briefly state the reason for each important suggestion not adopted; do not repost the model's reply, and do not force changes to a reasonable first draft just to show it was revised.
+3. **Hand to the user to decide**: present the revised plan together with the items that already needed the user's decision. Show the current state and the proposed change, a minimal usage example, the compatibility and migration impact, the recommended option and the main trade-offs. For a behavior change, compare the results before and after on the same input; listing function signatures alone is not enough. For the format, see [Interface change proposal examples](api-change-examples.md).
+4. **Implement as decided**: after the user confirms the specific plan, return to the original implementation and verification flow. Do not ask again about parts already confirmed and unchanged. Open decisions added or changed after the consultation MUST be confirmed first. When a dispatch involves these interfaces, list the approved scope in the prompt. When a worker finds that another interface change is needed, it reports to the main agent first, and the main agent handles it under this section.

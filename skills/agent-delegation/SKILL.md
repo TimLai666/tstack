@@ -5,44 +5,44 @@ metadata:
   version: "3.0.1"
 ---
 
-# Agent 派工規範
+# Agent Delegation Rules
 
 ## Overview
 
-主 agent 是強模型，負責寫骨架與每個格子的想要的結果、審查、驗證、提交。骨架鎖住範圍，弱模型照規格寫測試或填實作。一般派工的成本原則：依任務列的可用工具，照 OpenCode → Antigravity（agy）→ GitHub Copilot CLI → Codex → Claude 的順序派。測試、實作與雜事先交給 OpenCode 的免費模型，前端設計交給 agy 的 Gemini。Copilot 固定用 Auto，排在 agy 之後。方案取捨、技術選型與單一模組設計依序交給 agy 的 Opus、Codex 的 GPT-6 以上 sol、Claude 的 Opus。其他任務的模型與接手順序依下方決策表。任何 CLI 都能當主 agent，所以派工前先辨識自己是誰。原生 CLI 的說明入口見 [references/cli-cheatsheet.md](references/cli-cheatsheet.md)。
+The main agent is the strong model. It writes the skeleton and the expected results of every slot, and it reviews, verifies and commits. The skeleton fixes the scope; weaker models write tests or fill in implementations to the specification. Cost rule for ordinary dispatch: among the tools available for the task's row, dispatch in the order OpenCode → Antigravity (agy) → GitHub Copilot CLI → Codex → Claude. Tests, implementation and chores go first to OpenCode's free models; frontend design goes to agy's Gemini. Copilot always uses Auto and comes after agy. Trade-offs between options, technology selection and single-module design go, in order, to agy's Opus, Codex's GPT-6-or-later sol, and Claude's Opus. Models and handover order for other tasks follow the decision table below. Any CLI can be the main agent, so identify yourself before dispatching. The native CLI help entry points are in [references/cli-cheatsheet.md](references/cli-cheatsheet.md).
 
 ## Input Contract
 
-一般新派工使用 [scripts/dispatch.py](scripts/dispatch.py)，先執行無參數總覽或 `--help`，再讀相關子指令的 `--help`。使用 `list-types` 選擇任務類型，使用 `list-levels` 核對該類型的層級與宿主交接方式；混合任務先拆開，分類與雜事或探索重疊時選分類。
+For ordinary new dispatch, use [scripts/dispatch.py](scripts/dispatch.py): first run it with no arguments for the overview, or with `--help`, then read the `--help` of the relevant subcommands. Use `list-types` to choose the task type, and `list-levels` to check that type's levels and how handover to the host works. Split a mixed task first; when classification overlaps with chores or exploration, choose classification.
 
-主 agent 提供宿主、任務類型、專案目錄、角色、任務與驗收、可改檔案、驗證指令及篩選後的 Project Memory。記憶欄位必填，查過沒有適用經驗才填空陣列；空 context 可讀性審查依該節隔離規則填空陣列。提供實際可用模型與查證來源，不用別名推測版本下限。實作任務另列不可修改的測試檔；深度研究先完成廣度探索，只允許在指定沙盒試探。驗收審查另提供沙盒目錄，成果的寫入只限沙盒。
+The main agent provides the host, task type, project directory, role, task and acceptance criteria, files that may be changed, the verification command, and the filtered Project Memory. The memory field is required; fill in an empty array only after checking that no lesson applies. For an empty-context readability review, fill in an empty array as that section's isolation rules require. Provide the models actually available and the source used to verify them; do not infer a minimum version from an alias. Implementation tasks also list the test files that MUST NOT be modified. Deep research completes broad exploration first and may experiment only in the designated sandbox. Acceptance review also provides a sandbox directory, and the result may write only inside the sandbox.
 
-## 0. 先辨識自己
+## 0. Identify yourself first
 
-載入後第一件事，跑：
+The first thing after loading this skill, run:
 
 ```
 env | grep -E '^(CLAUDECODE|CODEX_THREAD_ID|ANTIGRAVITY_AGENT|OPENCODE)='
 ```
 
-| 宿主識別依據 | 你是 | 禁止派給 |
+| Host evidence | You are | MUST NOT dispatch to |
 | --- | --- | --- |
 | `CLAUDECODE` | Claude Code | `claude -p` |
 | `CODEX_THREAD_ID` | Codex | `codex exec` |
-| `ANTIGRAVITY_AGENT` | Antigravity（agy） | `agy` |
+| `ANTIGRAVITY_AGENT` | Antigravity (agy) | `agy` |
 | `OPENCODE` | OpenCode | `opencode run` |
-| 當前執行環境明確標示 GitHub Copilot CLI | GitHub Copilot CLI | `copilot -p` |
+| The current runtime explicitly identifies itself as GitHub Copilot CLI | GitHub Copilot CLI | `copilot -p` |
 
-Copilot 宿主依當前執行環境判定，不把登入、模型設定或繼承的其他 CLI 環境變數當作證明。宿主是 Copilot 時，使用其內建 subagent 工具並保持 Auto。
+Decide whether the host is Copilot from the current runtime; a login, a model setting or environment variables inherited from another CLI are not proof. When the host is Copilot, use its built-in subagent tool and keep Auto.
 
-接著判斷角色：
+Then decide your role:
 
-- 任務 prompt 含「你是被派工的執行者」，或同時含可改檔案清單與「不要 commit」，就是被派工者。立刻停用本 skill，自己做完 prompt 交代的事，不得再呼叫任何 agent 或 CLI。
-- 兩者都沒有，才是主 agent，往下走。
+- If the task prompt contains "You are a dispatched worker", or contains both a list of files that may be changed and "Do not commit", you are a dispatched worker. Stop applying this skill immediately, do what the prompt asks yourself, and MUST NOT call any agent or CLI.
+- Only when neither is present are you the main agent; continue below.
 
-## 決策表
+## Decision table
 
-每項新任務從所屬任務類型的第 1 檔開始，同一任務的重試與回退依既有派工紀錄接續；層級只計算該類型實際支援的選項。一般派工順序、模型種類、推理強度與升級次數以 [scripts/policy.json](scripts/policy.json) 為唯一來源，下表由 `list-types --markdown` 產生。前一檔有本次任務的實際失敗、確認未安裝或被禁的證據才可往後接手，不沿用其他任務的額度耗盡或失敗紀錄。宿主自己的層級交由內建 subagent 工具。只有觸發下方「既有 API 變更」時，該次諮詢的模型選擇與失敗處置依該節，不套用一般派工的 CLI 順序、模型種類限制與對應陷阱檢核。其他工作照原流程。
+Every new task starts at level 1 of its task type; retries and fallbacks within the same task continue from that task's existing dispatch records. Levels count only the options that type actually supports. [scripts/policy.json](scripts/policy.json) is the single source for ordinary dispatch order, model kinds, reasoning effort and number of escalations; the table below is generated by `list-types --markdown`. Hand over to a later level only with evidence from this task of an actual failure, a confirmed missing installation or a prohibition at the earlier level; do not carry over quota exhaustion or failure records from other tasks. The host's own level goes to the built-in subagent tool. Only when "Changes to an existing API" below is triggered do the model choice and failure handling of that consultation follow that section, instead of the ordinary dispatch CLI order, model kind limits and the matching pitfall checks. All other work follows the normal flow.
 
 <!-- DISPATCH_POLICY_START -->
 | 任務類型 | 適用需求 | 層級數 | 接手順序 |
@@ -60,65 +60,65 @@ Copilot 宿主依當前執行環境判定，不把登入、模型設定或繼承
 | `rules` | 寫 skill、prompt、規則與複雜架構 | 2 | 1. agy / opus → 2. claude / opus |
 <!-- DISPATCH_POLICY_END -->
 
-主 agent 自己做：寫骨架與想要的結果、審測試、派出去不划算的格子、讀 diff、跑測試、commit，以及統合深度研究的全部結果、做整體判斷。讀一個值、一份清單這類幾次工具呼叫就能完成的事也自己做，不派工。
+The main agent does these itself: writing the skeleton and expected results, reviewing tests, slots not worth dispatching, reading diffs, running tests, committing, and integrating all results of deep research into an overall judgment. It also does itself anything a few tool calls can finish, such as reading one value or one list, and does not dispatch it.
 
-### Script 執行與模型規則
+### Script execution and model rules
 
-- 新派工與層級接手一律透過 script，不自行重排工具、拼接派工指令或跳級。
-- `dispatch` 在背景啟動外部 CLI，結果用 `status --dispatch-id <ID> --wait <秒數>` 取得。`cli_failed`、`awaiting_review`、`native_required` 都交回主 agent 判斷與審查，不把 CLI 成功當成驗收通過。
-- 同一個 CLI 同時最多三條，內建 subagent 也計入。不用宿主自己的 CLI 指令派工，改用內建 subagent 工具。
-- 模型種類、推理強度、升級條件與各結果的處理步驟寫在 [references/script-execution.md](references/script-execution.md)。這次對話第一次派工前完整讀過；之後遇到沒處理過的 `status` 結果、要選模型或調整推理強度時，重讀對應段落。
+- New dispatch and level handover MUST go through the script; do not reorder tools, assemble dispatch commands yourself or skip levels.
+- `dispatch` starts the external CLI in the background; get the result with `status --dispatch-id <ID> --wait <seconds>`. `cli_failed`, `awaiting_review` and `native_required` all go back to the main agent for judgment and review; a CLI success is not an acceptance pass.
+- At most three runs per CLI at the same time, built-in subagents included. Do not dispatch with the host's own CLI command; use the built-in subagent tool instead.
+- Model kinds, reasoning effort, escalation conditions and the handling of each result are in [references/script-execution.md](references/script-execution.md). Read it in full before the first dispatch of this conversation; afterwards, reread the matching paragraph when you meet a `status` result you have not handled before, or when choosing a model or adjusting reasoning effort.
 
-### 既有 API 變更
+### Changes to an existing API
 
-只有準備變更既有 API，或函數、變數、結構體、Enum 等程式元素的命名、結構、用法或行為時，才啟動本節。不因任務涉及 API、一般設計、審查或派工就啟動。純內部實作調整若保持上述項目不變，或單純新增且不改變既有名稱、結構、用法或行為，照原流程。
+Apply this section only when preparing to change the name, structure, usage or behavior of an existing API or of a program element such as a function, variable, struct or Enum. Do not apply it merely because a task involves an API, general design, review or dispatch. A purely internal implementation change that keeps all of the above unchanged, or a pure addition that does not change any existing name, structure, usage or behavior, follows the normal flow.
 
-條件成立時，在修改受影響的骨架、測試或實作前，完整讀 [references/api-change-consultation.md](references/api-change-consultation.md)，照它完成獨立模型諮詢、修正初案與使用者確認，再接回實作。
+When the condition holds, before modifying the affected skeleton, tests or implementation, read [references/api-change-consultation.md](references/api-change-consultation.md) in full and complete the independent model consultation, the revision of the first draft and the user's confirmation as it describes, then return to implementation.
 
-### 骨架與格子
+### Skeleton and slots
 
-派實作前，主 agent 先照核心的 [Skeleton First](../software-engineering-guidelines/SKILL.md#skeleton-first) 寫好骨架，每個格子都有簽名與想要的結果清單。
+Before dispatching implementation, the main agent writes the skeleton following the core [Skeleton First](../software-engineering-guidelines/SKILL.md#skeleton-first); every slot has a signature and a list of expected results.
 
-哪些格子派出去、哪些自己填，依核心 [Skeleton First](../software-engineering-guidelines/SKILL.md#skeleton-first) 的工作量判斷。派出去的格子照下列順序：
+Which slots to dispatch and which to fill yourself follows the workload judgment in the core [Skeleton First](../software-engineering-guidelines/SKILL.md#skeleton-first). Dispatched slots follow this order:
 
-1. 派測試 agent，照想要的結果寫測試，不寫實作。
-2. 主 agent 審測試：逐條對照想要的結果，並在空格子上跑一次。有測試通過的退回重寫。
-3. 派另一個實作 agent 填格子，填到測試通過，不得修改測試檔。認為測試錯就停下回報，由主 agent 裁決。
-4. 主 agent 照「收件審查」驗收。
+1. Dispatch a test agent to write tests from the expected results, without writing the implementation.
+2. The main agent reviews the tests: check each against the expected results, and run them once against the empty slots. If any test passes, send them back to be rewritten.
+3. Dispatch a different implementation agent to fill the slots until the tests pass; it MUST NOT modify the test files. If it thinks a test is wrong, it stops and reports, and the main agent decides.
+4. The main agent accepts the work following "Acceptance review of returned work".
 
-沒有測試環境或畫面類的格子，測試換成可執行的驗證步驟，由測試 agent 寫成指令或檢查清單。
+For slots with no test environment, or slots that concern screens, replace the tests with executable verification steps, written by the test agent as commands or a checklist.
 
-## 派工流程
+## Dispatch flow
 
-每一步的細則在 [references/dispatch-flow.md](references/dispatch-flow.md)，到那一步才讀對應的段落。
+The details of each step are in [references/dispatch-flow.md](references/dispatch-flow.md); read the matching section only when you reach that step.
 
-1. **派工前**：帶入篩選過的專案記憶、確認沒有別人的半成品與同檔寫入、確認該 CLI 沒有超過三條，並判斷複用既有對話或新建。讀「派工前」與「Agent 與對話複用」。
-2. **發起**：用 script 提交。prompt 的七項由 script 依欄位產生，欄位怎麼填讀「派工 prompt 必備七項」。派審查之前讀 [references/review-isolation.md](references/review-isolation.md)。
-3. **派工中**：背景派工結束時會通知，等通知，不排定時喚醒或輪詢。中斷、重派與半成品的處理讀「派工中」。
-4. **收件審查**：照下方清單親自做。
-5. **失敗**：script 回 `cli_failed`、指令找不到、額度耗盡或逾時時，讀「工具失敗」與「CLI 未安裝」，自行接續下一層，不問使用者要不要重試。
-6. **回報**：照下方格式。
+1. **Before dispatching**: bring in the filtered project memory, confirm there is no one else's partial work and no concurrent write to the same files, confirm that CLI has no more than three runs, and decide whether to reuse an existing session or start a new one. Read "Before dispatching" and "Agent and session reuse".
+2. **Submit**: submit through the script. The script produces the seven parts of the prompt from the fields; for how to fill the fields, read "The seven parts of a dispatch prompt". Before dispatching a review, read [references/review-isolation.md](references/review-isolation.md).
+3. **While a dispatch runs**: a background dispatch sends a notification when it ends. Wait for the notification; do not schedule wake-ups or poll. For interruption, redispatch and partial work, read "While a dispatch runs".
+4. **Acceptance review of returned work**: do it yourself, following the checklist below.
+5. **Failure**: when the script returns `cli_failed`, a command is not found, a quota is exhausted or a run times out, read "Tool failures" and "CLI not installed" and continue to the next level yourself; do not ask the user whether to retry.
+6. **Report**: use the format below.
 
-規格、文章或報告交付前，MUST 依 [references/review-isolation.md](references/review-isolation.md) 的「空 context 可讀性審查」派一個未參與撰寫的 subagent 檢查。
+Before delivering a specification, article or report, you MUST dispatch a subagent that did not take part in writing it to check it, following "Empty-context readability review" in [references/review-isolation.md](references/review-isolation.md).
 
-### 收件審查
+### Acceptance review of returned work
 
-主 agent 親自做，不派另一個 agent 代審。規格、文章或報告交付前，另依「空 context 可讀性審查」檢查成品能否獨立理解。
+The main agent does this itself and does not dispatch another agent to review in its place. Before delivering a specification, article or report, also check, following "Empty-context readability review", that the result can be understood on its own.
 
-- [ ] 讀完整 diff：`git diff`，不是只看 subagent 摘要。
-- [ ] 回報裡的每個數字、測試通過數、檔案數，都對回實際輸出或檔案。
-- [ ] 核對覆蓋範圍。實際處理數少於應處理數，或有來源沒取得時，補派或在成果裡標明缺口，不當成完整結果彙整。
-- [ ] 自己跑一次驗證指令，貼實際輸出。subagent 說「測試通過」不算證據。
-- [ ] 比對可改檔案清單，多改的檔案一律退回。實作 agent 的 diff 碰到測試檔也退回。
-- [ ] 全部格子完成後跑完整使用流程驗收。
-- [ ] 才決定採用、退修或丟棄。
-- [ ] 交給使用者的是主 agent 整合後的完整內容，不是摘要，也不是各 subagent 回報的轉貼。
-- [ ] 不論成果採用或退修，都核對 subagent 回報的試錯與探索經驗，連同主 agent 自己的發現，判斷能否避免下次重複耗費時間與 token。依 project-memory 的記錄標準篩選，不把推測、流水帳或未解問題當成已驗證教訓。
-- [ ] 對符合條件的經驗，在原專案目錄依 project-memory 的工具先搜尋去重，再新增或更新，無須逐筆詢問使用者。舊記憶須查證確實失效後才更新原 key，保留仍有效的適用條件。寫入後讀回確認，不宣稱未完成的記錄已保存。
+- [ ] Read the complete diff with `git diff`, not just the subagent's summary.
+- [ ] Check every number, passing-test count and file count in the report against the actual output or files.
+- [ ] Check coverage. When fewer items were handled than should have been, or a source was not obtained, dispatch again for the gap or mark the gap in the result; do not compile it as a complete result.
+- [ ] Run the verification command yourself and paste the actual output. A subagent saying "tests pass" is not evidence.
+- [ ] Compare against the list of files that may be changed; any extra changed file MUST be sent back. Also send back an implementation agent's diff that touches test files.
+- [ ] After all slots are done, run acceptance on the complete usage flow.
+- [ ] Only then decide whether to adopt, send back for revision, or discard.
+- [ ] What goes to the user is the complete content integrated by the main agent, not a summary and not a repost of each subagent's report.
+- [ ] Whether the result is adopted or sent back, check the trial-and-error and exploration lessons the subagents reported, together with the main agent's own findings, and judge whether they can save time and tokens next time. Filter them by project-memory's recording criteria; do not treat guesses, running logs or unsolved problems as verified lessons.
+- [ ] For lessons that qualify, in the original project directory, use project-memory's tool to search for duplicates first, then add or update, without asking the user about each entry. Update an old memory's original key only after verifying it is really obsolete, and keep the conditions under which it still applies. Read back after writing to confirm; do not claim a record was saved when it was not.
 
-### 回報
+### Report
 
-每次回報獨立一段列出宿主與每次派工：
+Every report lists the host and every dispatch in a separate paragraph:
 
 ```
 宿主：Claude Code
@@ -126,8 +126,8 @@ Copilot 宿主依當前執行環境判定，不把登入、模型設定或繼承
 工具與模型：opencode / <實際免費模型名> / --agent build --auto
 ```
 
-每次派工註明實際工具、模型、旗標、新建或複用、agent 或 session 識別碼及隔離對象。回退附本次任務的失敗或未安裝證據。只有取得工具的快取用量證據時，才回報實際命中快取。新建時簡述無法複用的原因。沒派工就寫「工具與模型：無」。每次交接與收件依 script 輸出提醒執行：核對教訓與經驗，依 project-memory 流程搜尋去重、記錄並讀回確認。
+For every dispatch, state the actual tool, model and flags, whether it was new or reused, the agent or session ID, and what it was isolated from. A fallback includes this task's failure or not-installed evidence. Report an actual cache hit only when you have the tool's cache usage evidence. For a new session, state briefly why reuse was not possible. When nothing was dispatched, write "工具與模型：無". At every handover and acceptance, follow the script output's reminder: check lessons, then search for duplicates, record and read back to confirm, following the project-memory flow.
 
-## 陷阱
+## Pitfalls
 
-每次回報前逐列核對 [references/pitfalls.md](references/pitfalls.md)。
+Before every report, check [references/pitfalls.md](references/pitfalls.md) row by row.

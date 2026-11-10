@@ -1,49 +1,49 @@
-# 介面變更提案示例
+# Interface change proposal examples
 
-主 agent 在諮詢並修正初案後，依實際改動選用下列呈現方式，合併原本待使用者決定的事項。以下都是假設案例，不是已發生的變更或模型諮詢紀錄；實際提案使用查證過的現有程式，並標明建議稿。
+After consulting and revising the first draft, the main agent chooses from the presentations below according to the actual change, and combines it with the items that were already waiting for the user's decision. All of the following are hypothetical cases, not changes that happened or records of model consultations; an actual proposal uses verified existing code and is marked as a proposed draft.
 
-## 名稱、簽名與用法
+## Name, signature and usage
 
-**假設需求：** 讓呼叫端看得出第二個參數的意思。
+**Hypothetical requirement:** let callers see what the second parameter means.
 
-改前：
+Before:
 
 ```ts
 listUsers(20, true);
 ```
 
-建議改後：
+Proposed:
 
 ```ts
 listUsers({ limit: 20, includeDisabled: true });
 ```
 
-| 比較項目 | 改前 | 建議改後 |
+| Item | Before | Proposed |
 | --- | --- | --- |
-| 簽名 | `listUsers(limit: number, includeDisabled: boolean): User[]` | `listUsers(options: ListUsersOptions): User[]` |
-| 參數結構 | 兩個位置參數 | `ListUsersOptions` 包含 `limit: number` 與 `includeDisabled: boolean` |
-| 相同行為 | 最多回傳 20 位使用者，包含停用帳號 | 維持相同結果 |
-| 呼叫端影響 | 現有呼叫可用 | 必須更新呼叫方式，或保留舊簽名的相容入口 |
+| Signature | `listUsers(limit: number, includeDisabled: boolean): User[]` | `listUsers(options: ListUsersOptions): User[]` |
+| Parameter structure | Two positional parameters | `ListUsersOptions` contains `limit: number` and `includeDisabled: boolean` |
+| Same behavior | Returns at most 20 users, including disabled accounts | Same result |
+| Impact on callers | Existing calls work | Calls have to be updated, or a compatibility entry point with the old signature is kept |
 
-提案須交代初案經諮詢後改了什麼、採納依據及未採納的重要建議，再提出選擇。例如在所有呼叫端都由同一專案管理且能一起更新的前提下，可建議一次更新；存在外部呼叫端時，應說明相容入口與遷移安排，再請使用者決定。
+The proposal MUST state what the consultation changed in the first draft, the basis for what was adopted and the important suggestions not adopted, and then present the choice. For example, when all callers are managed in the same project and can be updated together, it may recommend updating them all at once; when external callers exist, it SHOULD describe the compatibility entry point and the migration plan, then ask the user to decide.
 
-## 簽名不變，行為改變
+## Same signature, changed behavior
 
-**假設需求：** 設定檔遺失時，讓呼叫端明確處理錯誤。
+**Hypothetical requirement:** when the settings file is missing, make callers handle the error explicitly.
 
-改前與建議改後都使用 `loadSettings(path: string): Settings`，但結果不同：
+Both before and after use `loadSettings(path: string): Settings`, but the results differ:
 
-| 相同輸入 | 改前 | 建議改後 |
+| Same input | Before | Proposed |
 | --- | --- | --- |
-| `loadSettings("missing.json")`，檔案不存在 | 回傳預設設定 | 拋出 `SettingsNotFoundError` |
+| `loadSettings("missing.json")`, file does not exist | Returns the default settings | Throws `SettingsNotFoundError` |
 
-改前使用：
+Usage before:
 
 ```ts
-const settings = loadSettings("missing.json"); // 取得預設設定
+const settings = loadSettings("missing.json"); // gets the default settings
 ```
 
-建議改後使用：
+Proposed usage:
 
 ```ts
 try {
@@ -57,4 +57,4 @@ try {
 }
 ```
 
-提案須說明既有呼叫端若不處理錯誤會受到什麼影響，附上經諮詢修正的建議，並讓使用者決定是否採用。函數名稱與簽名相同，仍須依行為差異觸發諮詢。
+The proposal MUST state what happens to existing callers that do not handle the error, attach the suggestion as revised by the consultation, and let the user decide whether to adopt it. Even when the function name and signature stay the same, the behavior difference MUST still trigger consultation.

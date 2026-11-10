@@ -1,38 +1,38 @@
-# Script 執行、模型規則與內建工具交接
+# Script execution, model rules and handover to built-in tools
 
-發起派工、處理 `status` 回傳的結果，或決定模型與推理強度時照本檔執行。主檔指的是 [SKILL.md](../SKILL.md)。
+Follow this file when submitting a dispatch, handling a result returned by `status`, or deciding the model and reasoning effort. "The main file" means [SKILL.md](../SKILL.md).
 
-- 主 agent 必須透過 script 發起新派工與處理層級接手，不自行重排工具或拼接派工指令。符合「Agent 與對話複用」時，依該節續接原 agent 或 session。操作與參數查詢使用 CLI 的總覽及子指令 `--help`；原生工具說明入口見 [CLI 速查表](cli-cheatsheet.md)。
-- 會啟動外部 CLI 的派工在背景執行，`dispatch` 輸出 `started` 後就結束。主 agent 用 `status --dispatch-id <ID> --wait <秒數>` 取得結果，秒數不超過自己指令工具的執行上限，結果仍是 `running` 就再查一次。宿主能在背景執行指令並在結束時通知，就可用它跑較長的 `status --wait`。`--timeout` 是單次執行外部 CLI 的上限，依任務需要設定，不為了配合自己指令工具的上限而縮短。
-- `status` 的 `runtime` 顯示工作程序很久沒有新輸出，主 agent 判斷它已經卡住時，用 `cancel` 停止，再依 `awaiting_review` 審查。結果為 `not_started` 表示此層還沒有啟動執行者，解除佔用後用 `--outcome dispatch-failed` 在同一層重來。
-- 外部 CLI 失敗而且檔案沒有變動時，結果為 `cli_failed`。script 不解讀錯誤內容，主 agent 讀 attempts 最後一筆的原始輸出判斷原因；指令無法啟動（`launch_error`）先依「CLI 未安裝」查證。判定這一層無法執行後，帶錯誤原文與判斷用 `--outcome dispatch-failed` 接下一層。正常回報、部分改檔與逾時先交回主 agent 審查，不把 CLI 成功當成驗收通過。
-- 結果為 `native_required` 時，主 agent 使用輸出指定的內建工具與合規模型，先依複用條件選擇既有 agent，再提供本次完整任務要求。禁止改用宿主自己的 CLI。內建 subagent 完成後，照 `awaiting_review` 的方式審查並用 `--outcome` 回報。內建工具不可用或派工失敗時，帶原派工識別碼、實際錯誤與下一層級接續；不可跳級。
-- 結果為 `awaiting_review` 時，主 agent 讀 diff、核對範圍並親自驗證。回報已完成驗收、派工失敗或驗證失敗時，依 CLI 的條件接續。寫程式同級連續兩次驗證失敗才升級，不能把成果不合格冒充為未派出。
-- 每次接續讀取原派工狀態，保留原 prompt、失敗證據與補充教訓。逾時、中斷或取消後，先由主 agent 確認程序及半成品，再依「工具失敗」的接續與停止條件處理。
-- 狀態與原始輸出存於專案外的使用者狀態目錄，由 script 接續與主 agent 審查時讀取；不在使用者專案根目錄新增協調檔。script 只替自己啟動的外部 CLI 計算名額與同檔寫入。交給宿主內建 subagent 的派工不佔名額也不鎖檔，主 agent 自己把它計入每個 CLI 三條的上限與同檔檢查，其他 agent 與未納管寫入也由主 agent 查證。
-- 每次外部 CLI 結束，script 先停止其工作程序群，再檢查所有專案檔案（含忽略檔）與授權沙盒。掃描無法完成或有變動就先審查。需要持續執行的服務由主 agent 管理。
+- The main agent MUST submit new dispatches and handle level handover through the script; do not reorder tools or assemble dispatch commands yourself. When "Agent and session reuse" applies, resume the original agent or session following that section. For operations and parameters, use the CLI's overview and the subcommands' `--help`; native tool help entry points are in the [CLI cheat sheet](cli-cheatsheet.md).
+- A dispatch that starts an external CLI runs in the background, and `dispatch` exits after printing `started`. The main agent gets the result with `status --dispatch-id <ID> --wait <seconds>`, with the seconds not exceeding its own command tool's execution limit; if the result is still `running`, query again. When the host can run a command in the background and notify on completion, it may use that to run a longer `status --wait`. `--timeout` is the limit for a single run of the external CLI; set it to what the task needs, and do not shorten it to fit your own command tool's limit.
+- When `status`'s `runtime` shows the worker process has had no new output for a long time and the main agent judges it stuck, stop it with `cancel`, then review it as for `awaiting_review`. A result of `not_started` means this level has not started a worker yet; after releasing the slot, redo the same level with `--outcome dispatch-failed`.
+- When an external CLI fails and no file changed, the result is `cli_failed`. The script does not interpret the error; the main agent reads the raw output of the last entry in attempts to judge the cause. When the command cannot start (`launch_error`), first verify following "CLI not installed". After judging that this level cannot run, continue to the next level with `--outcome dispatch-failed`, carrying the original error and the judgment. A normal report, partial file changes and a timeout first go back to the main agent for review; a CLI success is not an acceptance pass.
+- When the result is `native_required`, the main agent uses the built-in tool and compliant model named in the output, first chooses an existing agent under the reuse conditions, then provides this task's complete requirements. The main agent MUST NOT switch to the host's own CLI. After the built-in subagent finishes, review it as for `awaiting_review` and report with `--outcome`. When the built-in tool is unavailable or the dispatch fails, continue with the original dispatch ID, the actual error and the next level; MUST NOT skip a level.
+- When the result is `awaiting_review`, the main agent reads the diff, checks the scope and verifies it personally. When reporting that acceptance is complete, that the dispatch failed or that verification failed, continue under the CLI's conditions. For coding, escalate only after two consecutive verification failures at the same level; MUST NOT pass off an unacceptable result as not dispatched.
+- Every continuation reads the original dispatch state and keeps the original prompt, failure evidence and added lessons. After a timeout, interruption or cancellation, the main agent first confirms the processes and partial work, then handles it under the continuation and stop conditions of "Tool failures".
+- State and raw output are kept in a user state directory outside the project, read by the script when continuing and by the main agent when reviewing; do not add coordination files to the root of the user's project. The script counts slots and same-file writes only for the external CLIs it started itself. Dispatches handed to the host's built-in subagent take no slot and lock no files; the main agent itself counts them toward the three-per-CLI limit and the same-file check, and also verifies other agents and unmanaged writes.
+- Every time an external CLI ends, the script first stops its worker process group, then checks all project files (including ignored files) and the authorized sandbox. When the scan cannot complete or something changed, review first. Services that need to keep running are managed by the main agent.
 
-- 外部 CLI 派工一律明確指定自動核准：OpenCode 加 `--auto`，Copilot 加 `--allow-all-tools`，Codex 加 `--approve-for-me`，agy 加 `--mode accept-edits --dangerously-skip-permissions`，Claude Code 加 `--permission-mode auto`，Claude Code 不改用 bypass。Claude Code 與 agy 從目標專案目錄啟動。
-- 自動核准不擴大任務可改檔案清單。表中的「唯讀」指不得修改任何專案檔案，prompt 必須明寫；為了重現問題而寫的一次性腳本可以放在專案外的暫存目錄；探索、審查與實作沿用相同執行模式，不另設 plan、read-only 沙盒或唯讀工具清單，也不選唯讀專用 agent。宿主內建 subagent 不套用外部 CLI 旗標，可改範圍同樣寫在 prompt。
+- External CLI dispatch MUST explicitly specify auto-approval: OpenCode adds `--auto`, Copilot adds `--allow-all-tools`, Codex adds `--approve-for-me`, agy adds `--mode accept-edits --dangerously-skip-permissions`, Claude Code adds `--permission-mode auto`, and Claude Code does not switch to bypass. Claude Code and agy are started from the target project directory.
+- Auto-approval does not widen the task's list of files that may be changed. "Read-only" in the table means the worker MUST NOT modify any project file, and the prompt MUST state this explicitly; a throwaway script written to reproduce a problem may be placed in a temporary directory outside the project. Exploration, review and implementation use the same execution mode: do not set up plan mode, a read-only sandbox or a read-only tool list, and do not choose a read-only agent. The host's built-in subagent does not use external CLI flags; its scope of files that may be changed is likewise written in the prompt.
 
-- 表中只寫模型種類。script 輪到 OpenCode、agy 或 Codex 時，自行以 `opencode models`、`agy models` 或 `codex debug models` 查實際可用模型。agy 與 Codex 挑該種類中版本最新的；OpenCode 的免費模型有 `opencode/big-pickle` 就用它，沒有時取 `opencode/` 開頭的清單裡排序最後的一個。
-- Copilot 依本專案的免費版使用方式固定設 `--model auto`，不指定具體模型、推理強度或付費替代方案。`--allow-all-tools` 允許自動執行包含改檔在內的工具，`--trust-folder` 僅信任本次 prompt 模式的工作目錄設定。prompt 的可改範圍不變。Copilot 只用於決策表中明列 Auto 的任務，手動指定模型的種類限制不套用 Auto 的內部選擇，但 Auto 不作為 Fable、Opus 或 Astra 的指定模型諮詢。
-- opencode 只能用免費模型：`opencode models | grep opencode/` 查得到才算。
-- Codex 照表主動派。Review、驗收審查、深度研究與決策只用 GPT-6 以上、名稱含 sol 的模型。名稱含 luna 的模型只用於寫測試、填格子實作、照清單修 bug、快速唯讀探索、雜事與分類。
-- 深度研究分三層：
-  1. 廣度層：照「快速唯讀探索」那列派（OpenCode、Gemini Flash、Copilot Auto、luna、Haiku），每條負責一個範圍，掃描並回報發現與線索，附出處。回報當成線索，不當成事實。
-  2. 深度層：主 agent 從線索挑出值得深挖的項目，每個項目依深度研究那列先派 sol，失敗後才派 Opus，一次只專研一件事，prompt 只放那一件。回報系統結構、可行做法與每個結論的依據（檔案路徑、指令輸出、文件出處）。
-  3. 統合層：主 agent 合併廣度與深度的全部結果，核對關鍵依據、前後對照、做出整體判斷，決定採用哪個做法並親自執行。執行者的結論不直接當成定論。
-  廣度層沒挑出值得深挖的項目時，不派深度研究。
-- 驗收審查用 `acceptance` 類型，模型與接手順序同 `review`。執行者要實際操作成果來對照原始需求，所以另給沙盒目錄：成果產生的檔案與資料只寫進沙盒，專案檔一律不可改。它不需要先做廣度探索。
-- 深度研究的 agent 可實際試探系統，但可改檔案只列暫存目錄或沙盒，專案檔一律不可改。試探造成的副作用（建立的檔案、啟動的程序、改過的設定）一併寫進回報，由主 agent 決定保留或清掉。
-- 非免費模型的 effort 預設 `medium`，主 agent 判斷任務需要時才調高，最高 `xhigh`。agy 的 Gemini 選模型名結尾是 `-medium` 的版本，agy 的 Claude 不加 `--effort`，思考強度由模型名稱決定。Agent 工具沒有 effort 參數，不用設。
-- Haiku 與 Sonnet 只用 5.5 以上版本，所以 agy 的 Sonnet 4.6 不派。
-- Haiku 用在唯讀探索、雜事、分類與簡單的寫程式任務。
-- 任務同時符合分類與雜事或探索時，照分類那一列派。
-- 輪到 Claude 時，Sonnet 用在 Haiku 寫不出來的寫程式任務。
-- Opus 只用在前端設計、決策、寫規則、複雜架構、review、驗收審查、深度研究，以及 Sonnet 也沒過驗證的寫程式格子。派工順序依決策表，接手寫程式格子時 `claude -p` 改用 `--effort low`。
-- 寫程式那一列，同一個格子在同一級連續兩次沒過驗證才往下一級，claude 那欄依 Haiku、Sonnet、Opus 的順序升級。
-- 同一個 CLI 同時最多跑三條，Copilot 也計入，Claude Code 的 Agent 工具也算 claude。
-- 不用宿主自己的 CLI 指令派工（`claude -p`、`codex exec` 等），改用宿主內建的 subagent 工具。同一個模型不同 CLI 可以。
-- 一般派工的唯一例外：主 agent 判斷很難的寫程式格子，若這次任務裡 opencode 已在同類型的格子交出不完整或沒過驗證的結果，可以跳過 OpenCode，從 Copilot Auto 派起，失敗後再派 luna，其餘往下升級的規則不變。
+- The table lists only model kinds. When the script reaches OpenCode, agy or Codex, it looks up the actually available models itself with `opencode models`, `agy models` or `codex debug models`. For agy and Codex it picks the latest version of that kind; for OpenCode's free models it uses `opencode/big-pickle` when present, and otherwise the last entry in the sorted list of names starting with `opencode/`.
+- Copilot is always set to `--model auto`, without a specific model, reasoning effort or paid alternative. `--allow-all-tools` allows tools, including file edits, to run automatically; `--trust-folder` only trusts the working directory setting for this prompt-mode run. The prompt's scope of files that may be changed does not change. Copilot is used only for tasks for which the decision table lists Auto. The kind limits for manually specified models do not apply to Auto's internal choice, but Auto is not used as the designated model for a Fable, Opus or Astra consultation.
+- opencode may use only free models: a model counts only if `opencode models | grep opencode/` finds it.
+- Dispatch to Codex proactively according to the table. Review, acceptance review, deep research and decision use only models that are GPT-6 or later with sol in the name. Models with luna in the name are used only for writing tests, filling slots, fixing bugs from a list, fast read-only exploration, chores and classification.
+- Deep research has three layers:
+  1. Breadth layer: dispatch as in the "fast read-only exploration" row (OpenCode, Gemini Flash, Copilot Auto, luna, Haiku); each run covers one area, scans it and reports findings and leads with sources. Treat the reports as leads, not facts.
+  2. Depth layer: the main agent picks the items worth digging into from the leads; for each item, following the deep research row, dispatch sol first and Opus only after it fails. Each run studies one thing only, and the prompt contains only that thing. It reports the system structure, workable approaches and the basis for each conclusion (file paths, command output, document sources).
+  3. Integration layer: the main agent merges all breadth and depth results, checks the key evidence, cross-checks them, makes the overall judgment, decides which approach to adopt and carries it out personally. A worker's conclusion is not taken as final.
+  When the breadth layer finds no item worth digging into, do not dispatch deep research.
+- Acceptance review uses the `acceptance` type, with the same models and handover order as `review`. The worker operates the result to check it against the original requirements, and is also given a sandbox directory: files and data the result produces are written only into the sandbox, and project files MUST NOT be changed. It does not need broad exploration first.
+- A deep research agent may actually probe the system, but its files that may be changed list only a temporary directory or sandbox, and project files MUST NOT be changed. Side effects of probing (files created, processes started, settings changed) are written into the report, and the main agent decides whether to keep or clear them.
+- Effort for non-free models defaults to `medium`; the main agent raises it only when it judges the task needs it, up to `xhigh`. For agy's Gemini, choose the model name ending in `-medium`; agy's Claude takes no `--effort`, and its thinking strength is set by the model name. The Agent tool has no effort parameter and needs none.
+- Haiku and Sonnet are used only at version 5.5 or later, so agy's Sonnet 4.6 is not dispatched.
+- Haiku is used for read-only exploration, chores, classification and simple coding tasks.
+- When a task fits both classification and chores or exploration, dispatch it under the classification row.
+- When Claude's turn comes, Sonnet is used for coding tasks Haiku could not complete.
+- Opus is used only for frontend design, decision, writing rules, complex architecture, review, acceptance review, deep research, and coding slots that Sonnet also failed to verify. The dispatch order follows the decision table; when taking over a coding slot, `claude -p` uses `--effort low`.
+- In the coding row, move to the next level only after the same slot fails verification twice in a row at the same level; in the claude column, escalate in the order Haiku, Sonnet, Opus.
+- At most three runs of the same CLI at the same time; Copilot is counted too, and Claude Code's Agent tool counts as claude.
+- Do not dispatch with the host's own CLI command (`claude -p`, `codex exec`, and so on); use the host's built-in subagent tool instead. The same model through a different CLI is allowed.
+- The only exception for ordinary dispatch: for a coding slot the main agent judges to be hard, if opencode has already delivered an incomplete result or one that failed verification on a slot of the same type in this task, OpenCode may be skipped and dispatch starts from Copilot Auto, then luna after a failure; the other escalation rules are unchanged.

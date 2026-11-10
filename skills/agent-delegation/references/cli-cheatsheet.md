@@ -1,31 +1,31 @@
-# CLI 說明入口
+# CLI help entry points
 
-一般新派工先執行 `python3 <skill-dir>/scripts/dispatch.py` 查看總覽，再讀需要的子指令 `--help`。工具順序、層級數、模型限制與推理強度由 [policy.json](../scripts/policy.json) 提供。
+For ordinary new dispatch, first run `python3 <skill-dir>/scripts/dispatch.py` for the overview, then read the `--help` of the subcommands you need. Tool order, number of levels, model limits and reasoning effort come from [policy.json](../scripts/policy.json).
 
-Windows 使用 `py -3 <skill-dir>/scripts/dispatch.py`，需要 Python 3.9+ 與 Windows 10+。平台限制、狀態目錄與 CLI 包裝格式見腳本的 `--help` 及 `dispatch --help`。
+On Windows, use `py -3 <skill-dir>/scripts/dispatch.py`; it requires Python 3.9+ and Windows 10+. Platform limits, the state directory and the CLI wrapper format are in the script's `--help` and `dispatch --help`.
 
-| 工具 | 原生說明入口 |
+| Tool | Native help entry points |
 | --- | --- |
-| OpenCode | `opencode --help`、`opencode run --help`、`opencode models` |
-| Antigravity（agy） | `agy --help`、`agy models` |
-| GitHub Copilot CLI | `copilot --help`、`copilot help permissions` |
-| Codex | `codex --help`、`codex exec --help`、`codex debug models` |
+| OpenCode | `opencode --help`, `opencode run --help`, `opencode models` |
+| Antigravity (agy) | `agy --help`, `agy models` |
+| GitHub Copilot CLI | `copilot --help`, `copilot help permissions` |
+| Codex | `codex --help`, `codex exec --help`, `codex debug models` |
 | Claude Code | `claude --help` |
 
-CLI 更新後核對實際介面。旗標不支援時保留錯誤並交由 script 接手，不改用未核准的模型或執行模式。
+After a CLI update, check its actual interface. When a flag is not supported, keep the error and let the script take over; do not switch to an unapproved model or execution mode.
 
-## 內建工具交接
+## Handing over to a built-in tool
 
-`native_required` 的模型選擇、派工與回報依 [script-execution.md](script-execution.md) 執行。
+Model choice, dispatch and reporting for `native_required` follow [script-execution.md](script-execution.md).
 
-## 對話續接
+## Resuming a session
 
-複用條件與隔離要求見 [dispatch-flow.md](dispatch-flow.md#agent-與對話複用)。內建工具使用既有 agent 的續接功能，外部 CLI 使用原 session 的續接功能。參數查上表原生 help 或內建工具說明，明確指定識別碼，不用「最近一次」猜對話。
+Reuse conditions and isolation requirements are in [dispatch-flow.md](dispatch-flow.md#agent-and-session-reuse). A built-in tool uses its resume feature for the existing agent; an external CLI uses the resume feature of the original session. Look up the parameters in the native help listed in the table above or in the built-in tool's documentation, and specify the ID explicitly; do not guess the session with "most recent".
 
-script 尚未提供 session 續接時，由主 agent 使用原生續接介面，保留任務、識別碼、實際模型、輸出與驗證紀錄。SKILL.md 的宿主 CLI 禁令、自動核准、可改範圍、併行限制與收件審查同樣適用。主 agent 在續接前後核對程序與檔案變動，包含忽略檔及授權沙盒。
+When the script does not yet provide session resume, the main agent uses the native resume interface and keeps the task, ID, actual model, output and verification records. SKILL.md's ban on the host's own CLI, auto-approval, scope of files that may be changed, concurrency limits and acceptance review apply in the same way. Before and after resuming, the main agent checks the processes and file changes, including ignored files and the authorized sandbox.
 
-script 的派工識別碼用於派工狀態接續，不等於模型對話的 session 識別碼，不以恢復派工狀態宣稱已複用對話。
+The script's dispatch ID is for continuing dispatch state; it is not the model session ID. Do not claim a session was reused because dispatch state was restored.
 
-## 狀態與半成品
+## State and partial work
 
-script 的狀態保存原始任務、嘗試紀錄、錯誤與輸出位置。主 agent 接續前讀取紀錄、檢查程序及磁碟差異，補入已核對的經驗。續接失敗時，依 [工具失敗](dispatch-flow.md#工具失敗) 處理，不反覆嘗試失效 session。部分成果由主 agent 決定保留與接續方式，script 不自動刪除、stash 或 reset。
+The script's state keeps the original task, attempt records, errors and output locations. Before continuing, the main agent reads the records, checks processes and disk differences, and adds the verified lessons. When resuming fails, handle it following [Tool failures](dispatch-flow.md#tool-failures); do not keep retrying a dead session. The main agent decides how partial results are kept and continued; the script does not delete, stash or reset them automatically.

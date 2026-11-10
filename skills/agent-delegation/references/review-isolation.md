@@ -1,20 +1,20 @@
-# 審查脈絡隔離與可讀性審查
+# Reviewer isolation and readability review
 
-派出任何審查之前，以及規格、文章或報告交付之前，照本檔執行。
+Follow this file before dispatching any review, and before delivering a specification, article or report.
 
-## 審查脈絡隔離
+## Reviewer isolation
 
-誰的成果必須交給獨立的 reviewer，依核心的 [Independent Review](../../software-engineering-guidelines/SKILL.md#independent-review)。本節規定怎麼隔離。Reviewer MUST 與受審成果的實作者 context 隔離，包括主 agent 親自實作時的主對話。不得把實作者的 agent 或 session 改名、換角色或要求忽略前文後拿來審查，也不得透過對話繼承或轉貼實作討論帶入該脈絡。要求互相獨立的角色，即使分不同時間執行也不得共用 context。此規則同時適用於內建工具與外部 CLI。
+Whose work MUST go to an independent reviewer follows the core [Independent Review](../../software-engineering-guidelines/SKILL.md#independent-review). This section sets how to isolate. The reviewer MUST be isolated from the context of the author of the work under review, including the main conversation when the main agent implemented it itself. You MUST NOT rename the author's agent or session, change its role or tell it to ignore earlier messages and then use it to review, and MUST NOT bring that context in through session inheritance or by reposting the implementation discussion. Roles required to be independent of each other MUST NOT share a context, even when they run at different times. This rule applies to both built-in tools and external CLIs.
 
-一般審查提供需求、驗收條件、程式碼、diff 與可核對的驗證證據。既有 reviewer 只有在未帶入受審成果的實作脈絡，且本次審查不要求與前次審查隔離時才能複用。空 context 可讀性審查另依下節限制輸入與複查方式。
+An ordinary review provides the requirements, acceptance criteria, code, diff and checkable verification evidence. An existing reviewer may be reused only when it has not been given the implementation context of the work under review and this review does not need to be isolated from the previous review. An empty-context readability review also follows the next section's limits on inputs and re-review.
 
-### 空 context 可讀性審查
+### Empty-context readability review
 
-規格、文章或報告完成、準備交付前，MUST 派一個未參與撰寫的 subagent，檢查目標讀者能否在沒有本次對話的情況下理解成品。主 agent 親自撰寫的成品也適用；程式實作與一般對話答覆不因此新增審查。
+When a specification, article or report is finished and about to be delivered, you MUST dispatch a subagent that did not take part in writing it to check whether the target readers can understand it without this conversation. This also applies to work the main agent wrote itself; code implementation and ordinary conversational answers do not get an extra review because of this rule.
 
-- 依 `review` 類型派工，除上述角色隔離外，還須隔離本成品的修改與前次審查脈絡。只處理過不影響本次判讀的其他成品的 reviewer 可依複用條件沿用。新建時關閉對話繼承，不能隔離時依工具失敗流程接手。
-- prompt 只交代目標讀者、閱讀目的、成品及讀者實際可取得的資料，並保留派工的角色、唯讀範圍、驗收與回報要求。不得提供主對話、寫作計畫、修改理由、預期解讀或前次審查答案；`project_memory` 填 `[]`，相關經驗由主 agent 自行核對，不交給審查者。
-- 提供規格、文章或報告的完整正文與隨附資料，包含讀者實際能取得的引用文件與附件；不要求讀者具備超出目標讀者設定的知識。
-- 審查者先用自己的話說明成品主旨，規格另說明要求的行為與驗收條件，報告另說明主要結論與依據，再逐項指出無法理解的位置、可能的誤解、缺少的資訊與最小修正建議，附段落、頁碼或檔案行號。不得修改任何檔案，不自行腦補缺失資訊；沒有發現問題就明說。
-- 主 agent 對照成品核對意見，修正確實依賴隱藏脈絡的部分。優先改善結構、命名或刪除無關內容，必要時才補說明；可讀性審查不取代事實查證、測試或正確性審查。
-- 修正後以更新成品重新發起派工，用新的空 context 複查，不沿用前次審查者或帶入前次回報。工具失敗依原流程接續，但接手 prompt 只保留啟動或執行失敗證據，不帶入成品解讀或審查意見。交付時如實區分已通過、仍有缺口與工具受阻。
+- Dispatch with the `review` type. Beyond the role isolation above, it MUST also be isolated from the context of this work's revisions and of previous reviews. A reviewer that has only handled other work that does not affect this reading may be kept under the reuse conditions. When starting a new one, turn off session inheritance; when isolation is not possible, hand over following the tool failure flow.
+- The prompt states only the target readers, the reading purpose, the work and the material the readers can actually obtain, and keeps the dispatch's role, read-only scope, acceptance and reporting requirements. You MUST NOT provide the main conversation, the writing plan, the reasons for revisions, the intended reading or answers from previous reviews; fill `project_memory` with `[]`, and the main agent checks relevant lessons itself instead of giving them to the reviewer.
+- Provide the complete text of the specification, article or report and its accompanying material, including the cited documents and attachments the readers can actually obtain; do not require knowledge beyond what the target readers are set to have.
+- The reviewer first states in its own words the main point of the work; for a specification, also the required behavior and acceptance criteria; for a report, also the main conclusions and their basis. It then lists, item by item, the places it cannot understand, possible misreadings, missing information and the smallest fix, with the paragraph, page number or file line number. It MUST NOT modify any file and does not fill in missing information by guessing; when it finds no problem, it says so.
+- The main agent checks the feedback against the work and fixes the parts that really depend on hidden context. Prefer improving structure or naming, or deleting unrelated content; add explanation only when needed. A readability review does not replace fact-checking, tests or correctness review.
+- After fixing, dispatch again with the updated work and re-review in a new empty context; do not keep the previous reviewer or bring in the previous report. Tool failures continue under the normal flow, but the handover prompt keeps only the launch or execution failure evidence, with no reading of the work or review feedback. At delivery, state truthfully what passed, what still has gaps and what was blocked by tools.
