@@ -137,6 +137,18 @@ class HostTargets(unittest.TestCase):
             "rsync -az ./dist/ devbox:/srv/www/": ["devbox"],
             "cd app && ssh devbox 'docker ps' | head": ["devbox"],
             "ssh devbox && scp a prod-api:/tmp/a": ["devbox", "prod-api"],
+            "sftp -P 2222 devbox": ["devbox"],
+            "ssh -vp 2222 devbox": ["devbox"],
+            "ssh -p2222 devbox": ["devbox"],
+            "mosh --port 60001 devbox": ["devbox"],
+            "mosh --ssh='ssh -p 2222' devbox": ["devbox"],
+            "sudo -u root ssh devbox": ["devbox"],
+            "env -i TERM=xterm ssh devbox": ["devbox"],
+            "ssh ssh://deploy@devbox:2222": ["devbox"],
+            "sftp sftp://devbox/srv": ["devbox"],
+            "rsync -a rsync://devbox/module ./x": ["devbox"],
+            "rsync -az -e 'ssh -p 2222' ./dist/ devbox:/srv/www/": ["devbox"],
+            "scp -3 host-a:file host-b:file": ["host-a", "host-b"],
         }
         for command, expected in cases.items():
             self.assertEqual(self.targets(command), expected, command)
@@ -191,6 +203,39 @@ class HostFacts(Hook):
         data = json.loads(self.bash("ssh devbox", CLAUDE_PLUGIN_DATA=""))["hookSpecificOutput"]
         self.assertNotIn("permissionDecision", data)
         self.assertIn("docker 要加 sudo", data["additionalContext"])
+
+    def test_long_host_records_are_cut_to_fit_and_say_how_to_read_the_rest(self):
+        for i in range(40):
+            self.fact("devbox", "host-fact-number-%02d" % i, "主機事實" * 70)
+        reason = json.loads(self.bash("ssh devbox"))["hookSpecificOutput"]["permissionDecisionReason"]
+        self.assertLess(len(reason), 9000)
+        self.assertIn("host-fact-number-00", reason)
+        self.assertIn("load --host devbox", reason)
+        self.assertIn("重新執行", reason)
+
+    def test_a_host_already_shown_is_not_read_again(self):
+        self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
+        self.assertIn("deny", self.bash("ssh devbox"))
+        store = self.home / ".tstack" / "hosts" / "devbox" / "learnings.jsonl"
+        store.write_text("{not json\n", encoding="utf-8")  # would yield nothing if it were read again
+        legacy = self.home / ".mystack"
+        legacy.mkdir()
+        self.assertEqual(self.bash("ssh devbox uptime"), "")
+        self.assertTrue(legacy.exists(), "the memory script ran again and moved the old store")
+
+    def test_old_markers_are_cleaned_up(self):
+        self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
+        folder = self.data / "host-facts-shown"
+        folder.mkdir(parents=True)
+        old = folder / "ancient--devbox.flag"
+        old.touch()
+        os.utime(old, (0, 0))
+        self.assertIn("deny", self.bash("ssh devbox"))
+        self.assertFalse(old.exists())
+
+    def test_wrapped_dangerous_commands_are_still_caught(self):
+        out = json.loads(self.bash("sudo -u root git add -A"))["hookSpecificOutput"]
+        self.assertIn("git add -- <路徑>", out["permissionDecisionReason"])
 
     def test_switch_off_and_unreadable_facts_never_block(self):
         self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")

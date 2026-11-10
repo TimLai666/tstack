@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "2.1.1"
+  version: "2.1.2"
 ---
 
 ## Overview
@@ -31,7 +31,7 @@ Apply these checks before proposing an approach or writing tickets:
 
 - **Constraints first.** Read the technical constraints in the project and user-level rules, such as allowed languages, runtimes, licenses and hosting. Drop every option that breaks one before comparing the rest. When recommending a tool or integration, check for an official or first-party one before a community one.
 - **Define the terms that decide behavior.** When a requirement rests on a term with more than one reasonable reading, such as a time window, a total or a status, write a one-sentence definition with a worked example and confirm it before building on it.
-- **List the counterpart operations.** For each feature, go through create, edit, delete, the reverse of every action (add and remove, increase and decrease, lock and unlock), ordering, the settings entry point, where the data is stored, import and export, and the edit history. Put each one in scope or name it as out of scope.
+- **List the counterpart operations.** Go through the core's [Counterpart Operations](../software-engineering-guidelines/SKILL.md#counterpart-operations) for each feature and put each one in scope or name it as out of scope.
 - **Do not pick one reading of divergent behavior.** When the request allows materially different behaviors, such as rejecting versus queueing, present them with a recommendation and get the choice before designing around one.
 
 Collect unresolved decisions that require user tradeoffs and present related choices together with a recommendation and consequences. Ask before changing agreed scope, architecture, workflows, or other consequential choices that are not authorized. Continue independent analysis while awaiting answers. Reuse settled decisions without asking again.

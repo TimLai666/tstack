@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "Software engineering guidelines for any software change. It is the core of the tstack stack: it names which tstack skill to use at each point of the work and owns the rules they share. This skill MUST be loaded before requirement clarification, architecture/design, implementation, refactoring, code review, testing, shipping, or creating Git commits (including standalone commit requests), and MUST NOT be skipped because the change is a one-liner. Covers simplicity, complete delivery based on a coherent implementation design, testing-first for high-impact changes with TDD (Test-Driven Development), and verifiable success criteria. Triggers on: 任何軟體規劃, 需求釐清, 架構設計, 寫 code, 改 code, 做功能, 修 bug, refactor, 開發, coding, development, 實作, 實現, 寫程式, 改程式, 加功能, 修問題, code review, 測試, 重構, init, 初始化專案, 建立 CLAUDE.md, 建立 AGENTS.md"
 metadata:
-  version: "2.6.1"
+  version: "2.7.0"
 ---
 
 ## The Stack
@@ -178,6 +178,10 @@ Rules that several tstack skills rely on. Each is defined once here; the other s
 - Before concluding that something is impossible, absent, not installed, unsupported, or already confirmed, name the check that was run and the scope it covered. A timeout, a redirect, an empty result and a single failed lookup are not such checks.
 - A cause that is not verified is a hypothesis. Label it as one, and do not write it into code comments, docstrings, agent instruction files, skills or project memory as a fact.
 - Retrying follows item 4 of [Evidence-Guided Iterations](#evidence-guided-iterations).
+
+### Counterpart Operations
+
+A requested action brings its counterparts with it. For each feature, go through: create, edit and delete; the reverse of every action (add and remove, increase and decrease, lock and unlock); ordering; the settings or entry point from which it is reached; where its data is stored; import and export; the edit history. Each one is either in scope or named as out of scope.
 
 ### Independent Review
 

@@ -19,7 +19,7 @@
 | `pnpm-lock.yaml` | `pnpm audit` | |
 | `yarn.lock` | `yarn npm audit`（Yarn 2 以上）、`yarn audit`（Yarn 1） | |
 | `bun.lock`、`bun.lockb` | `bun audit` | |
-| `requirements*.txt`、`pyproject.toml`、`poetry.lock`、`uv.lock` | | `pip-audit` |
+| `requirements*.txt`、`pyproject.toml`、`poetry.lock`、`uv.lock` | | `pip-audit`。它讀 requirements 檔或已安裝的環境；只有 `poetry.lock` 或 `uv.lock` 時，先用該工具匯出 requirements，或改稽核已安裝好的環境 |
 | `go.mod` | | `govulncheck` |
 | `Cargo.lock` | | `cargo audit`、`cargo deny` |
 | `Gemfile.lock` | | `bundler-audit` |
@@ -61,7 +61,7 @@
 |---|---|
 | `Dockerfile` | `hadolint`、`trivy config` |
 | 已建好的映像檔 | `trivy image`、`grype`、`docker scout` |
-| Terraform、CloudFormation、Kubernetes 設定、Helm chart | `trivy config`、`checkov`、`tfsec`、`kubesec` |
+| Terraform、CloudFormation、Kubernetes 設定、Helm chart | `trivy config`、`checkov`、`kubesec` |
 | GitHub Actions 的 workflow | `zizmor`、`actionlint` |
 
 ## 執行中的服務

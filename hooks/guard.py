@@ -18,6 +18,7 @@ import re
 import shlex
 import subprocess
 import sys
+import time
 
 OPERATORS = {"&&", "||", ";", "|", "&", "|&", ";;", "(", ")"}
 WRAPPERS = {"sudo", "command", "env", "time", "nohup", "exec"}
@@ -41,9 +42,17 @@ KILL_BY_NAME = ("不依程式名稱結束程序，同名的程序可能是使用
 HOST_FACTS = ("連到 %s 之前，先讀 project-memory 裡這台主機的記錄：\n\n%s\n\n"
               "讀完後重新執行同一個指令。這個提醒在每段對話裡，每台主機只出現一次。")
 MEMORY_SCRIPT = Path(__file__).resolve().parent.parent / "skills" / "project-memory" / "scripts" / "memory.py"
-# ssh options that take a value, so the word after them is not the host.
-SSH_VALUE_OPTIONS = set("bcDEeFIiJLlmOopQRSWw")
+# Hook context over 10,000 characters is replaced by a preview, so the notice stays well under it.
+NOTICE_BUDGET = 8000
+HOST_FACTS_CUT = "\n… 這台主機的記錄太長，放不下全文。用 project-memory 的 `load --host %s` 讀完整內容。"
+LOOKUP_SECONDS = 6
+# Short options that take a value, so the word after them is not the host.
+VALUE_OPTIONS = {"ssh": set("bcDEeFIiJLlmOopQRSWw"), "mosh": set("p"), "sftp": set("BbcDFiJlPoRSsX"),
+                 "scp": set("cDFiJloPSX"), "rsync": set("eMT")}
+LONG_VALUE_OPTIONS = {"--port", "--ssh", "--server", "--predict", "--family", "--bind-server", "--client", "--rsh"}
+WRAPPER_VALUE_OPTIONS = {"sudo": set("ughpCDRTU"), "env": set("uSC"), "time": set("fo"), "exec": set("a")}
 REMOTE_PATH = re.compile(r"^(?:[^@/\\:\s]+@)?([A-Za-z0-9][A-Za-z0-9._-]*):")
+REMOTE_URL = re.compile(r"^(?:ssh|sftp|scp|rsync)://(?:[^@/\s]+@)?([A-Za-z0-9][A-Za-z0-9._-]*)")
 
 WINDOWS_TMP = ("Windows 上各個 shell 與程式對 `/tmp` 的解讀不同，寫進去的檔案別的程式讀不到。"
                "改用這個 session 的暫存目錄或專案內的絕對路徑。")
@@ -69,11 +78,34 @@ def segments(command):
         yield current
 
 
-def strip_prefix(words):
-    """Drop leading VAR=value assignments and wrappers such as sudo or env."""
+def skip_options(args, value_options):
+    """Index of the first word that is not an option or an option's value."""
     i = 0
-    while i < len(words) and (re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", words[i]) or words[i] in WRAPPERS):
-        i += 1
+    while i < len(args) and args[i].startswith("-") and args[i] != "-":
+        word = args[i]
+        if word == "--":
+            return i + 1
+        takes_next = word in LONG_VALUE_OPTIONS
+        if not word.startswith("--"):
+            # In a cluster such as -vp, only an option that ends the word takes the next word as its value.
+            for position, letter in enumerate(word[1:], 1):
+                if letter in value_options:
+                    takes_next = position == len(word) - 1
+                    break
+        i += 2 if takes_next else 1
+    return i
+
+
+def strip_prefix(words):
+    """Drop leading VAR=value assignments and wrappers such as sudo or env, with the wrappers' own options."""
+    i = 0
+    while i < len(words):
+        if re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", words[i]):
+            i += 1
+        elif words[i] in WRAPPERS:
+            i += 1 + skip_options(words[i + 1:], WRAPPER_VALUE_OPTIONS.get(words[i], set()))
+        else:
+            break
     return words[i:]
 
 
@@ -147,65 +179,86 @@ def remote_hosts(command):
     found = []
     if not isinstance(command, str):
         return found
+
+    def add(raw):
+        name = host_name(raw) if raw else None
+        if name and name not in found:
+            found.append(name)
+
     for words in segments(command):
         words = strip_prefix(words)
         if not words:
             continue
-        name, args, target = program(words[0]), words[1:], None
+        name, args = program(words[0]), words[1:]
         if name in ("ssh", "mosh", "sftp"):
-            i = 0
-            while i < len(args) and args[i].startswith("-"):
-                takes_value = len(args[i]) == 2 and args[i][1] in SSH_VALUE_OPTIONS
-                i += 2 if takes_value else 1
-            if i < len(args):
-                target = host_name(args[i].split(":", 1)[0])
+            rest = args[skip_options(args, VALUE_OPTIONS[name]):]
+            if rest:
+                url = REMOTE_URL.match(rest[0])
+                add(url.group(1) if url else rest[0].split(":", 1)[0])
         elif name in ("scp", "rsync"):
-            for arg in args:
-                match = None if arg.startswith(("-", "/", ".", "~")) else REMOTE_PATH.match(arg)
-                if match and len(match.group(1)) > 1:  # a single letter is a Windows drive
-                    target = host_name(match.group(1))
-                    break
-        if target and target not in found:
-            found.append(target)
+            for arg in args[skip_options(args, VALUE_OPTIONS[name]):]:
+                url = REMOTE_URL.match(arg)
+                path = None if url or arg.startswith(("-", "/", ".", "~")) else REMOTE_PATH.match(arg)
+                if url:
+                    add(url.group(1))
+                elif path and len(path.group(1)) > 1:  # a single letter is a Windows drive
+                    add(path.group(1))
     return found
 
 
-def host_facts(host):
+def host_facts(host, seconds):
     """What project-memory recorded about this host, or None when there is nothing to read."""
     store = Path(os.path.expanduser("~")) / ".tstack" / "hosts" / host / "learnings.jsonl"
     if not store.is_file():
         return None
     result = subprocess.run([sys.executable, str(MEMORY_SCRIPT), "load", "--host", host], capture_output=True,
-                            text=True, encoding="utf-8", errors="replace", timeout=6,
+                            text=True, encoding="utf-8", errors="replace", timeout=seconds,
                             env=dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1"))
     text = result.stdout.strip()
     return text if result.returncode == 0 and text.startswith("# Host memory") else None
 
 
-def first_time(session, host):
-    """True the first time this session meets this host, None on later ones, False when nothing can be kept."""
+def marker(session, host):
+    """Where this session records that the host's facts were shown, or None when nothing can be kept."""
     root = os.environ.get("CLAUDE_PLUGIN_DATA")
     if not root:
-        return False
+        return None
     folder = Path(root) / "host-facts-shown"
     folder.mkdir(parents=True, exist_ok=True)
-    marker = folder / (re.sub(r"[^A-Za-z0-9_-]", "_", session or "unknown") + "--" + host + ".flag")
-    if marker.exists():
-        return None
-    marker.touch()
-    return True
+    return folder / (re.sub(r"[^A-Za-z0-9_-]", "_", session or "unknown") + "--" + host + ".flag")
+
+
+def forget_old(folder):
+    cutoff = time.time() - 30 * 86400
+    for old in folder.glob("*.flag"):
+        try:
+            if old.stat().st_mtime < cutoff:
+                old.unlink()
+        except OSError:
+            pass
 
 
 def host_notice(command, session):
-    """(facts text, deny?) for the first host in the command whose facts were not shown yet, or None."""
+    """(notice, deny?) for the first host in the command whose facts this session has not been shown, or None."""
+    deadline = time.monotonic() + LOOKUP_SECONDS  # one budget for the whole hook run, however many hosts
     for host in remote_hosts(command):
-        facts = host_facts(host)
+        flag = marker(session, host)
+        if flag is not None and flag.exists():
+            continue  # already shown: do not read the store again
+        remaining = deadline - time.monotonic()
+        if remaining <= 0.5:
+            break
+        facts = host_facts(host, remaining)
         if not facts:
             continue
-        seen = first_time(session, host)
-        if seen is None:
-            continue
-        return HOST_FACTS % (host, facts), bool(seen)
+        room = NOTICE_BUDGET - len(HOST_FACTS % (host, ""))
+        if len(facts) > room:
+            cut = HOST_FACTS_CUT % host
+            facts = facts[:room - len(cut)].rsplit("\n", 1)[0] + cut
+        if flag is not None:
+            flag.touch()
+            forget_old(flag.parent)
+        return HOST_FACTS % (host, facts), flag is not None
     return None
 
 

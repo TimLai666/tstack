@@ -1,6 +1,6 @@
 ---
 name: acceptance-review
-description: "Check a finished piece of work against what was originally asked: every requirement is matched to a result that was actually exercised, and the original problem is shown to be solved. This skill MUST be used before reporting substantial work as done, finished or fixed, before handing a deliverable back, and when the user asks whether the result meets the request (驗收、驗收審查、有沒有做到、有沒有符合需求、有沒有解決問題、對一下需求、做完了嗎、acceptance review、does this meet the requirement). It judges the delivered result, not the diff, so it applies with or without a PR. When this conversation produced the work, the review MUST be dispatched to an independent reviewer through agent-delegation, and that reviewer MUST NOT be given the implementer's summary. It MUST NOT replace diff-review for code correctness, security-scan for vulnerabilities, or test-and-fix for running the tests."
+description: "Check a finished piece of work against what was originally asked: every requirement is matched to a result that was actually exercised, and the original problem is shown to be solved. This skill MUST be used before reporting substantial work as done, finished or fixed or handing it back, and when the user asks whether the result meets the request (驗收、驗收審查、有沒有做到、有沒有符合需求、有沒有解決問題、對一下需求、做完了嗎、acceptance review、does this meet the requirement). It judges the delivered result, not the diff, so it applies with or without a PR. When this conversation produced the work, the review MUST be dispatched to an independent reviewer through agent-delegation, and that reviewer MUST NOT be given the implementer's summary. It MUST NOT replace diff-review for code correctness, security-scan for vulnerabilities, or test-and-fix for running the tests."
 allowed-tools:
   - Bash
   - Read
@@ -37,12 +37,13 @@ This follows the core's [Independent Review](../software-engineering-guidelines/
 
 ## Dispatching the review
 
-Load **agent-delegation** and dispatch one reviewer with the `review` task type, following its reuse rules. The task states:
+Load **agent-delegation** and dispatch one reviewer, following its reuse rules. The reviewer has to run the result, and a result often writes something, so use the `research` task type: it gives the reviewer a sandbox directory outside the project and keeps the project's files read-only. The task states:
 
 - **The request in the user's own words.** Quote the original message, and every later message in which the user corrected, added to or narrowed it. Do not paraphrase and do not merge them into a tidy list.
 - **The agreed acceptance criteria**, when some were set.
 - **Where the result is and how to run or open it**: the commands, the address, the files, the test accounts or sample data it needs.
-- **This file's absolute path** as the procedure to follow, and that no file may be modified.
+- **This file's absolute path** as the procedure to follow.
+- **Where the result may write.** Point output paths, databases and generated files at the sandbox directory or at a local or test environment. No project file may be modified.
 
 Leave out the implementer's summary, the list of what was done, and any statement that something works. The reviewer finds out what was delivered by looking at it.
 
@@ -54,12 +55,12 @@ Build the list from the quoted messages only.
 
 - One row for each thing the user asked for, in their words, with the message it came from.
 - A later message that corrects or narrows an earlier one replaces it. Keep the latest version and note what it replaced.
-- Keep requirements that the request implies but does not spell out in a separate group, marked as implied. This covers the counterpart of every requested action (remove for add, decrease for increase, edit and delete for create), the settings or entry point a feature needs in order to be reached, and the states a requested screen cannot avoid, such as empty and error.
+- Keep requirements that the request implies but does not spell out in a separate group, marked as implied. This covers the core's [Counterpart Operations](../software-engineering-guidelines/SKILL.md#counterpart-operations) for every requested action, and the states a requested screen cannot avoid, such as empty and error.
 - When a requirement can be read in more than one way, list the readings. Do not pick one.
 
 ## Step 2 — Find and exercise the result for each row
 
-For each row, locate what was delivered and use it the way the user would: run the command, call the endpoint, open the screen and perform the action, read the produced file.
+For each row, locate what was delivered and use it the way the user would: run the command, call the endpoint, open the screen and perform the action, read the produced file. Let it write only where the task allows. When exercising a row would write to a real external system that has no test environment, do not do it: the row is not verifiable, and the report says what is missing.
 
 | Verdict | When |
 |---|---|
