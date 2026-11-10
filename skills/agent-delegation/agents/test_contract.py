@@ -50,14 +50,14 @@ class Contract(unittest.TestCase):
         request = dict(project_dir="/project", role="tester", prompt="Check the contract", allowed_files=[],
                        project_memory=[], verification=[], test_files=["tests.py"])
         readonly = dispatch.build_prompt(request, POLICY["tasks"]["exploration"], {})
-        self.assertIn("不得修改任何專案檔案", readonly)
-        self.assertIn("專案外的暫存目錄", readonly)
+        self.assertIn("Do not modify any project file", readonly)
+        self.assertIn("temporary directory outside the project", readonly)
         testing = dispatch.build_prompt(dict(request, allowed_files=["tests.py"]), POLICY["tasks"]["testing"], {})
-        self.assertIn("只寫測試，不寫實作", testing)
-        self.assertNotIn("不得修改測試檔", testing)
+        self.assertIn("Write tests only. Do not write the implementation.", testing)
+        self.assertNotIn("Do not modify the test files", testing)
         self.assertEqual(testing.splitlines()[0], dispatch.MARKER)
-        self.assertIn("已確認原因", testing)
-        self.assertIn("驗證證據", testing)
+        self.assertIn("confirmed cause", testing)
+        self.assertIn("verification evidence", testing)
 
     def test_symlink_cannot_authorize_git_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:

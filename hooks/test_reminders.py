@@ -82,14 +82,14 @@ class Reminders(unittest.TestCase):
                                    ensure_ascii=False) + "\n", encoding="utf-8")
         text = self.session_start()
         self.assertIn("看到明顯的小瑕疵就順手修", text)
-        self.assertNotIn("還沒有記憶", text)
+        self.assertNotIn("has no memory yet", text)
 
     def test_session_start_carries_machine_facts_even_without_project_memory(self):
         self.machine_fact("temp-folder-blocks-exe", "暫存資料夾不能執行 exe")
         text = self.session_start()
         self.assertIn("暫存資料夾不能執行 exe", text)
-        self.assertIn("不用再執行 load", text)
-        self.assertNotIn("還沒有記憶", text)
+        self.assertIn("no need to run load again", text)
+        self.assertNotIn("has no memory yet", text)
 
     def test_long_project_memory_still_leaves_machine_facts_in_full(self):
         self.machine_fact("temp-folder-blocks-exe", "暫存資料夾不能執行 exe")
@@ -98,7 +98,7 @@ class Reminders(unittest.TestCase):
         self.assertLess(len(text), 10000)
         self.assertIn("long-rule-19", text)
         self.assertIn("暫存資料夾不能執行 exe", text)
-        self.assertIn("執行 load", text)
+        self.assertIn("run load", text)
 
     def test_reduced_machine_facts_without_project_memory_still_ask_for_a_load(self):
         for i in range(40):
@@ -106,8 +106,8 @@ class Reminders(unittest.TestCase):
         text = self.session_start()
         self.assertLess(len(text), 10000)
         self.assertIn("machine-fact-number-39", text)
-        self.assertIn("執行 load", text)
-        self.assertNotIn("不用再執行 load", text)
+        self.assertIn("run load", text)
+        self.assertNotIn("no need to run load again", text)
 
     def session_start(self, **payload):
         return self.context("session-start", "SessionStart", dict(source="startup", **payload))["additionalContext"]
@@ -117,13 +117,13 @@ class Reminders(unittest.TestCase):
         text = self.session_start()
         self.assertIn("retry-needs-token", text)
         self.assertIn("呼叫付款 API 前要先換新的 token", text)
-        self.assertIn("不用再執行 load", text)
+        self.assertIn("no need to run load again", text)
         self.assertIn("memory.py", text)  # the recording command printed by load
 
     def test_session_start_without_memory_says_so(self):
         text = self.session_start()
-        self.assertIn("還沒有記憶", text)
-        self.assertNotIn("不用再執行 load", text)
+        self.assertIn("has no memory yet", text)
+        self.assertNotIn("no need to run load again", text)
 
     def test_session_start_moves_memory_left_in_the_old_folder(self):
         self.remember(("old-store-rule", "舊位置的經驗"), base=".mystack")
@@ -139,14 +139,14 @@ class Reminders(unittest.TestCase):
         self.assertIn("long-rule-00", text)
         self.assertIn("long-rule-19", text)
         self.assertNotIn("很長的經驗很長的經驗", text)
-        self.assertIn("執行 load", text)
-        self.assertNotIn("不用再執行 load", text)
+        self.assertIn("run load", text)
+        self.assertNotIn("no need to run load again", text)
 
     def test_session_start_falls_back_to_the_reminder_when_memory_cannot_be_read(self):
         text = self.session_start(cwd=str(self.root / "no-such-folder"))
         self.assertIn("project-memory", text)
-        self.assertIn("載入本專案的記憶", text)
-        self.assertNotIn("不用再執行 load", text)
+        self.assertIn("load this project's memory", text)
+        self.assertNotIn("no need to run load again", text)
 
     def test_first_subagent_without_delegation_skill_is_denied_once(self):
         first = self.context("pre-agent", "PreToolUse", {"tool_name": "Agent"})

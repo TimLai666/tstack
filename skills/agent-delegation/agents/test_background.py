@@ -98,7 +98,7 @@ class Background(unittest.TestCase):
         rejected = self.resume(started["dispatch_id"], "--outcome", "verification-failed",
                                "--failure-reason", "x", "--partial-work-reviewed")
         self.assertNotEqual(rejected.returncode, 0)
-        self.assertIn("執行", rejected.stderr)
+        self.assertIn("still running", rejected.stderr)
 
     def test_stale_stop_request_does_not_cancel_next_run(self):
         self.fake("opencode", "import time; time.sleep(30)")
