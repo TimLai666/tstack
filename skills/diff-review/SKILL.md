@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "3.3.0"
+  version: "4.0.0"
 ---
 
 ## Who reviews
@@ -30,7 +30,7 @@ Small and low-risk is defined in the core's [Independent Review](../software-eng
 
 ### Lightweight review
 
-Read the whole diff once against the request and the technical checks that apply to it, and run the [blast-radius check](references/blast-radius.md). Dispatch no one. When [UI handoff](#ui-handoff) applies, look at the changed screens yourself following **ui-review** and report it on the `UI handoff` line. Report with [Final output](#final-output) and state on the `Reviewed` line that it was a lightweight self-review.
+Read the whole diff once against the request and the checks in [references/technical-review.md](references/technical-review.md) that apply to it, and run the [blast-radius check](references/blast-radius.md). Dispatch no one. When [UI handoff](#ui-handoff) applies, look at the changed screens yourself following **ui-review** and report it on the `UI handoff` line. Report with [Final output](#final-output) and state on the `Reviewed` line that it was a lightweight self-review.
 
 ---
 
@@ -65,29 +65,12 @@ Identify the relevant code diff from the user's input, current worktree, pull re
 ## Review sequence
 
 1. **Check scope:** Compare the diff with the stated request and report meaningful scope drift or missing requirements.
-2. **Review code:** Review the full diff using the technical checks below.
+2. **Review code:** Review the full diff with [references/technical-review.md](references/technical-review.md), which also covers the documentation and guidance the diff affects.
 3. **Hand over:** When you are the main conversation, decide with [Security handoff](#security-handoff) and [UI handoff](#ui-handoff) whether the diff needs those reviews, and run each one that applies.
 
 ---
 
-## Technical review
-
-Review the full diff. For each applicable area, verify:
-
-- **Queries and data integrity:** Queries remain bounded, return the intended rows, and preserve data integrity across writes and transactions.
-- **Race conditions and state:** Concurrent operations, check-then-act flows, shared state, and asynchronous work remain atomic and consistent.
-- **Error handling:** Failures are surfaced and handled, including partial failures, timeouts, cleanup, and recovery.
-- **Performance and resources:** Check unbounded work, resource leaks, N+1 queries, missing indexes, avoidable quadratic work, expensive loops, heavy dependencies, and fetch waterfalls.
-- **Maintainability:** Check unnecessary complexity, duplicated logic, unclear responsibilities, leaky abstractions, and difficulty understanding, testing, or extending the change.
-- **Data migration:** Check irreversible migrations, locking schema changes, missing foreign-key indexes, unsafe backfills, and removal of schemas before dependent code.
-- **Completeness and compatibility:** For each changed shared contract, such as a state, field, path, identifier, schema, or configuration:
-  1. Inventory relevant occurrences first: search the entire target tree using stable contract fragments such as path prefixes, filename patterns, field names, command names, or resolver functions.
-  2. Trace each producer to all consumers and each consumer back to a concrete producer, including unchanged files outside the diff. A consumer has a concrete producer only when it computes the value or calls a named shared resolver. Prose placeholders, examples, and state expected from an earlier tool do not count.
-  3. Compare the exact values or derivation logic used on both sides. Report unaccounted occurrences, missing implementations, and duplicated or divergent derivations.
-- **API contracts:** Check incompatible responses, new required inputs without defaults, changed error formats, and pagination behavior using the compatibility tracing above.
-- **Tests:** Tests demonstrate changed public behavior, negative and edge cases, failure paths, and regression protection. Check isolation violations and flaky patterns.
-
-### Findings
+## Findings
 
 Report in the format and scale of the core's [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity). For each finding, cite the file and line, describe the trigger and impact, and recommend a proportionate action. Refer to a secret as the core's [Secrets](../software-engineering-guidelines/SKILL.md#secrets) rule requires.
 
@@ -132,7 +115,7 @@ style issues, not missing tests, actual breakage: wrong results, lost or corrupt
 data, races, unhandled failures, resource exhaustion. Vulnerabilities are reviewed
 separately; note one only if you run into it.
 
-Apply the relevant Technical review checks from this skill independently.
+Apply the checks in this skill's references/technical-review.md independently.
 Include file and line references, the failure trigger, evidence, and impact.
 Give each CONFIRMED finding a level from P0 (must fix before merging) to P3
 (minor). NEEDS INVESTIGATION concerns go in a separate section with missing
@@ -141,24 +124,6 @@ facts and verification steps. Do not classify uncertainty as a confirmed defect.
 Never print the values of settings, tokens, passwords or keys, including in the
 commands you run and their output. Report the key name and where it is stored.
 ```
-
----
-
-## Documentation and guidance consistency
-
-Review documentation and distributable guidance affected by the diff, both at the repository root and within affected packages, modules, or subtrees. Include, where applicable:
-
-- README files, architecture guides, contributing guides, API references, and other explanatory documentation
-- Package- or module-specific documentation
-- Changelogs and release notes when required by project convention or when the change affects users
-- Repository operating contracts for agents working in the repository, such as `AGENTS.md` or `CLAUDE.md`
-- Installable agent skills, prompts, templates, examples, plugin metadata, and other agent-facing artifacts distributed by the repository
-
-Check whether changes to behavior, interfaces, setup, configuration, installation, migrations, required artifacts, workflows, handoff rules, tool usage, or deployment constraints are reflected in every affected document or artifact.
-
-When the repository distributes installable skills or other agent-facing artifacts, treat them as product outputs. Verify that their instructions, examples, references, metadata, and packaging remain aligned with the changed behavior.
-
-Report each mismatch with references to both the changed code and the affected document or artifact.
 
 ---
 

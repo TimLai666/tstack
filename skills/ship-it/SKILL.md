@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "2.5.1"
+  version: "3.0.0"
 ---
 
 ## Overview
@@ -34,9 +34,10 @@ does not grant the next.
 
 Identify the hosting platform from the target remote's URL and use that
 platform's CLI for every later step: `gh` for GitHub, `glab` for GitLab. Read
-the CLI's `--help` for the subcommand before using a flag this skill does not
-show. On another platform, use its authorized CLI or API and apply the same
-gates.
+that platform's command file once: [references/github.md](references/github.md)
+or [references/gitlab.md](references/gitlab.md). Later steps name an action, and
+the command for it is in that file. On another platform, use its authorized CLI
+or API and apply the same gates.
 
 Use the project's existing delivery document. With no other arrangement, look
 for `delivery-status.md`; support `delivery-plan.md` in older projects. Read the
@@ -91,12 +92,7 @@ _SHIP_SHA=$(git rev-parse HEAD)
 ```
 
 Look up the pipeline for `_SHIP_SHA` and report it as passed, failed, running or
-absent, with its URL:
-
-| Platform | Pipeline for a commit |
-|---|---|
-| GitHub | `gh run list --commit "$_SHIP_SHA"` |
-| GitLab | `glab api "projects/:id/pipelines?sha=$_SHIP_SHA"` |
+absent, with its URL.
 
 A failed pipeline caused by this push is handled now, within scope. The light
 path ends here; report with the Delivery report below.
@@ -146,10 +142,7 @@ to PR or MR titles or descriptions.**
 Save the completed body to a temporary file and use its path as `_SHIP_BODY`.
 Set `_SHIP_TITLE` from the actual change:
 
-| Platform | Create | Update |
-|---|---|---|
-| GitHub | `gh pr create --base "$_SHIP_BASE" --head "$_SHIP_BRANCH" --title "$_SHIP_TITLE" --body-file "$_SHIP_BODY"` | `gh pr edit` with the body file |
-| GitLab | `glab mr create --target-branch "$_SHIP_BASE" --source-branch "$_SHIP_BRANCH" --title "$_SHIP_TITLE" --description-file "$_SHIP_BODY"` | `glab mr update` with the completed description |
+Create the PR or MR, or update the existing one, with the platform's command.
 
 If the CLI is unavailable or unauthenticated, use an available authorized
 alternative or provide the completed title and body for manual submission.
@@ -163,7 +156,7 @@ Merge only when the user or the project's recorded rule authorizes it. A request
 
 Green is judged for the exact head commit of the PR or MR, and all of these hold:
 
-- **Every check has finished and none failed**, whether the platform marks it required or not. A check that was skipped by its own conditions or reported neutral does not count against it. A pipeline in which nothing ran is not green. On GitLab, when the head commit has more than one pipeline, each of them must be green, counting the latest run of one that was run again.
+- **Every check has finished and none failed**, whether the platform marks it required or not. A check that was skipped by its own conditions or reported neutral does not count against it. A pipeline in which nothing ran is not green. When the head commit has more than one pipeline, each of them must be green.
 - **Automated review feedback is dealt with.** When a review agent or bot comments on PRs or MRs in this repository, wait for its review of this head commit and resolve every point it raises: fix it, or reply with the reason it does not apply. A fix is a new commit, so green is judged again from the start.
 - **A review agent that cannot review is not waited for.** When it reports that it could not run, for example because its quota or usage limit is exhausted, go on without it and say so in the report. When it is simply silent after every check has finished, this is not green: do not merge, report that its review has not arrived, and ask how to proceed.
 
@@ -180,21 +173,11 @@ Green is judged for the exact head commit of the PR or MR, and all of these hold
 | A check failed or was cancelled, a review point is unresolved, or a pipeline exists in which nothing ran | Do not merge. Handle it within scope or report it |
 | No pipeline exists yet | Do not merge and do not set auto-merge: with no pipeline the platform merges at once. Wait for the pipeline to appear, then start again from item 1 |
 
-| Platform | Head SHA | Checks and review comments | Merge now | Let the platform merge |
-|---|---|---|---|---|
-| GitHub | `gh pr view <number> --json headRefOid` | `gh pr checks <number>`, `gh pr view <number> --json reviews,comments`, and `gh api repos/{owner}/{repo}/pulls/<number>/comments` for inline comments | `gh pr merge <number> --match-head-commit "$_SHIP_SHA"` | `gh pr merge <number> --auto --match-head-commit "$_SHIP_SHA"` |
-| GitLab | `glab mr view <number> --output json` (`sha`) | `glab api "projects/:id/pipelines?sha=$_SHIP_SHA"`, each pipeline's jobs with `glab api "projects/:id/pipelines/<pipeline id>/jobs"`, and `glab mr view <number> --comments` | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge=false --yes` | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge --yes` |
-
-Always pin the SHA, so a commit pushed in between cannot ride along, and always state the auto-merge choice. `glab mr merge` without it turns auto-merge on by default.
+Always pin the SHA, so a commit pushed in between cannot ride along.
 
 ### Waiting
 
-Letting the platform merge keeps a merge-when-green request alive even if this conversation ends, but the platform only waits for what it knows about. Use it only when its condition is the same as green:
-
-| Platform | The platform waits for | Use it only when |
-|---|---|---|
-| GitHub | The branch's required checks, nothing else | Every check that runs on the PR is a required check, and no automated review is expected |
-| GitLab | The pipeline of the head commit, which still counts as succeeded when a job marked as allowed to fail has failed | No job in the pipeline is allowed to fail, the commit has a single pipeline, and no automated review is expected |
+Letting the platform merge keeps a merge-when-green request alive even if this conversation ends, but the platform only waits for what it knows about. Use it only when its condition is the same as green. The platform's command file says what that platform waits for and when it may be used.
 
 Otherwise wait yourself: watch the checks in the background with the Step 9 watch command, and when it returns start again from item 1. The watch is only a signal that something finished. What decides is the state read for the pinned SHA at that moment.
 
@@ -208,14 +191,8 @@ Read the checks for the resulting PR, MR or merge commit and report passed,
 failed, pending or unavailable. When waiting for CI is part of the
 requested delivery, watch it to a result and handle failures within scope:
 
-| Platform | Read | Watch |
-|---|---|---|
-| GitHub | `gh pr checks "$_SHIP_PR_URL"` | `gh pr checks "$_SHIP_PR_URL" --watch` |
-| GitLab | `glab ci status --branch "$_SHIP_BRANCH"` | `glab ci status --branch "$_SHIP_BRANCH" --wait` |
-
 When deployment verification is requested, identify the deployment run or job
-for the intended revision and environment and watch that one explicitly, for
-example `gh run watch "$_SHIP_RUN_ID" --exit-status`.
+for the intended revision and environment and watch that one explicitly.
 
 Inspect failed checks or jobs and resolve failures within scope; when the cause
 is not evident, invoke **investigate**. Verify the deployment's required outcome
