@@ -14,7 +14,7 @@ metadata:
 
 ## Overview
 
-Answer one question: does what was delivered do what was asked? The answer comes from the delivered result, not from a diff, so this review applies with or without a PR. The reviewer starts from the request, goes to the running result, and reports every requirement that has no working result behind it.
+Check whether what was delivered does what was asked. Judge from the delivered result, not from a diff; the review applies with or without a PR. Start from the request, go to the running result, and report every requirement that has no working result behind it.
 
 | Review of | Skill |
 |---|---|
@@ -23,11 +23,11 @@ Answer one question: does what was delivered do what was asked? The answer comes
 | Vulnerabilities | **security-scan** |
 | Rendered screens | **ui-review** |
 
-Tests that pass and a diff that reads well do not answer this question. Code can be correct and still leave out half of what was asked.
+Tests that pass and a diff that reads well do not answer this question.
 
 ## Who reviews
 
-This follows the core's [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review).
+Apply the core's [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review).
 
 | You are | Do |
 |---|---|
@@ -37,7 +37,7 @@ This follows the core's [Independent Review](../software-engineering-guidelines/
 
 ## Dispatching the review
 
-Load **agent-delegation** and dispatch one reviewer, following its reuse rules. Use the `acceptance` task type: the reviewer has to run the result, and a result often writes something, so this type gives the reviewer a sandbox directory outside the project and keeps the project's files read-only. The task states:
+Load **agent-delegation** and dispatch one reviewer, following its reuse rules. Use the `acceptance` task type; it gives the reviewer a sandbox directory outside the project and keeps the project's files read-only. The task states:
 
 - **The request in the user's own words.** Quote the original message, and every later message in which the user corrected, added to or narrowed it. Do not paraphrase and do not merge them into a tidy list.
 - **The agreed acceptance criteria**, when some were set.
@@ -45,7 +45,7 @@ Load **agent-delegation** and dispatch one reviewer, following its reuse rules. 
 - **This file's absolute path** as the procedure to follow.
 - **Where the result may write.** Point output paths, databases and generated files at the sandbox directory or at a local or test environment. No project file may be modified.
 
-Leave out the implementer's summary, the list of what was done, and any statement that something works. The reviewer finds out what was delivered by looking at it.
+Leave out the implementer's summary, the list of what was done, and any statement that something works.
 
 When the reviewer returns, check each finding against the result. Fixing a finding is implementation again: the fixed work goes back to the reviewer, normally the same one resumed.
 

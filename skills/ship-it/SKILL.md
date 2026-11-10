@@ -140,7 +140,7 @@ verification results. Scale detail to the change and remove irrelevant sections.
 to PR or MR titles or descriptions.**
 
 Save the completed body to a temporary file and use its path as `_SHIP_BODY`.
-Set `_SHIP_TITLE` from the actual change:
+Set `_SHIP_TITLE` from the actual change.
 
 Create the PR or MR, or update the existing one, with the platform's command.
 
@@ -150,7 +150,7 @@ Report which operations actually succeeded.
 
 ## Step 8 — Merge only when everything is green
 
-Merge only when the user or the project's recorded rule authorizes it. A request such as「全綠之後合併」is that authorization, and it is not finished until the PR or MR is confirmed merged.
+Merge only when the user or the project's recorded rule authorizes it. A request such as "merge once everything is green" is that authorization, and it is not finished until the PR or MR is confirmed merged.
 
 ### What green means
 
@@ -173,13 +173,13 @@ Green is judged for the exact head commit of the PR or MR, and all of these hold
 | A check failed or was cancelled, a review point is unresolved, or a pipeline exists in which nothing ran | Do not merge. Handle it within scope or report it |
 | No pipeline exists yet | Do not merge and do not set auto-merge: with no pipeline the platform merges at once. Wait for the pipeline to appear, then start again from item 1 |
 
-Always pin the SHA, so a commit pushed in between cannot ride along.
+Always pin the SHA.
 
 ### Waiting
 
-Letting the platform merge keeps a merge-when-green request alive even if this conversation ends, but the platform only waits for what it knows about. Use it only when its condition is the same as green. The platform's command file says what that platform waits for and when it may be used.
+Let the platform merge only when its condition is the same as green. The platform's command file says what that platform waits for and when it may be used.
 
-Otherwise wait yourself: watch the checks in the background with the Step 9 watch command, and when it returns start again from item 1. The watch is only a signal that something finished. What decides is the state read for the pinned SHA at that moment.
+Otherwise wait yourself: watch the checks in the background with the Step 9 watch command, and when it returns start again from item 1. The watch only signals that something finished; decide by the state read for the pinned SHA at that moment.
 
 After letting the platform merge, watch the same way and then confirm the PR or MR state. Merged ends the task. A failed check means nothing was merged: handle it within scope and repeat this step.
 
@@ -189,7 +189,7 @@ Until the merge is confirmed, name the pending merge in the core's [Turn-End Rep
 
 Read the checks for the resulting PR, MR or merge commit and report passed,
 failed, pending or unavailable. When waiting for CI is part of the
-requested delivery, watch it to a result and handle failures within scope:
+requested delivery, watch it to a result and handle failures within scope.
 
 When deployment verification is requested, identify the deployment run or job
 for the intended revision and environment and watch that one explicitly.

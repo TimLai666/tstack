@@ -36,7 +36,7 @@ For tests requiring a running service, find the startup command and address in p
 
 For each affected behavior, identify the expected result, test method, and priority. Include relevant normal, invalid-input, empty, and failure cases. Use the project's existing test commands and verification requirements, following the testing strategy in **software-engineering-guidelines**.
 
-Cross-check the plan against the request and relevant task records. A mismatch is a reason to clarify the expected behavior, not to silently change the test scope.
+Cross-check the plan against the request and relevant task records. On a mismatch, clarify the expected behavior; do not silently change the test scope.
 
 ---
 

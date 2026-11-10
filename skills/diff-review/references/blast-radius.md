@@ -13,7 +13,7 @@ Listing the callers is not the result. The result is the breakage a search would
 
 ## Do not trust the write-up
 
-A write-up that sounds right reads the same whether or not it is true. For each fact the change's safety depends on, take it as far down this list as is cheap, and say where it stopped:
+Do not accept a write-up as proof. For each fact the change's safety depends on, take it as far down this list as is cheap, and say where it stopped:
 
 1. Stated, with nothing behind it. Worth nothing on its own.
 2. Pointed at: the file and line, or the library's own source.
