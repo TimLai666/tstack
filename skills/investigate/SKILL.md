@@ -1,0 +1,118 @@
+---
+name: investigate
+description: "This skill MUST be used when a bug's root cause is unknown and requires investigation, or when the user explicitly requests investigate or root-cause analysis. SHOULD be used for unexplained failures, regressions, intermittent behavior, a red CI pipeline, an error that recurs in the same conversation, or an expected result that never appeared: 根因調查, 為什麼會這樣, 壞掉了, 怎麼又, 還是不行, CI 紅燈, pipeline 失敗, 沒看到結果, failing, broken, flaky. MUST NOT treat an apparently obvious cause as confirmed without evidence. When evidence already establishes the cause, proceed to targeted verification and repair without restarting the investigation."
+allowed-tools:
+  - Bash
+  - Read
+  - Edit
+  - Grep
+  - Glob
+  - AskUserQuestion
+metadata:
+  version: "1.4.0"
+---
+
+## Core rule
+
+**No fix without understanding the root cause.** Use verified evidence to explain how the cause produces the symptom. An apparently obvious cause still needs verification; an already established cause does not need a new round of hypotheses.
+
+**State only what was checked.** Before concluding that something is impossible, absent, not installed, unsupported by a site or service, or already confirmed, name the check that was run and the scope it covered. A timeout, a redirect, an empty result and a single failed lookup are not such checks.
+
+**A cause that is not verified stays a hypothesis.** Label it as one in the report. Do not write it into code comments, docstrings, `AGENTS.md`, `CLAUDE.md`, skills or project memory as a fact.
+
+## Step 1 — Understand the symptom
+
+Gather the following from the report, available logs, project configuration, and prior attempts. Ask only for missing information that materially affects the investigation:
+
+- **Exact symptom:** verbatim error, wrong output, crash, or silent failure.
+- **Reproduction:** reliable trigger, frequency, and conditions for intermittent failures.
+- **Onset:** when it started and potentially related changes.
+- **Environment:** where it occurs and relevant differences from working environments.
+- **Prior attempts:** what was tested or changed and the observed results.
+
+When the symptom matches a row in [references/common-checks.md](references/common-checks.md), run that row's check before forming hypotheses.
+
+## Step 2 — Form hypotheses
+
+Propose plausible causes supported by the available evidence. Rank them by evidential support and explain the uncertainty without inventing percentages or padding the list to a fixed count. For each hypothesis, identify a discriminating check:
+
+```text
+Hypothesis: [possible cause]
+Evidence: [observations supporting it]
+Would rule it out: [contradicting observation]
+Next check: [how to obtain evidence that distinguishes it from alternatives]
+```
+
+Common categories:
+- Wrong data assumptions: missing values, unexpected types, or shapes.
+- State or timing: concurrency, stale caches, or operation ordering.
+- Configuration or environment differences.
+- Changed external dependencies or library behavior.
+- Regression from a relevant source change.
+
+A user's belief that an area cannot be at fault affects investigation priority, but does not itself rule out that area.
+
+## Step 3 — Test hypotheses with minimal disruption
+
+Prefer existing logs, a debugger, configuration inspection, and controlled reproductions. Choose checks by their ability to distinguish causes, cost, and operational impact.
+
+When observation is insufficient, use a reversible diagnostic change within the authorized scope. Record what changed, preserve existing work, and remove temporary instrumentation or restore diagnostic-only dependency changes after the check. Retain a diagnostic change only when it is intentionally part of the agreed fix.
+
+| Hypothesis | Example check |
+|---|---|
+| A value is missing | Inspect it at the relevant boundary with a debugger or temporary targeted logging |
+| Operations race | Compare operation timing and state transitions in a controlled reproduction |
+| Configuration differs | Compare only relevant settings; redact secrets and prefer presence or equality checks for sensitive values |
+| Dependency behavior changed | Compare relevant versions in an isolated reproduction without changing the shared environment |
+
+Inspect source history for changes tied to the affected behavior and symptom onset. Follow relevant evidence rather than a fixed number of commits or days. Record the outcome of each check and revise or eliminate hypotheses.
+
+## Step 4 — Trace the data flow
+
+Use the evidence to trace the affected path, checking hypotheses along the way:
+
+```text
+[Request/Event enters at: ]
+  → [Layer 1] — state here: [what you found]
+  → [Layer 2] — state here: [what you found]
+  → [Where behavior diverges from expected] — state here: [what you found]
+  → [Where the symptom manifests]
+```
+
+Identify the earliest verified point where actual behavior diverges from expected. Cite the exact file and line when applicable, explain how it causes the symptom, and continue tracing upstream until earlier causes are ruled out. Steps 2–4 can inform one another as new evidence appears.
+
+## Step 5 — Fix the confirmed cause
+
+Make the smallest change that addresses the verified root cause. Before editing, explain the cause and why the proposed change resolves it. Mention related unresolved problems only when they affect the user's outcome or the scope of this fix.
+
+Choose test-writing order according to project rules and risk. Add regression coverage that reproduces the original failure under its triggering conditions, fails on the pre-fix version, and passes with the fix. Assert the relevant observable behavior rather than private implementation details. If reproduction is intermittent or the required environment is unavailable, report the evidence limit and remaining verification instead of claiming a proven fix.
+
+Follow the user's or project's commit arrangement; otherwise keep the fix and regression test in separate commits, staging only their intended changes. Test-writing order and commit order are separate decisions: a test can be written first even when committed separately after the fix.
+
+## Step 6 — Verify
+
+Repeat the original reproduction with the fix and verify the regression coverage before and after it. Run relevant checks for affected behavior and follow the project's full-suite rules. Confirm temporary diagnostic changes have been cleaned up or intentionally retained.
+
+If the symptom persists, use the observed result to revisit the hypothesis and data flow. Before another fix attempt, identify what new evidence justifies it. Apply the stopping conditions below when further attempts would repeat unsupported guesses.
+
+## Step 7 — Stop or request help when evidence cannot advance
+
+Pause affected repair attempts when the next attempt has no new evidence or distinct diagnostic check, repeats a disproven guess, or requires unavailable information, access, expertise, or authorization. Continue independent investigation that can safely produce new evidence. An evidence-backed next step may proceed regardless of how many earlier attempts failed.
+
+Report the actual blocker and a concrete next step:
+
+```text
+Blocked investigation: [what cannot currently be established]
+
+Attempts and observations:
+- [check or fix attempted, what changed, and observed result]
+
+Current understanding:
+[confirmed facts, remaining hypotheses, and what is uncertain]
+
+Missing evidence or access:
+[what is needed to distinguish the remaining causes]
+
+Recommended next step:
+[specific check, information request, or authorized action]
+```

@@ -1,0 +1,287 @@
+{
+  "version": 1,
+  "hosts": [
+    "codex",
+    "claude",
+    "opencode",
+    "agy",
+    "copilot"
+  ],
+  "tasks": {
+    "testing": {
+      "label": "寫測試",
+      "access": "tests",
+      "verification_retries": 2,
+      "levels": [
+        {
+          "tool": "opencode",
+          "family": "free",
+          "effort": null
+        },
+        {
+          "tool": "copilot",
+          "family": "auto",
+          "effort": null
+        },
+        {
+          "tool": "codex",
+          "family": "luna",
+          "effort": "medium",
+          "minimum": "6.0"
+        },
+        {
+          "tool": "claude",
+          "family": "haiku",
+          "effort": "medium",
+          "minimum": "5.5"
+        },
+        {
+          "tool": "claude",
+          "family": "sonnet",
+          "effort": "medium",
+          "minimum": "5.5"
+        },
+        {
+          "tool": "claude",
+          "family": "opus",
+          "effort": "low"
+        }
+      ]
+    },
+    "implementation": {
+      "label": "填格子實作、照清單修 bug",
+      "access": "implementation",
+      "verification_retries": 2,
+      "levels": [
+        {
+          "tool": "opencode",
+          "family": "free",
+          "effort": null
+        },
+        {
+          "tool": "copilot",
+          "family": "auto",
+          "effort": null
+        },
+        {
+          "tool": "codex",
+          "family": "luna",
+          "effort": "medium",
+          "minimum": "6.0"
+        },
+        {
+          "tool": "claude",
+          "family": "haiku",
+          "effort": "medium",
+          "minimum": "5.5"
+        },
+        {
+          "tool": "claude",
+          "family": "sonnet",
+          "effort": "medium",
+          "minimum": "5.5"
+        },
+        {
+          "tool": "claude",
+          "family": "opus",
+          "effort": "low"
+        }
+      ]
+    },
+    "frontend": {
+      "label": "前端設計、版面、樣式",
+      "access": "write",
+      "verification_retries": 1,
+      "levels": [
+        {
+          "tool": "agy",
+          "family": "gemini-flash-medium",
+          "effort": null
+        },
+        {
+          "tool": "copilot",
+          "family": "auto",
+          "effort": null
+        },
+        {
+          "tool": "claude",
+          "family": "opus",
+          "effort": "medium"
+        }
+      ]
+    },
+    "exploration": {
+      "label": "快速唯讀探索、找檔案",
+      "access": "read",
+      "verification_retries": 1,
+      "levels": [
+        {
+          "tool": "opencode",
+          "family": "free",
+          "effort": null
+        },
+        {
+          "tool": "agy",
+          "family": "gemini-flash-medium",
+          "effort": null
+        },
+        {
+          "tool": "copilot",
+          "family": "auto",
+          "effort": null
+        },
+        {
+          "tool": "codex",
+          "family": "luna",
+          "effort": "medium",
+          "minimum": "6.0"
+        },
+        {
+          "tool": "claude",
+          "family": "haiku",
+          "effort": "medium",
+          "minimum": "5.5"
+        }
+      ]
+    },
+    "chores": {
+      "label": "機械性文件段落、證據整理、大量套版改寫",
+      "access": "write",
+      "verification_retries": 1,
+      "levels": [
+        {
+          "tool": "opencode",
+          "family": "free",
+          "effort": null
+        },
+        {
+          "tool": "agy",
+          "family": "gemini-flash-medium",
+          "effort": null
+        },
+        {
+          "tool": "copilot",
+          "family": "auto",
+          "effort": null
+        },
+        {
+          "tool": "codex",
+          "family": "luna",
+          "effort": "medium",
+          "minimum": "6.0"
+        },
+        {
+          "tool": "claude",
+          "family": "haiku",
+          "effort": "medium",
+          "minimum": "5.5"
+        }
+      ]
+    },
+    "classification": {
+      "label": "分類、打標籤、編碼",
+      "access": "write",
+      "verification_retries": 1,
+      "levels": [
+        {
+          "tool": "copilot",
+          "family": "auto",
+          "effort": null
+        },
+        {
+          "tool": "codex",
+          "family": "luna",
+          "effort": "medium",
+          "minimum": "6.0"
+        },
+        {
+          "tool": "claude",
+          "family": "haiku",
+          "effort": "medium",
+          "minimum": "5.5"
+        }
+      ]
+    },
+    "review": {
+      "label": "審 diff、找漏洞、對契約",
+      "access": "read",
+      "verification_retries": 1,
+      "levels": [
+        {
+          "tool": "agy",
+          "family": "opus",
+          "effort": null
+        },
+        {
+          "tool": "codex",
+          "family": "sol",
+          "effort": "medium",
+          "minimum": "6.0"
+        },
+        {
+          "tool": "claude",
+          "family": "opus",
+          "effort": "medium"
+        }
+      ]
+    },
+    "research": {
+      "label": "深度研究的深度層",
+      "access": "sandbox",
+      "verification_retries": 1,
+      "levels": [
+        {
+          "tool": "codex",
+          "family": "sol",
+          "effort": "medium",
+          "minimum": "6.0"
+        },
+        {
+          "tool": "claude",
+          "family": "opus",
+          "effort": "medium"
+        }
+      ]
+    },
+    "decision": {
+      "label": "方案取捨、技術選型、單一模組設計",
+      "access": "read",
+      "verification_retries": 1,
+      "levels": [
+        {
+          "tool": "agy",
+          "family": "opus",
+          "effort": null
+        },
+        {
+          "tool": "codex",
+          "family": "sol",
+          "effort": "medium",
+          "minimum": "6.0"
+        },
+        {
+          "tool": "claude",
+          "family": "opus",
+          "effort": "medium"
+        }
+      ]
+    },
+    "rules": {
+      "label": "寫 skill、prompt、規則與複雜架構",
+      "access": "write",
+      "verification_retries": 1,
+      "levels": [
+        {
+          "tool": "agy",
+          "family": "opus",
+          "effort": null
+        },
+        {
+          "tool": "claude",
+          "family": "opus",
+          "effort": "medium"
+        }
+      ]
+    }
+  }
+}
