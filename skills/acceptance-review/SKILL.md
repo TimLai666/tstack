@@ -1,6 +1,6 @@
 ---
 name: acceptance-review
-description: "Check a finished piece of work against what was originally asked: every requirement is matched to a result that was actually exercised, and the original problem is shown to be solved. This skill MUST be used before reporting substantial work as done, finished or fixed or handing it back, and when the user asks whether the result meets the request (驗收、驗收審查、有沒有做到、有沒有符合需求、有沒有解決問題、對一下需求、做完了嗎、acceptance review、does this meet the requirement). It judges the delivered result, not the diff, so it applies with or without a PR. When this conversation produced the work, the review MUST be dispatched to an independent reviewer through agent-delegation, and that reviewer MUST NOT be given the implementer's summary. It MUST NOT replace diff-review for code correctness, security-scan for vulnerabilities, or test-and-fix for running the tests."
+description: "Check finished work against what was originally asked: every requirement is matched to a result that was actually exercised, and the original problem is shown to be solved. This skill MUST be used before reporting substantial work as done or handing it back, and when the user asks whether the result meets the request. Work this conversation produced MUST be checked by an independent reviewer who is not given the implementer's summary. Triggers on: 驗收、有沒有做到、有沒有符合需求、有沒有解決問題、做完了嗎、acceptance review"
 allowed-tools:
   - Bash
   - Read
@@ -9,7 +9,7 @@ allowed-tools:
   - Agent
   - AskUserQuestion
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 ## Overview

@@ -1,20 +1,8 @@
 ---
 name: agent-delegation
-description: >-
-  This skill MUST be loaded when the user mentions subagent、分工、派工、
-  antigravity、agy、opencode、copilot、codex or Claude Code Agent, before dispatching
-  work even on small tasks, and when proposing
-  changes to existing API names, signatures, usage or behavior（介面變更）.
-  It MUST also be loaded before delivering specifications, articles, or reports（規格、文章、報告）for fresh-context review.
-  It SHOULD be loaded for questions about who should code or which model to use.
-  Existing API changes MUST follow the conditional consultation rule before
-  implementation. New delegation MUST use scripts/dispatch.py and its task-local levels,
-  and MUST NOT skip tools based on earlier turns. Main agents MUST define skeletons
-  and expected results before implementation, protect tests, and avoid their own CLI.
-  Dispatched workers MUST NOT apply this skill or delegate. Ordinary prompts MUST
-  carry project lessons; workers MUST report lessons for verification and recording.
+description: "Rules and script for handing work to a subagent or another CLI (OpenCode, Antigravity, Copilot, Codex, Claude). This skill MUST be loaded before dispatching any subagent or CLI, even for a small task, before changing an existing API's name, signature, usage or behavior, and before delivering a specification, article or report. New delegation MUST go through scripts/dispatch.py. A dispatched worker MUST NOT apply this skill or delegate further. Triggers on: subagent、派工、分工、agy、opencode、copilot、codex、誰來寫、用哪個模型、介面變更"
 metadata:
-  version: "3.0.0"
+  version: "3.0.1"
 ---
 
 # Agent 派工規範

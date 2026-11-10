@@ -1,6 +1,6 @@
 ---
 name: diff-review
-description: "Review a code diff before substantial or high-risk code is committed or handed back, opened as a pull request or merge request, or merged. This skill MUST be used when the user provides a code diff or asks for a code, PR or MR review, and when code is about to be submitted as a PR or MR or merged. It MUST NOT be skipped solely because the diff is small. When this conversation wrote the diff, the review MUST be dispatched to an independent reviewer through agent-delegation; only a small, low-risk change of its own gets a lightweight self-review. It MUST NOT be used for changes limited to documentation, prose, images or formatting. It checks scope, correctness, compatibility, maintainability and tests, and is the single entry for code review: it MUST hand security-relevant changes to security-scan and changed screens to ui-review, and merges their findings. Triggers on: 幫我 review, 幫我看程式 diff, 看一下程式改了什麼, review 程式碼, PR review, MR review, diff review, code review, 看看程式有沒有問題"
+description: "Review a code diff. This skill MUST be used when the user provides a diff or asks for a code, PR or MR review, and before substantial or high-risk code is committed, handed back, opened as a PR or MR, or merged. It MUST NOT be skipped because the diff is small. A diff this conversation wrote MUST go to an independent reviewer; only a small, low-risk change gets a lightweight self-review. It hands security-relevant changes to security-scan and changed screens to ui-review, and checks what a change could break elsewhere. It MUST NOT be used for changes limited to documentation, prose, images or formatting. Triggers on: 幫我 review, 看 diff, PR review, MR review, code review, 影響範圍, 看看程式有沒有問題"
 allowed-tools:
   - Bash
   - Read
@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "4.0.0"
+  version: "4.0.1"
 ---
 
 ## Who reviews

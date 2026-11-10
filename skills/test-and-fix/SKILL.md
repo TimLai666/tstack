@@ -1,6 +1,6 @@
 ---
 name: test-and-fix
-description: "Run tests, find failures, fix them, verify. Diff-aware: tests affected behavior in web apps, APIs, CLIs, and libraries. This skill MUST be invoked on the triggers below, and SHOULD be invoked after any code change the user has not yet verified, before pushing, before marking a ticket or task as done, and before reporting that something is fixed. It MUST NOT be replaced by waiting for CI. Triggers on: 跑測試, 測一下, 有沒有壞掉, run tests, test this, 跑一下 tests, 測試, check if broken"
+description: "Run tests, find failures, fix them and verify, for web apps, APIs, CLIs and libraries. This skill MUST be invoked on the triggers below, and SHOULD be invoked after any code change that is not yet verified, before pushing, and before reporting that something is done or fixed. It MUST NOT be replaced by waiting for CI. Triggers on: 跑測試, 測一下, 有沒有壞掉, run tests, test this, check if broken"
 allowed-tools:
   - Bash
   - Read
@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "1.6.1"
+  version: "1.6.2"
 ---
 
 ## Preamble

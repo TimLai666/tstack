@@ -1,6 +1,6 @@
 ---
 name: project-memory
-description: "Shared cross-agent memory in four stores: project lessons from costly trial-and-error, the user's preferences that hold in every project, facts about this machine, and facts about remote hosts reached from it. This skill MUST be invoked before starting work in an existing project, to load what was already learned there, and MUST be invoked again as that work wraps up, to record what this session learned before it ends. MUST also be invoked on the triggers below to record something new, and SHOULD be invoked whenever the user states something worth remembering about how this project behaves. A preference for every project (全域偏好、以後都這樣) MUST go in the global store, not the user's instruction files. Facts about a machine (機器環境、這台沒裝、遠端主機) MUST go in the machine or host store. MUST NOT be used for task lists or open bugs, which belong in the issue tracker or AGENTS.md. Triggers on: 記一下, 之前踩過什麼雷, 學到什麼, 有什麼教訓, remember this, lesson learned, project learnings, 記錄一下, 之前遇過的, 把這個記起來"
+description: "Shared cross-agent memory in four stores: project lessons, the user's preferences for every project, facts about this machine, and facts about remote hosts. This skill MUST be invoked when starting work in a project whose memory is not already in context, and again as the work wraps up to record what was learned. A cross-project preference MUST go in the global store, not in the user's instruction files; a machine fact MUST go in the machine or host store. It MUST NOT be used for task lists or open bugs. Triggers on: 記一下, 之前踩過什麼雷, 有什麼教訓, remember this, 把這個記起來, 以後都這樣, 這台沒裝"
 allowed-tools:
   - Bash
   - Read
@@ -8,7 +8,7 @@ allowed-tools:
   - Edit
   - AskUserQuestion
 metadata:
-  version: "1.16.2"
+  version: "1.16.3"
 ---
 
 ## Purpose and workflow
