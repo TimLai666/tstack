@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "3.1.0"
+  version: "3.1.1"
 ---
 
 ## Who reviews
@@ -31,7 +31,7 @@ This follows the core's [Independent Review](../software-engineering-guidelines/
 
 1. Establish the diff and its base as in [Establish review scope](#establish-review-scope).
 2. Decide which reviews apply: the code review always, and the ones [Security handoff](#security-handoff) and [UI handoff](#ui-handoff) call for. Deciding this is not reviewing.
-3. Load **agent-delegation** and dispatch one reviewer per review with the `review` task type, at the same time when more than one applies. Each task states:
+3. Load **agent-delegation** and dispatch one reviewer per review with the `review` task type, at the same time when more than one applies. Whether to continue an existing reviewer or start a new one follows its reuse rules: start reviewers so they can be resumed, and send a re-review back to the reviewer that reported the findings unless this review has to be isolated from that one. Each task states:
    - the original request and acceptance criteria, so the reviewer can check scope
    - how to obtain the diff: the base and the command, or the PR or MR
    - the skill file to follow, by absolute path: this file for the code review, the **security-scan** skill in diff mode, the **ui-review** skill for the changed screens
@@ -39,7 +39,7 @@ This follows the core's [Independent Review](../software-engineering-guidelines/
 4. Add the reviewer described in [Adversarial subagent](#adversarial-subagent) when its condition holds.
 5. When the reviewers return, check each finding against the code or the rendered result. Keep what holds, and move what cannot be confirmed to Needs investigation with the missing fact.
 
-Fixing the findings is implementation again. A diff that changed after review is reviewed again by a reviewer, not by the main conversation.
+Fixing the findings is implementation again. A diff that changed after review is reviewed again by a reviewer, normally the same one resumed, not by the main conversation.
 
 ---
 
