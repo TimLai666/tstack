@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Optional reminders that point Claude Code to the tstack skills.
+"""Reminders that point Claude Code to the tstack skills, and the project memory at session start.
 
 Usage: reminders.py MODE, with the hook event JSON on stdin.
 Modes: session-start, pre-agent, post-agent, post-bash, pre-compact.
@@ -10,15 +10,24 @@ import os
 from pathlib import Path
 import re
 import shlex
+import subprocess
 import sys
 import time
 
 DELEGATION = "agent-delegation"
 
-SESSION_START = (
-    "這個環境裝了 tstack plugin。開始工作前，先依 project-memory skill 載入本專案的記憶。"
-    "規劃、寫程式、改程式、審查或 commit 前，先載入 software-engineering-guidelines skill。"
-    "要開 subagent、外派其他 CLI、變更既有 API，或交付規格、文章、報告前，先載入 agent-delegation skill。")
+MEMORY_SCRIPT = Path(__file__).resolve().parent.parent / "skills" / "project-memory" / "scripts" / "memory.py"
+# Claude Code replaces hook context over 10,000 characters with a short preview.
+CONTEXT_BUDGET = 9000
+
+INTRO = "這個環境裝了 tstack plugin。"
+MEMORY_LOADED = "以下是 project-memory 已替你載入的本專案記憶，這次對話不用再執行 load，要查某一筆的全文時用 search：\n\n"
+MEMORY_EMPTY = "本專案在 project-memory 還沒有記憶。"
+MEMORY_KEYS = ("本專案的記憶太長，hook 放不下全文，以下只列出各筆的 key。"
+               "開始工作前先依 project-memory skill 執行 load 讀完整內容：\n")
+MEMORY_UNREAD = "開始工作前，先依 project-memory skill 載入本專案的記憶。"
+SKILLS = ("\n\n規劃、寫程式、改程式、審查或 commit 前，先載入 software-engineering-guidelines skill。"
+          "要開 subagent、外派其他 CLI、變更既有 API，或交付規格、文章、報告前，先載入 agent-delegation skill。")
 DENY_AGENT = (
     "這次對話還沒載入 agent-delegation skill。先載入它，依它決定這項工作由哪個工具和模型執行，"
     "再重新派工。這個提醒每個 session 只擋一次。")
@@ -29,6 +38,35 @@ BEFORE_COMPACT = "摘要時保留本 session 還沒寫入 project-memory 的試�
 
 def context(event, text):
     return {"hookSpecificOutput": {"hookEventName": event, "additionalContext": text}}
+
+
+def run_memory(cwd, *args):
+    """Output of the project-memory script for the project in cwd, or None when it fails."""
+    result = subprocess.run([sys.executable, str(MEMORY_SCRIPT), *args], cwd=cwd, capture_output=True,
+                            text=True, encoding="utf-8", errors="replace", timeout=4,
+                            env=dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1"))
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def session_start(cwd):
+    """The session-start context: the project's memory when it fits, otherwise how to get it."""
+    try:
+        if not cwd or not os.path.isdir(cwd):
+            raise OSError("no project directory")
+        loaded = run_memory(cwd, "load")
+        if loaded is None:
+            raise OSError("memory script failed")
+        if loaded.startswith("NO_LEARNINGS"):
+            memory = MEMORY_EMPTY
+        elif len(INTRO + MEMORY_LOADED + loaded + SKILLS) <= CONTEXT_BUDGET:
+            memory = MEMORY_LOADED + loaded
+        else:
+            entries = json.loads(run_memory(cwd, "load", "--json") or "[]")
+            keys = "\n".join("- %s（%s）" % (e.get("key"), e.get("type")) for e in entries)
+            memory = (MEMORY_KEYS + keys)[:CONTEXT_BUDGET - len(INTRO + SKILLS)]
+    except Exception:  # Fall back to asking for the load; never leave the session without the reminder.
+        memory = MEMORY_UNREAD
+    return INTRO + memory + SKILLS
 
 
 def delegation_loaded(transcript):
@@ -98,7 +136,7 @@ def is_commit(command):
 
 def respond(mode, event):
     if mode == "session-start":
-        return context("SessionStart", SESSION_START)
+        return context("SessionStart", session_start(event.get("cwd")))
     if mode == "pre-compact":
         return BEFORE_COMPACT
     if event.get("agent_id"):

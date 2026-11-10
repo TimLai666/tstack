@@ -19,13 +19,19 @@ class Reminders(unittest.TestCase):
         self.data = self.root / "plugin-data"
         self.transcript = self.root / "session.jsonl"
         self.transcript.write_text("")
+        # A private home: the session-start hook runs the memory script, which moves ~/.mystack.
+        self.home = self.root / "home"
+        self.home.mkdir()
+        self.project = self.root / "demo-project"
+        self.project.mkdir()
 
     def run_hook(self, mode, payload=None, raw=None):
-        event = dict(session_id="s1", transcript_path=str(self.transcript), cwd=str(self.root))
+        event = dict(session_id="s1", transcript_path=str(self.transcript), cwd=str(self.project))
         event.update(payload or {})
         result = subprocess.run([sys.executable, str(SCRIPT), mode], input=raw if raw is not None else json.dumps(event),
                                 capture_output=True, text=True, encoding="utf-8", timeout=20,
-                                env=dict(os.environ, CLAUDE_PLUGIN_DATA=str(self.data)))
+                                env=dict(os.environ, CLAUDE_PLUGIN_DATA=str(self.data),
+                                         HOME=str(self.home), USERPROFILE=str(self.home)))
         self.assertEqual(result.returncode, 0, result.stderr)
         return result.stdout
 
@@ -52,6 +58,53 @@ class Reminders(unittest.TestCase):
                 text = self.context("session-start", "SessionStart", {"source": source})["additionalContext"]
                 for skill in ("project-memory", "software-engineering-guidelines", "agent-delegation"):
                     self.assertIn(skill, text)
+
+    def remember(self, *entries, base=".tstack"):
+        path = self.home / base / "projects" / "demo-project" / "learnings.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as handle:
+            for key, insight in entries:
+                handle.write(json.dumps({"ts": "2026-01-01T00:00:00Z", "type": "pitfall", "key": key,
+                                         "insight": insight, "confidence": 8, "source": "test"}, ensure_ascii=False) + "\n")
+
+    def session_start(self, **payload):
+        return self.context("session-start", "SessionStart", dict(source="startup", **payload))["additionalContext"]
+
+    def test_session_start_carries_the_project_memory(self):
+        self.remember(("retry-needs-token", "呼叫付款 API 前要先換新的 token"))
+        text = self.session_start()
+        self.assertIn("retry-needs-token", text)
+        self.assertIn("呼叫付款 API 前要先換新的 token", text)
+        self.assertIn("不用再執行 load", text)
+        self.assertIn("memory.py", text)  # the recording command printed by load
+
+    def test_session_start_without_memory_says_so(self):
+        text = self.session_start()
+        self.assertIn("還沒有記憶", text)
+        self.assertNotIn("不用再執行 load", text)
+
+    def test_session_start_moves_memory_left_in_the_old_folder(self):
+        self.remember(("old-store-rule", "舊位置的經驗"), base=".mystack")
+        text = self.session_start()
+        self.assertIn("舊位置的經驗", text)
+        self.assertFalse((self.home / ".mystack").exists())
+        self.assertTrue((self.home / ".tstack" / "projects" / "demo-project" / "learnings.jsonl").exists())
+
+    def test_memory_too_long_for_the_hook_lists_keys_and_asks_for_a_load(self):
+        self.remember(*[("long-rule-%02d" % i, "很長的經驗" * 150) for i in range(20)])
+        text = self.session_start()
+        self.assertLess(len(text), 10000)
+        self.assertIn("long-rule-00", text)
+        self.assertIn("long-rule-19", text)
+        self.assertNotIn("很長的經驗很長的經驗", text)
+        self.assertIn("執行 load", text)
+        self.assertNotIn("不用再執行 load", text)
+
+    def test_session_start_falls_back_to_the_reminder_when_memory_cannot_be_read(self):
+        text = self.session_start(cwd=str(self.root / "no-such-folder"))
+        self.assertIn("project-memory", text)
+        self.assertIn("載入本專案的記憶", text)
+        self.assertNotIn("不用再執行 load", text)
 
     def test_first_subagent_without_delegation_skill_is_denied_once(self):
         first = self.context("pre-agent", "PreToolUse", {"tool_name": "Agent"})

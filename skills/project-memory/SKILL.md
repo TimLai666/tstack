@@ -8,14 +8,14 @@ allowed-tools:
   - Edit
   - AskUserQuestion
 metadata:
-  version: "1.12.0"
+  version: "1.13.0"
 ---
 
 ## Purpose and workflow
 
 Keep project-specific solutions that took repeated failed attempts or substantial searching, time or tokens to find, so the next agent can avoid repeating that work.
 
-1. **Starting work in a project** — run `load` before reading code or making changes, without waiting to be asked. Search related keys before working in that area.
+1. **Starting work in a project** — read this project's memory before reading code or making changes, without waiting to be asked. When the session opened with the memory already in context (the tstack session-start hook provides it in Claude Code), use that and do not run `load` again. When it is absent, or only keys are listed, run `load`. Search related keys before working in that area.
 2. **When something is learned or work wraps up** — check the recording criteria below and run `add` for qualifying lessons. Report saved entries; if nothing qualifies, no announcement is needed.
 
 ## The script
@@ -44,7 +44,7 @@ python3 "$_MEM" --help
 
 ---
 
-## Load (do this first)
+## Load
 
 ```bash
 python3 "$_MEM" load

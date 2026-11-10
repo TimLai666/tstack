@@ -44,7 +44,7 @@ tstack 是一個整體，只支援整組安裝。各個 skill 會直接引用彼
 
 只有以 plugin 安裝時才有 hook。skill 本身不依賴 hook，用 `npx skills` 整組安裝時一樣能用。
 
-**提醒**（`hooks/reminders.py`）：開始工作時提醒載入專案記憶與工程準則，派 subagent 前提醒載入派工規範，commit 與 subagent 回報後提醒記錄經驗。
+**記憶與提醒**（`hooks/reminders.py`）：開新對話時直接把這個專案的記憶放進對話，不用再多一次載入；記憶太長放不下時改列出各筆的 key。另外在幾個時間點提醒：開始工作前載入工程準則，派 subagent 前載入派工規範，commit 與 subagent 回報後記錄經驗。
 
 **指令防護**（`hooks/guard.py`）：攔下幾種反覆造成損害的指令，並在拒絕訊息裡給出替代做法。
 
