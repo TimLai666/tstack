@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "1.6.0"
+  version: "1.6.1"
 ---
 
 ## Preamble
@@ -73,6 +73,8 @@ Report verification gaps explicitly.
 
 ## Report
 
+Levels follow the core's [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity).
+
 ```text
 ## Test Report [feature/branch] [date]
 
@@ -86,7 +88,7 @@ Tests run: N | Passed: N | Failed: N | Fixed: N (with regression tests)
 1. [description] — file:line — regression test: [test name]
 
 ### Issues found (not yet fixed)
-1. [P0/P1/P2] [description] — blocking: [yes/no]
+1. [P0-P3] [description] — blocking: [yes/no]
 
 ### Not verified
 - [behavior] — [what was missing: real target, integration run, rendered image] — or 未視覺確認

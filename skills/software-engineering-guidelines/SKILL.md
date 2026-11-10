@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "Software engineering guidelines for any software change. It is the core of the tstack stack: it names which tstack skill to use at each point of the work and owns the rules they share. This skill MUST be loaded before requirement clarification, architecture/design, implementation, refactoring, code review, testing, shipping, or creating Git commits (including standalone commit requests), and MUST NOT be skipped because the change is a one-liner. Covers simplicity, complete delivery based on a coherent implementation design, testing-first for high-impact changes with TDD (Test-Driven Development), and verifiable success criteria. Triggers on: 任何軟體規劃, 需求釐清, 架構設計, 寫 code, 改 code, 做功能, 修 bug, refactor, 開發, coding, development, 實作, 實現, 寫程式, 改程式, 加功能, 修問題, code review, 測試, 重構, init, 初始化專案, 建立 CLAUDE.md, 建立 AGENTS.md"
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 ## The Stack
@@ -15,8 +15,8 @@ This skill is the core of tstack. tstack is installed as a whole: every other ts
 | Architecture, module boundaries or the split into tickets is undecided | **eng-architect** |
 | A failure whose cause is unknown, a red CI pipeline, the same error a second time, or an expected result that never appeared | **investigate** |
 | Code changed and not yet verified; before pushing; before calling something fixed or done | **test-and-fix** |
-| A diff is about to be committed as substantial work, opened as a PR or MR, or merged; the user hands over a diff | **diff-inspector**, which hands security-relevant changes to **security-scan** |
-| Screens were built or changed | **ui-review** |
+| A diff is about to be committed as substantial work, opened as a PR or MR, or merged; the user hands over a diff | **diff-review**, which hands security-relevant changes to **security-scan** and changed screens to **ui-review** |
+| A review of built screens is requested on its own | **ui-review** |
 | A security scan or hardening of the project is requested | **security-scan** |
 | Pushing, opening or updating a PR or MR, merging | **ship-it** |
 | Dispatching a subagent or another CLI; changing an existing API's name, signature, usage or behavior; delivering a specification, article or report | **agent-delegation** |
@@ -178,6 +178,28 @@ Rules that several tstack skills rely on. Each is defined once here; the other s
 - A cause that is not verified is a hypothesis. Label it as one, and do not write it into code comments, docstrings, agent instruction files, skills or project memory as a fact.
 - Retrying follows item 4 of [Evidence-Guided Iterations](#evidence-guided-iterations).
 
+### Findings and Severity
+
+**diff-review**, **security-scan** and **ui-review** report with this format and scale, so their results merge into one list.
+
+A finding is confirmed only when code or observed behavior shows a concrete failure scenario. A concern backed by evidence but missing a decisive fact is reported as needing investigation, with the missing fact and how to verify it. Speculation and style preferences are not findings.
+
+| Level | Meaning |
+|---|---|
+| P0 | Must be fixed before merging or release: a security breach, data loss, an outage, or a main flow that cannot be completed |
+| P1 | Serious: incorrect behavior, a major regression, or exposure of other users' data is likely. Normally fixed before merging |
+| P2 | Moderate and localized. Actionable; may be scheduled after merging when the risk is accepted |
+| P3 | Minor: small impact, or it needs several unlikely conditions together |
+
+Each review skill adds the criteria for assigning these levels in its own domain.
+
+```text
+[P0-P3] [CONFIRMED] location - trigger, impact, description, recommended action
+[NEEDS INVESTIGATION] location - observed evidence, possible failure, missing fact, verification step
+```
+
+`location` is a file and line, or a screen and state for rendered UI. An item that needs investigation describes its impact conditionally and carries no level. List confirmed findings from P0 to P3, then the items needing investigation.
+
 ### Staging and Commits
 
 - Stage with explicit paths. `git add -A`, `git add .`, `git add --all`, `git commit -a` and `git commit -am` are not used, including in a fresh repository. Leave out build output, caches, operating-system metadata files and binaries the task did not ask for. List what is left out of the commit and why; do not silently stash, discard or include unrelated changes.
@@ -224,7 +246,7 @@ Fill the skeleton using Principles 2–4 and Principle 5's whole-goal priorities
 ### C. After Completion
 
 1. Verify with **test-and-fix** and report the results (Principle 4).
-2. Review the diff with **diff-inspector** when the change is substantial or about to become a PR, MR or merge. Run **ui-review** when screens changed.
+2. Review the diff with **diff-review** when the change is substantial or about to become a PR, MR or merge. It hands security-relevant changes and changed screens to the other review skills.
 3. Review the Pre-Ship Checklist.
 4. Commit under [Staging and Commits](#staging-and-commits). Push, open a PR or MR, or merge through **ship-it**.
 5. Record qualifying lessons through **project-memory**.

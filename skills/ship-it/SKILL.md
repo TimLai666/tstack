@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "2.2.0"
+  version: "2.3.0"
 ---
 
 ## Overview
@@ -128,13 +128,10 @@ Fix failures introduced by this branch. Establish evidence for pre-existing
 failures or environment blockers, apply project delivery rules, and report any
 remaining gate instead of presenting partial results as a pass.
 
-Run **diff-inspector** on the outgoing diff unless an existing review covers
+Run **diff-review** on the outgoing diff unless an existing review covers
 that same diff. Review later changes and their effects. Resolve confirmed
 findings according to severity and project rules, and distinguish unresolved
 questions from confirmed defects.
-
-When the diff changes rendered screens, run **ui-review** on those screens
-unless an existing review covers their current state.
 
 ## Step 7 — Open or update the PR or MR
 

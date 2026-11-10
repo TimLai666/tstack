@@ -1,6 +1,6 @@
 ---
 name: security-scan
-description: "Scan a codebase the user owns for security vulnerabilities, then fix and verify them. This skill MUST be used when the user asks for a security scan, security audit, vulnerability check or hardening of their own project (資安掃描、資安審查、安全性檢查、漏洞掃描、找漏洞、補漏洞、弱點掃描、資安健檢、security scan、security audit、vulnerability scan、pentest my app). It MUST also be used in diff mode when diff-inspector hands over a diff, or when the user asks for a security check of a diff, PR or MR (這個 diff 有沒有資安問題、PR 資安檢查). It SHOULD be used before a first public release and after adding authentication, payment, file upload, or anything that takes outside input. It MUST fetch the current CWE Top 25, OWASP and related lists at scan time and MUST NOT rely on remembered editions. It MUST NOT be used against systems or code the user does not own or is not authorized to test. Logic errors, implementation defects and maintainability belong to diff-inspector, not this skill."
+description: "Scan a codebase the user owns for security vulnerabilities, then fix and verify them. This skill MUST be used when the user asks for a security scan, security audit, vulnerability check or hardening of their own project (資安掃描、資安審查、安全性檢查、漏洞掃描、找漏洞、補漏洞、弱點掃描、資安健檢、security scan、security audit、vulnerability scan、pentest my app). It MUST also be used in diff mode when diff-review hands over a diff, or when the user asks for a security check of a diff, PR or MR (這個 diff 有沒有資安問題、PR 資安檢查). It SHOULD be used before a first public release and after adding authentication, payment, file upload, or anything that takes outside input. It MUST fetch the current CWE Top 25, OWASP and related lists at scan time and MUST NOT rely on remembered editions. It MUST NOT be used against systems or code the user does not own or is not authorized to test. Logic errors, implementation defects and maintainability belong to diff-review, not this skill."
 allowed-tools:
   - Bash
   - Read
@@ -13,7 +13,7 @@ allowed-tools:
   - WebFetch
   - WebSearch
 metadata:
-  version: "1.1.1"
+  version: "1.2.0"
 ---
 
 # 資安掃描
@@ -27,15 +27,15 @@ metadata:
 | 模式 | 什麼時候用 | 範圍 |
 |---|---|---|
 | 全專案 | 使用者要求掃描或健檢 | 整個專案或指定的目錄 |
-| diff | **diff-inspector** 交接過來，或使用者要檢查某個 diff、PR、MR 的資安 | 這個 diff，加上它的輸入與輸出會經過的既有程式 |
+| diff | **diff-review** 交接過來，或使用者要檢查某個 diff、PR、MR 的資安 | 這個 diff，加上它的輸入與輸出會經過的既有程式 |
 
-這個 skill 只管漏洞。邏輯錯誤、實作缺陷、效能與可維護性由 **diff-inspector** 審查，原因不明的錯誤用 **investigate**。
+這個 skill 只管漏洞。邏輯錯誤、實作缺陷、效能與可維護性由 **diff-review** 審查，原因不明的錯誤用 **investigate**。
 
 ## Input Contract
 
 | 項目 | 取得方式 |
 |---|---|
-| 模式 | diff-inspector 交接，或使用者指名 diff、PR、MR 時用 diff 模式，其餘用全專案模式 |
+| 模式 | diff-review 交接，或使用者指名 diff、PR、MR 時用 diff 模式，其餘用全專案模式 |
 | 掃描範圍 | 全專案模式：使用者指定的目錄、服務或功能，沒指定就是整個專案。diff 模式：指定的 diff 與比較基準，不明確時依 git 狀態與 PR、MR 的目標分支判斷 |
 | 授權 | 程式是使用者自己的，或使用者說明有權測試。無法確認時先問，不開始掃描 |
 | 要不要直接修 | 使用者說「補」「修」就修；只說「掃」「檢查」就先交報告，修補等確認。diff 模式預設只回報 |
@@ -85,18 +85,20 @@ metadata:
 
 找不到可行的觸發路徑就不算漏洞，可以放進「強化建議」。
 
+等級用核心 [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity) 的 P0 到 P3。資安發現的判定標準：
+
 | 等級 | 判定 |
 |---|---|
-| 嚴重 | 不需登入或只需一般帳號，就能執行任意程式、取得或竄改大量資料、接管他人帳號或提升到管理員 |
-| 高 | 能存取或修改其他使用者的資料、繞過付款或關鍵流程，或需要的條件容易達成 |
-| 中 | 需要特定條件或受害者互動，影響限於單一使用者或有限的資料 |
-| 低 | 影響很小，或需要多個不容易同時成立的條件 |
+| P0 | 不需登入或只需一般帳號，就能執行任意程式、取得或竄改大量資料、接管他人帳號或提升到管理員 |
+| P1 | 能存取或修改其他使用者的資料、繞過付款或關鍵流程，或需要的條件容易達成 |
+| P2 | 需要特定條件或受害者互動，影響限於單一使用者或有限的資料 |
+| P3 | 影響很小，或需要多個不容易同時成立的條件 |
 
 依賴套件的漏洞另外確認兩件事：專案有沒有實際呼叫到受影響的功能，以及該 CVE 是否在 CISA KEV 清單上。在清單上的往上調一級。
 
 ### 6. 修補
 
-依嚴重度由高到低處理。修補照 **software-engineering-guidelines** 進行：
+由 P0 到 P3 依序處理。修補照 **software-engineering-guidelines** 進行：
 
 - 修根因，並搜尋同一種寫法的其他位置一起修。
 - 優先用框架或函式庫提供的防護，不自己寫跳脫、加密或驗證。
@@ -118,7 +120,7 @@ metadata:
 - **清單（步驟 2）**：這次對話已經抓過的清單直接沿用。還沒抓過時，抓 CWE Top 25、OWASP Top 10，以及 diff 碰到的技術對應的清單。
 - **掃描（步驟 4）**：依賴或 lockfile 有變動時，稽核新增與升降版的套件。diff 內新增的字串逐一檢查有沒有秘密。總表只對照 diff 碰到的那幾節，其餘各節不用列。
 - **修補（步驟 6）**：預設不修，把發現交回呼叫方。使用者或呼叫方要求修時才修。
-- **回報**：只交 Output Contract 的第 1 到 4 項，並附上實際檢查過的檔案與總表章節。由 diff-inspector 交接時，等級照它的格式換算：嚴重對 P0，高對 P1，中與低對 P2。
+- **回報**：只交 Output Contract 的第 1 到 4 項，並附上實際檢查過的檔案與總表章節。由 diff-review 交接時，把發現與待確認項目原樣交回，由它合併。
 - diff 沒有碰到任何輸入、驗證、授權、檔案、對外請求、秘密、加密、依賴或部署設定時，回報「這個 diff 沒有資安相關的改動」並寫出判斷依據，不做完整流程。
 
 ## Output Contract
@@ -127,8 +129,8 @@ metadata:
 
 1. **結論**：各等級的發現數、已修補數、仍待處理的最高等級。
 2. **範圍與依據**：掃了哪些目錄與服務、使用的清單（名稱、版本、網址、抓取日期）、執行的工具與版本、沒抓到或沒執行的項目與原因。
-3. **發現**：由嚴重到低，每筆包含編號、等級、類別（清單項目編號與 CWE）、位置（檔案與行號）、觸發方式與所需條件、影響、修補內容與驗證結果。秘密的寫法照核心的 [Secrets](../software-engineering-guidelines/SKILL.md#secrets)。
-4. **待確認**：有證據但缺關鍵事實的項目，以及補上事實的方法。
+3. **發現**：由 P0 到 P3，每筆用核心 [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity) 的格式，另附類別（清單項目編號與 CWE）、攻擊者需要的條件、修補內容與驗證結果。秘密的寫法照核心的 [Secrets](../software-engineering-guidelines/SKILL.md#secrets)。
+4. **待確認**：同一格式的 `NEEDS INVESTIGATION` 項目。
 5. **強化建議**：不構成漏洞但值得做的防護，以及建議安裝的掃描工具。
 6. **清單對照表**：每份清單逐項的結論，以及總表各節是否適用。
 
@@ -148,7 +150,7 @@ metadata:
 |---|---|
 | 只搜尋 `eval`、`exec` 這類關鍵字就交差 | 從每個入口追資料流，授權與邏輯問題要讀流程 |
 | 用記憶中的舊版排名 | 每次從入口頁抓當下的版本 |
-| 依賴稽核列出幾十筆就全部標成嚴重 | 逐筆確認專案是否用到受影響的功能 |
+| 依賴稽核列出幾十筆就全部標成 P0 | 逐筆確認專案是否用到受影響的功能 |
 | 找到一處就修那一處 | 搜尋同樣的寫法，一次修完 |
 | 把秘密從程式刪掉就當作修好 | 請使用者撤銷並輪替 |
 | 在正式環境試攻擊請求 | 只在本機或測試環境重現 |

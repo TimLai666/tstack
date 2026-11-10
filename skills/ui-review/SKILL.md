@@ -1,6 +1,6 @@
 ---
 name: ui-review
-description: "Review a built user interface as it actually renders: score it, scan for generic AI-made patterns, check it against the project's design baseline and record the findings. This skill MUST be used when the user asks for a UI review, a design review of implemented screens, or an AI slop scan (UI 審查、畫面審查、介面審查、看一下做出來的畫面、畫面有沒有問題、design review、UI review、UI critique、AI slop scan). It SHOULD be used after screens are implemented or changed, before the work is handed back or merged. It MUST inspect rendered screens and MUST NOT judge from source code or design files alone. It MUST NOT be used to set a design direction or to create or change DESIGN.md, and MUST NOT replace diff-inspector for code logic or security-scan for vulnerabilities."
+description: "Review a built user interface as it actually renders: score it, scan for generic AI-made patterns, check it against the project's design baseline and record the findings. This skill MUST be used when the user asks for a UI review, a design review of implemented screens, or an AI slop scan (UI 審查、畫面審查、介面審查、看一下做出來的畫面、畫面有沒有問題、design review、UI review、UI critique、AI slop scan). It SHOULD be used after screens are implemented or changed, before the work is handed back or merged. It MUST inspect rendered screens and MUST NOT judge from source code or design files alone. It MUST NOT be used to set a design direction or to create or change DESIGN.md, and MUST NOT replace diff-review for code logic or security-scan for vulnerabilities."
 allowed-tools:
   - Bash
   - Read
@@ -10,7 +10,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 ## Overview
@@ -20,8 +20,10 @@ Review what was built, as the user will see it. The input is the running interfa
 | Review of | Skill |
 |---|---|
 | Rendered screens and interactions | this skill |
-| Code logic and implementation | **diff-inspector** |
+| Code logic and implementation | **diff-review** |
 | Vulnerabilities | **security-scan** |
+
+When **diff-review** hands over a diff, review only the screens it changed and return the findings to it.
 
 A review request produces findings and recommendations. Fix only when the user asked for fixes, then recheck the affected screens in the rendered result.
 
@@ -70,6 +72,15 @@ Flag any present:
 - success states that only say "Success!" with no next step
 
 ## Step 3 — Present findings and decisions
+
+Report each finding in the format and scale of the core's [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity), with the screen and state as its location. Levels for rendered UI:
+
+| Level | Rendered UI |
+|---|---|
+| P0 | The primary action cannot be completed, or content is unreadable or unusable at a supported viewport |
+| P1 | The user is misled, or an important state such as error, empty or loading is broken or missing |
+| P2 | An inconsistency between similar elements, or a deviation from the design baseline |
+| P3 | Polish |
 
 Present findings and recommended fixes with evidence from the inspected screens and interactions. Ask about unresolved tradeoffs or changes to an agreed direction, and group related choices with a recommendation. A review request produces recommendations; execute fixes only within the user's authorized scope. After an authorized UI fix, inspect the rendered result again and repeat the affected interactions before marking the finding resolved.
 

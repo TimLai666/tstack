@@ -1,6 +1,6 @@
 ---
-name: diff-inspector
-description: "Inspect code diffs before opening a pull request or merging. This skill MUST be used when the user provides a code diff, pastes code changes, asks for a code or PR review, or when code is about to be submitted as a PR or merged. It MUST NOT be skipped solely because the diff is small. It SHOULD also be used before committing or handing back substantial or high-risk code changes. It MUST NOT be used when changes are limited to non-code content such as documentation, prose, images, or formatting. For small, low-risk self-changes, perform only a lightweight review without specialist dispatch. Checks requirement scope, correctness, compatibility, maintainability, and test coverage. Vulnerabilities are not reviewed here: when the diff touches security-relevant code, it MUST hand that part to security-scan in diff mode. Triggers on: 幫我看程式 diff, 看一下程式改了什麼, review 程式碼, PR review, diff review, code review, 看看程式有沒有問題"
+name: diff-review
+description: "Review a code diff before it is committed as substantial work, opened as a pull request or merge request, or merged. This skill MUST be used when the user provides a code diff, pastes code changes, or asks for a code, PR or MR review, and when code is about to be submitted as a PR or MR or merged. It MUST NOT be skipped solely because the diff is small; for small, low-risk self-changes perform a lightweight review without specialist dispatch. It MUST NOT be used when changes are limited to non-code content such as documentation, prose, images, or formatting. It checks requirement scope, correctness, compatibility, maintainability and test coverage, and is the single entry for review: it MUST hand security-relevant changes to security-scan and changed screens to ui-review, and merges their findings. Triggers on: 幫我 review, 幫我看程式 diff, 看一下程式改了什麼, review 程式碼, PR review, MR review, diff review, code review, 看看程式有沒有問題"
 allowed-tools:
   - Bash
   - Read
@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "2.0.1"
+  version: "3.0.0"
 ---
 
 ## Review timing
@@ -31,7 +31,7 @@ Identify the relevant code diff from the user's input, current worktree, pull re
 
 1. **Check scope:** Compare the diff with the stated request and report meaningful scope drift or missing requirements.
 2. **Review code:** Review the full diff using the technical checks below.
-3. **Hand over security:** Decide with the rule in [Security handoff](#security-handoff) whether the diff needs a security check, and run it when it does.
+3. **Hand over:** Decide with [Security handoff](#security-handoff) and [UI handoff](#ui-handoff) whether the diff needs those reviews, and run each one that applies.
 
 ---
 
@@ -52,27 +52,9 @@ Review the full diff. For each applicable area, verify:
 - **API contracts:** Check incompatible responses, new required inputs without defaults, changed error formats, and pagination behavior using the compatibility tracing above.
 - **Tests:** Tests demonstrate changed public behavior, negative and edge cases, failure paths, and regression protection. Check isolation violations and flaky patterns.
 
-### Evidence and severity
+### Findings
 
-Put an issue in Findings only when relevant code or observed behavior confirms a concrete failure scenario. Put evidence-backed concerns with missing decisive facts in a separate Needs investigation section, naming the missing fact and how to verify it.
-
-- **P0:** Critical or blocking. Can cause data loss, a service outage, a security breach reported by the security handoff, or another failure that must be fixed before merging.
-- **P1:** Serious. Likely to cause incorrect behavior or a major regression and should normally be fixed before merging.
-- **P2:** Moderate and localized. Actionable, but may be scheduled after merging when the risk is acceptable.
-
-For each finding:
-
-- cite the relevant file and line; refer to a secret as the core's [Secrets](../software-engineering-guidelines/SKILL.md#secrets) rule requires
-- describe the trigger and impact
-- assign P0, P1, or P2 based on impact
-- label it `CONFIRMED`
-- recommend a proportionate action
-
-Do not report speculation or style preferences as defects.
-
-Finding format: `[P0/P1/P2] [CONFIRMED] file:line - trigger, impact, description, and recommended action`
-
-Investigation format: `[NEEDS INVESTIGATION] file:line - observed evidence, possible failure, missing fact, and verification step`. Describe impact conditionally rather than assigning a confirmed defect severity.
+Report in the format and scale of the core's [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity). For each finding, cite the file and line, describe the trigger and impact, and recommend a proportionate action. Refer to a secret as the core's [Secrets](../software-engineering-guidelines/SKILL.md#secrets) rule requires.
 
 ---
 
@@ -88,13 +70,21 @@ This skill does not look for vulnerabilities. Run **security-scan** in diff mode
 
 State which of these the diff touches, or that it touches none, with the files that decided it. When unsure, hand over.
 
-Merge the returned findings into Findings using this mapping: 嚴重 to P0, 高 to P1, 中 and 低 to P2. Keep its evidence and location, and mark each as `security-scan`.
+Merge the returned findings into Findings, keeping their level, evidence and location, and mark each as `security-scan`.
+
+---
+
+## UI handoff
+
+This skill does not judge how screens look or behave. Run **ui-review** on the affected screens when the diff adds or changes what a user sees: templates, components, styles, layout, copy, or the empty, loading and error states of a screen.
+
+State which screens the diff changes, or that it changes none, with the files that decided it. Merge the returned findings into Findings, keeping their level, evidence and location, and mark each as `ui-review`.
 
 ---
 
 ## Adversarial subagent
 
-Run an adversarial subagent when the diff is large, spans multiple components, or affects high-impact behavior such as authentication, authorization, payments, sensitive data, migrations, concurrency, or critical user workflows.
+Dispatch an adversarial subagent through **agent-delegation**, with the prompt below as its task, when the diff is large, spans multiple components, or affects high-impact behavior such as authentication, authorization, payments, sensitive data, migrations, concurrency, or critical user workflows.
 
 ```text
 You are an adversarial reviewer. Review the established diff.
@@ -106,9 +96,9 @@ separately; note one only if you run into it.
 
 Apply the relevant Technical review checks from this skill independently.
 Include file and line references, the failure trigger, evidence, and impact.
-Use the Evidence and severity rules: CONFIRMED findings receive P0/P1/P2;
-NEEDS INVESTIGATION concerns go in a separate section with missing facts
-and verification steps. Do not classify uncertainty as a confirmed defect.
+Give each CONFIRMED finding a level from P0 (must fix before merging) to P3
+(minor). NEEDS INVESTIGATION concerns go in a separate section with missing
+facts and verification steps. Do not classify uncertainty as a confirmed defect.
 
 Never print the values of settings, tokens, passwords or keys, including in the
 commands you run and their output. Report the key name and where it is stored.
@@ -136,25 +126,26 @@ Report each mismatch with references to both the changed code and the affected d
 
 ## Final output
 
-Lead with confirmed findings ordered from P0 to P2, followed by evidence-backed concerns needing investigation. Review and deduplicate results from technical, documentation, adversarial, and security-handoff checks by failure scenario and affected location, preserving distinct causes and the strongest evidence.
+Lead with confirmed findings ordered from P0 to P3, followed by evidence-backed concerns needing investigation. Review and deduplicate results from technical, documentation, adversarial, and handoff checks by failure scenario and affected location, preserving distinct causes and the strongest evidence.
 
 Use this structure:
 
 ```text
-## Diff Inspector
+## Diff Review
 Scope: [CLEAN / DRIFT / MISSING]
 Reviewed: [diff source and scope]
 Adversarial review: [RUN — Trigger: reason]
 Security handoff: [RUN — touches: ... / NOT NEEDED — reason]
+UI handoff: [RUN — screens: ... / NOT NEEDED — reason]
 
 ### Findings
-- [P0/P1/P2] [CONFIRMED] file:line - trigger, impact, description, and recommended action
+- [P0-P3] [CONFIRMED] location - trigger, impact, description, recommended action
 
 ### Needs investigation
-- [NEEDS INVESTIGATION] file:line - observed evidence, possible failure, missing fact, and verification step
+- [NEEDS INVESTIGATION] location - observed evidence, possible failure, missing fact, verification step
 
 ### Scope differences
 - [include only when scope drift or missing requirements exist]
 ```
 
-Include the `Adversarial review` line only when that review ran. Always include the `Security handoff` line. If there are no confirmed findings, state `No confirmed findings.` Report any investigation concerns separately. Do not include empty sections.
+Include the `Adversarial review` line only when that review ran. Always include the `Security handoff` and `UI handoff` lines. If there are no confirmed findings, state `No confirmed findings.` Report any investigation concerns separately. Do not include empty sections.
