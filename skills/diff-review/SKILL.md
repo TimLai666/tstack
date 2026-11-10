@@ -1,6 +1,6 @@
 ---
 name: diff-review
-description: "Review a code diff before substantial or high-risk code is committed or handed back, opened as a pull request or merge request, or merged. This skill MUST be used when the user provides a code diff, pastes code changes, or asks for a code, PR or MR review, and when code is about to be submitted as a PR or MR or merged. It MUST NOT be skipped solely because the diff is small. When this conversation wrote any part of the diff, the review MUST be dispatched to an independent reviewer through agent-delegation, not done by the main conversation. It MUST NOT be used for changes limited to documentation, prose, images or formatting. It checks requirement scope, correctness, compatibility, maintainability and test coverage, and is the single entry for code review: it MUST hand security-relevant changes to security-scan and changed screens to ui-review, and merges their findings. Triggers on: 幫我 review, 幫我看程式 diff, 看一下程式改了什麼, review 程式碼, PR review, MR review, diff review, code review, 看看程式有沒有問題"
+description: "Review a code diff before substantial or high-risk code is committed or handed back, opened as a pull request or merge request, or merged. This skill MUST be used when the user provides a code diff or asks for a code, PR or MR review, and when code is about to be submitted as a PR or MR or merged. It MUST NOT be skipped solely because the diff is small. When this conversation wrote the diff, the review MUST be dispatched to an independent reviewer through agent-delegation; only a small, low-risk change of its own gets a lightweight self-review. It MUST NOT be used for changes limited to documentation, prose, images or formatting. It checks scope, correctness, compatibility, maintainability and tests, and is the single entry for code review: it MUST hand security-relevant changes to security-scan and changed screens to ui-review, and merges their findings. Triggers on: 幫我 review, 幫我看程式 diff, 看一下程式改了什麼, review 程式碼, PR review, MR review, diff review, code review, 看看程式有沒有問題"
 allowed-tools:
   - Bash
   - Read
@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "3.1.3"
+  version: "3.2.0"
 ---
 
 ## Who reviews
@@ -22,8 +22,15 @@ This follows the core's [Independent Review](../software-engineering-guidelines/
 | You are | Do |
 |---|---|
 | The main conversation, and it wrote or changed any part of the diff | Do not review. Follow [Dispatching the review](#dispatching-the-review), then [Final output](#final-output) |
+| The main conversation, and the diff is a small, low-risk change of its own | Do a [lightweight review](#lightweight-review) yourself |
 | The main conversation, and it had no part in the diff | Review it yourself with the sequence below |
 | A reviewer dispatched for this diff | Review it yourself with the sequence below. Do not dispatch anyone, and leave the handoffs to the main conversation |
+
+A change is small and low-risk when it is a few lines, is easy to revert, meets neither [Security handoff](#security-handoff) nor the condition in [Adversarial review](#adversarial-review), and changes no shared contract. When in doubt, it is not.
+
+### Lightweight review
+
+Read the whole diff once against the request and the technical checks that apply to it. Dispatch no one. Report with [Final output](#final-output) and state on the `Reviewed` line that it was a lightweight self-review.
 
 ---
 
@@ -36,7 +43,7 @@ This follows the core's [Independent Review](../software-engineering-guidelines/
    - how to obtain the diff: the base and the command, or the PR or MR
    - the skill file to follow, by absolute path: this file for the code review, the **security-scan** skill in diff mode, the **ui-review** skill for the changed screens
    - that no file may be modified, and that findings use the core's [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity) format
-4. Add the reviewer described in [Adversarial subagent](#adversarial-subagent) when its condition holds.
+4. Add the [Adversarial review](#adversarial-review) when its condition holds.
 5. When the reviewers return, check each finding against the code or the rendered result. Keep what holds, and move what cannot be confirmed to Needs investigation with the missing fact.
 
 Fixing the findings is implementation again. A diff that changed after review is reviewed again by a reviewer, normally the same one resumed, not by the main conversation.
@@ -110,9 +117,12 @@ State which screens the diff changes, or that it changes none, with the files th
 
 ---
 
-## Adversarial subagent
+## Adversarial review
 
-The main conversation dispatches one more reviewer through **agent-delegation**, with the prompt below as its task, when the diff is large, spans multiple components, or affects high-impact behavior such as authentication, authorization, payments, sensitive data, migrations, concurrency, or critical user workflows.
+Run it when the diff is large, spans multiple components, or affects high-impact behavior such as authentication, authorization, payments, sensitive data, migrations, concurrency, or critical user workflows. It has two parts, each done by a reviewer the main conversation dispatches through **agent-delegation**:
+
+- **Breakage.** One more reviewer takes the side of a chaos engineer, with the prompt below as its task.
+- **Security.** When [Security handoff](#security-handoff) applies, the **security-scan** reviewer takes the side of an attacker. Say so in its task; **security-scan** describes how.
 
 ```text
 You are an adversarial reviewer. Review the established diff.
