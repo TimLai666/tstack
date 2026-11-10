@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "Software engineering guidelines for any software change. It is the core of the tstack stack: it names which tstack skill to use at each point of the work and owns the rules they share. This skill MUST be loaded before requirement clarification, architecture/design, implementation, refactoring, code review, testing, shipping, or creating Git commits (including standalone commit requests), and MUST NOT be skipped because the change is a one-liner. Covers simplicity, complete delivery based on a coherent implementation design, testing-first for high-impact changes with TDD (Test-Driven Development), and verifiable success criteria. Triggers on: 任何軟體規劃, 需求釐清, 架構設計, 寫 code, 改 code, 做功能, 修 bug, refactor, 開發, coding, development, 實作, 實現, 寫程式, 改程式, 加功能, 修問題, code review, 測試, 重構, init, 初始化專案, 建立 CLAUDE.md, 建立 AGENTS.md"
 metadata:
-  version: "2.8.1"
+  version: "2.8.2"
 ---
 
 ## The Stack
@@ -187,7 +187,7 @@ A requested action brings its counterparts with it. For each feature, go through
 
 The agent that produced a piece of work does not review it. When this conversation wrote or changed any part of what is under review, whether code, screens or a fix, the review is carried out by a reviewer in a separate context, dispatched through **agent-delegation**.
 
-The exception is a small, low-risk change of its own: a few lines that are easy to revert and touch nothing the review skills treat as high-impact or security-relevant. The main conversation reviews that one itself, lightly, and says in its report that it did.
+The exception is a small, low-risk change of its own: a few lines that are easy to revert, that change no shared contract, and that touch nothing the review skills treat as high-impact or security-relevant. When in doubt, it is not small. The main conversation does every review that applies to such a change itself, lightly, dispatches no one, and says in its report that it did.
 
 - The main conversation decides which reviews apply and dispatches them. It gives each reviewer the request, the acceptance criteria, where the work is, and the review skill to follow. It does not pass along its own reasoning about the work or its opinion of it.
 - When the reviewers return, the main conversation checks each finding against the code or the rendered result, then merges and reports them. It does not add a verdict of its own that the work is sound.

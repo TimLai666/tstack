@@ -209,7 +209,20 @@ class GlobalPreferences(unittest.TestCase):
         self.assertIn("1 live key(s)", self.run_memory("stats", "--global").stdout)
         self.assertIn(os.path.join(".tstack", "global", "learnings.jsonl"), self.run_memory("path", "--global").stdout)
 
-    def test_fit_reduces_global_and_machine_stores_to_keys_together(self):
+    def test_fit_reduces_machine_facts_before_global_preferences(self):
+        for i in range(12):
+            self.add("long-project-rule-%02d" % i, "很長的專案經驗" * 120, kind="pitfall")
+        for i in range(4):
+            self.add("global-preference-%02d" % i, "個人偏好" * 70, "--global", kind="preference")
+        for i in range(10):
+            self.add("machine-fact-number-%02d" % i, "機器事實" * 70, "--machine")
+        shown = self.run_memory("load", "--fit", "4200").stdout
+        self.assertLessEqual(len(shown), 4200)
+        self.assertIn("# Machine memory — 10 fact(s), keys only:", shown)
+        self.assertIn("# Global memory — 4 preference(s)\n", shown)
+        self.assertIn("個人偏好個人偏好", shown)
+
+    def test_fit_reduces_both_wide_stores_when_it_must(self):
         for i in range(12):
             self.add("long-project-rule-%02d" % i, "很長的專案經驗" * 120, kind="pitfall")
         for i in range(10):

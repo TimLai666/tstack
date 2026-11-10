@@ -31,7 +31,7 @@
 - Haiku 用在唯讀探索、雜事、分類與簡單的寫程式任務。
 - 任務同時符合分類與雜事或探索時，照分類那一列派。
 - 輪到 Claude 時，Sonnet 用在 Haiku 寫不出來的寫程式任務。
-- Opus 只用在前端設計、決策、寫規則、複雜架構、review、深度研究，以及 Sonnet 也沒過驗證的寫程式格子。派工順序依決策表，接手寫程式格子時 `claude -p` 改用 `--effort low`。
+- Opus 只用在前端設計、決策、寫規則、複雜架構、review、驗收審查、深度研究，以及 Sonnet 也沒過驗證的寫程式格子。派工順序依決策表，接手寫程式格子時 `claude -p` 改用 `--effort low`。
 - 寫程式那一列，同一個格子在同一級連續兩次沒過驗證才往下一級，claude 那欄依 Haiku、Sonnet、Opus 的順序升級。
 - 同一個 CLI 同時最多跑三條，Copilot 也計入，Claude Code 的 Agent 工具也算 claude。
 - 不用宿主自己的 CLI 指令派工（`claude -p`、`codex exec` 等），改用宿主內建的 subagent 工具。同一個模型不同 CLI 可以。

@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "3.2.0"
+  version: "3.2.1"
 ---
 
 ## Who reviews
@@ -26,11 +26,11 @@ This follows the core's [Independent Review](../software-engineering-guidelines/
 | The main conversation, and it had no part in the diff | Review it yourself with the sequence below |
 | A reviewer dispatched for this diff | Review it yourself with the sequence below. Do not dispatch anyone, and leave the handoffs to the main conversation |
 
-A change is small and low-risk when it is a few lines, is easy to revert, meets neither [Security handoff](#security-handoff) nor the condition in [Adversarial review](#adversarial-review), and changes no shared contract. When in doubt, it is not.
+Small and low-risk is defined in the core's [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review). For a diff, security-relevant means [Security handoff](#security-handoff) applies, and high-impact means the condition in [Adversarial review](#adversarial-review) holds.
 
 ### Lightweight review
 
-Read the whole diff once against the request and the technical checks that apply to it. Dispatch no one. Report with [Final output](#final-output) and state on the `Reviewed` line that it was a lightweight self-review.
+Read the whole diff once against the request and the technical checks that apply to it. Dispatch no one. When [UI handoff](#ui-handoff) applies, look at the changed screens yourself following **ui-review** and report it on the `UI handoff` line. Report with [Final output](#final-output) and state on the `Reviewed` line that it was a lightweight self-review.
 
 ---
 

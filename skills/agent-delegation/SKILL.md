@@ -14,7 +14,7 @@ description: >-
   Dispatched workers MUST NOT apply this skill or delegate. Ordinary prompts MUST
   carry project lessons; workers MUST report lessons for verification and recording.
 metadata:
-  version: "2.27.0"
+  version: "2.27.1"
 ---
 
 # Agent 派工規範

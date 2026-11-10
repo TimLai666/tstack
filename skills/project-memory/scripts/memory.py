@@ -26,7 +26,7 @@ and path to that store, and makes add write there. NAME is the name used to reac
 the host, such as its SSH alias. --json and --all cover the project store unless
 one of the three is given. load --fit N (at least 200) keeps the output within N
 characters: the project memory is reduced to its keys first, then the machine
-facts, then the project key list is shortened. The heading of every reduced
+facts, then the global preferences, then the project key list is shortened. The heading of every reduced
 section says "keys only:".
 """
 
@@ -405,12 +405,17 @@ def fitted(text, limit, joined, project, entries, wide):
         lines = ["- %s (%s)" % (e["key"], e.get("type", "other")) for e in entries]
     else:
         header, lines = project, []  # the NO_LEARNINGS line stays as it is
-    full = "\n\n".join(text_of for _, _, text_of in wide)
-    keys = "\n\n".join(
-        "# %s — %d %s, keys only: run `load %s` for the text\n%s"
-        % (WIDE[name][1], len(found), WIDE[name][2], WIDE[name][3], ", ".join(e["key"] for e in found))
-        for name, found, _ in wide)
-    for wide_part in ((full, keys) if wide else ("",)):
+    def as_keys(name, found):
+        return ("# %s — %d %s, keys only: run `load %s` for the text\n%s"
+                % (WIDE[name][1], len(found), WIDE[name][2], WIDE[name][3], ", ".join(e["key"] for e in found)))
+
+    # Wide stores give way from the last one printed: machine facts before the user's global preferences,
+    # which are rules to follow and are the last thing reduced to keys.
+    stages = ["\n\n".join(as_keys(name, found) if position >= len(wide) - reduced else text_of
+                           for position, (name, found, text_of) in enumerate(wide))
+              for reduced in range(len(wide) + 1)]
+    keys = stages[-1]
+    for wide_part in stages:
         text = joined("\n".join([header] + lines), wide_part)
         if len(text) <= limit:
             return text
