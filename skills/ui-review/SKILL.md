@@ -10,7 +10,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 ## Overview
@@ -23,7 +23,9 @@ Review what was built, as the user will see it. The input is the running interfa
 | Code logic and implementation | **diff-review** |
 | Vulnerabilities | **security-scan** |
 
-When **diff-review** hands over a diff, review only the screens it changed and return the findings to it.
+When this conversation built or changed the screens under review, the review follows the core's [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review): a reviewer in a separate context does it, and the main conversation only checks the findings. A reviewer dispatched for this purpose reviews the screens itself and dispatches no one.
+
+When the review is for a diff handed over by **diff-review**, cover only the screens that diff changed and return the findings.
 
 A review request produces findings and recommendations. Fix only when the user asked for fixes, then recheck the affected screens in the rendered result.
 

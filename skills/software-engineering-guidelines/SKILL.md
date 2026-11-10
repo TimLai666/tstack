@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "Software engineering guidelines for any software change. It is the core of the tstack stack: it names which tstack skill to use at each point of the work and owns the rules they share. This skill MUST be loaded before requirement clarification, architecture/design, implementation, refactoring, code review, testing, shipping, or creating Git commits (including standalone commit requests), and MUST NOT be skipped because the change is a one-liner. Covers simplicity, complete delivery based on a coherent implementation design, testing-first for high-impact changes with TDD (Test-Driven Development), and verifiable success criteria. Triggers on: 任何軟體規劃, 需求釐清, 架構設計, 寫 code, 改 code, 做功能, 修 bug, refactor, 開發, coding, development, 實作, 實現, 寫程式, 改程式, 加功能, 修問題, code review, 測試, 重構, init, 初始化專案, 建立 CLAUDE.md, 建立 AGENTS.md"
 metadata:
-  version: "2.4.0"
+  version: "2.5.0"
 ---
 
 ## The Stack
@@ -178,6 +178,14 @@ Rules that several tstack skills rely on. Each is defined once here; the other s
 - A cause that is not verified is a hypothesis. Label it as one, and do not write it into code comments, docstrings, agent instruction files, skills or project memory as a fact.
 - Retrying follows item 4 of [Evidence-Guided Iterations](#evidence-guided-iterations).
 
+### Independent Review
+
+The agent that produced a piece of work does not review it. When this conversation wrote or changed any part of what is under review, whether code, screens or a fix, the review is carried out by a reviewer in a separate context, dispatched through **agent-delegation**. This holds however small the change is.
+
+- The main conversation decides which reviews apply and dispatches them. It gives each reviewer the request, the acceptance criteria, where the work is, and the review skill to follow. It does not pass along its own reasoning about the work or its opinion of it.
+- When the reviewers return, the main conversation checks each finding against the code or the rendered result, then merges and reports them. It does not add a verdict of its own that the work is sound.
+- Work this conversation had no part in producing, such as a diff the user hands over or someone else's PR, may be reviewed directly.
+
 ### Findings and Severity
 
 **diff-review**, **security-scan** and **ui-review** report with this format and scale, so their results merge into one list.
@@ -246,7 +254,7 @@ Fill the skeleton using Principles 2–4 and Principle 5's whole-goal priorities
 ### C. After Completion
 
 1. Verify with **test-and-fix** and report the results (Principle 4).
-2. Review the diff with **diff-review** when the change is substantial or about to become a PR, MR or merge. It hands security-relevant changes and changed screens to the other review skills.
+2. Have the diff reviewed through **diff-review** when the change is substantial or about to become a PR, MR or merge. The review follows [Independent Review](#independent-review): reviewers in separate contexts cover the code, and security-relevant changes and changed screens where they apply.
 3. Review the Pre-Ship Checklist.
 4. Commit under [Staging and Commits](#staging-and-commits). Push, open a PR or MR, or merge through **ship-it**.
 5. Record qualifying lessons through **project-memory**.

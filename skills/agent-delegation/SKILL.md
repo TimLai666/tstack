@@ -14,7 +14,7 @@ description: >-
   Dispatched workers MUST NOT apply this skill or delegate. Ordinary prompts MUST
   carry project lessons; workers MUST report lessons for verification and recording.
 metadata:
-  version: "2.25.0"
+  version: "2.26.0"
 ---
 
 # Agent 派工規範
@@ -143,7 +143,7 @@ Copilot 宿主依當前執行環境判定，不把登入、模型設定或繼承
 
 ### 審查脈絡隔離
 
-Reviewer MUST 與受審成果的實作者 context 隔離，包括主 agent 親自實作時的主對話。不得把實作者的 agent 或 session 改名、換角色或要求忽略前文後拿來審查，也不得透過對話繼承或轉貼實作討論帶入該脈絡。要求互相獨立的角色，即使分不同時間執行也不得共用 context。此規則同時適用於內建工具與外部 CLI。
+誰的成果必須交給獨立的 reviewer，依核心的 [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review)。本節規定怎麼隔離。Reviewer MUST 與受審成果的實作者 context 隔離，包括主 agent 親自實作時的主對話。不得把實作者的 agent 或 session 改名、換角色或要求忽略前文後拿來審查，也不得透過對話繼承或轉貼實作討論帶入該脈絡。要求互相獨立的角色，即使分不同時間執行也不得共用 context。此規則同時適用於內建工具與外部 CLI。
 
 一般審查提供需求、驗收條件、程式碼、diff 與可核對的驗證證據。既有 reviewer 只有在未帶入受審成果的實作脈絡，且本次審查不要求與前次審查隔離時才能複用。空 context 可讀性審查另依下節限制輸入與複查方式。
 

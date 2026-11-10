@@ -13,7 +13,7 @@ allowed-tools:
   - WebFetch
   - WebSearch
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # 資安掃描
@@ -48,6 +48,7 @@ metadata:
 - 讀專案的規則檔、架構文件與既有的安全相關紀錄。用 **project-memory** 載入本專案的記憶。
 - 只測使用者擁有或獲授權的程式與環境。重現漏洞只在本機或測試環境進行，不對正式環境與第三方服務送攻擊請求，不讀取、不帶出真實使用者的資料。
 - 掃描期間不改動程式。修補在步驟 6 進行。
+- 這段對話寫過或改過掃描範圍內的程式時，步驟 3 到 5 依核心的 [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review) 派給獨立的 reviewer 做，主對話只核對發現。修補之後的複查也一樣。被派來的 reviewer 自己完成掃描，不再派工。
 
 ### 2. 抓最新清單
 
