@@ -4,12 +4,19 @@
 Usage: guard.py, with the PreToolUse hook event JSON on stdin.
 A matching command is denied with the replacement in the reason. Anything this
 script cannot parse is let through, and any error prints nothing and exits 0.
+
+It also hands over what project-memory holds about a remote host: the first
+command in a session that connects to a host with recorded facts is denied once,
+with those facts in the reason, so they are read before anything runs there.
+
 Set TSTACK_GUARD=off in the environment Claude Code starts from to switch it off.
 """
 import json
 import os
+from pathlib import Path
 import re
 import shlex
+import subprocess
 import sys
 
 OPERATORS = {"&&", "||", ";", "|", "&", "|&", ";;", "(", ")"}
@@ -31,6 +38,13 @@ MERGE = ("`glab mr merge` 不寫明時預設開啟 auto-merge，還沒有 pipeli
          "該 SHA 還沒有 pipeline 時兩種都不要下，先等 pipeline 出現。細節見 ship-it 的 Step 8。")
 KILL_BY_NAME = ("不依程式名稱結束程序，同名的程序可能是使用者或其他流程開的。"
                 "只結束自己啟動的那一個：POSIX 用 `kill <PID>`，Windows 用 `taskkill /PID <PID>` 或 `Stop-Process -Id <PID>`。")
+HOST_FACTS = ("連到 %s 之前，先讀 project-memory 裡這台主機的記錄：\n\n%s\n\n"
+              "讀完後重新執行同一個指令。這個提醒在每段對話裡，每台主機只出現一次。")
+MEMORY_SCRIPT = Path(__file__).resolve().parent.parent / "skills" / "project-memory" / "scripts" / "memory.py"
+# ssh options that take a value, so the word after them is not the host.
+SSH_VALUE_OPTIONS = set("bcDEeFIiJLlmOopQRSWw")
+REMOTE_PATH = re.compile(r"^(?:[^@/\\:\s]+@)?([A-Za-z0-9][A-Za-z0-9._-]*):")
+
 WINDOWS_TMP = ("Windows 上各個 shell 與程式對 `/tmp` 的解讀不同，寫進去的檔案別的程式讀不到。"
                "改用這個 session 的暫存目錄或專案內的絕對路徑。")
 
@@ -122,6 +136,79 @@ def check_segment(words):
     return None
 
 
+def host_name(raw):
+    """Normalised the way project-memory names a host folder, or None."""
+    name = raw.rsplit("@", 1)[-1].strip().lower()
+    return name if re.match(r"^[a-z0-9][a-z0-9._-]*$", name) and ".." not in name else None
+
+
+def remote_hosts(command):
+    """Hosts that the ssh, mosh, sftp, scp and rsync commands in this line connect to, in order."""
+    found = []
+    if not isinstance(command, str):
+        return found
+    for words in segments(command):
+        words = strip_prefix(words)
+        if not words:
+            continue
+        name, args, target = program(words[0]), words[1:], None
+        if name in ("ssh", "mosh", "sftp"):
+            i = 0
+            while i < len(args) and args[i].startswith("-"):
+                takes_value = len(args[i]) == 2 and args[i][1] in SSH_VALUE_OPTIONS
+                i += 2 if takes_value else 1
+            if i < len(args):
+                target = host_name(args[i].split(":", 1)[0])
+        elif name in ("scp", "rsync"):
+            for arg in args:
+                match = None if arg.startswith(("-", "/", ".", "~")) else REMOTE_PATH.match(arg)
+                if match and len(match.group(1)) > 1:  # a single letter is a Windows drive
+                    target = host_name(match.group(1))
+                    break
+        if target and target not in found:
+            found.append(target)
+    return found
+
+
+def host_facts(host):
+    """What project-memory recorded about this host, or None when there is nothing to read."""
+    store = Path(os.path.expanduser("~")) / ".tstack" / "hosts" / host / "learnings.jsonl"
+    if not store.is_file():
+        return None
+    result = subprocess.run([sys.executable, str(MEMORY_SCRIPT), "load", "--host", host], capture_output=True,
+                            text=True, encoding="utf-8", errors="replace", timeout=6,
+                            env=dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1"))
+    text = result.stdout.strip()
+    return text if result.returncode == 0 and text.startswith("# Host memory") else None
+
+
+def first_time(session, host):
+    """True the first time this session meets this host, None on later ones, False when nothing can be kept."""
+    root = os.environ.get("CLAUDE_PLUGIN_DATA")
+    if not root:
+        return False
+    folder = Path(root) / "host-facts-shown"
+    folder.mkdir(parents=True, exist_ok=True)
+    marker = folder / (re.sub(r"[^A-Za-z0-9_-]", "_", session or "unknown") + "--" + host + ".flag")
+    if marker.exists():
+        return None
+    marker.touch()
+    return True
+
+
+def host_notice(command, session):
+    """(facts text, deny?) for the first host in the command whose facts were not shown yet, or None."""
+    for host in remote_hosts(command):
+        facts = host_facts(host)
+        if not facts:
+            continue
+        seen = first_time(session, host)
+        if seen is None:
+            continue
+        return HOST_FACTS % (host, facts), bool(seen)
+    return None
+
+
 def violation(command, windows=None):
     """The replacement advice for the first blocked command in the line, or None."""
     if not isinstance(command, str) or not command.strip():
@@ -141,12 +228,19 @@ def main():
         if os.environ.get("TSTACK_GUARD", "").lower() == "off":
             return 0
         event = json.loads(sys.stdin.read())
-        reason = violation((event.get("tool_input") or {}).get("command"))
+        command = (event.get("tool_input") or {}).get("command")
+        reason, deny = violation(command), True
+        if not reason:
+            notice = host_notice(command, event.get("session_id"))
+            if notice:
+                reason, deny = notice
     except Exception:  # A guard that crashes must not block work.
         return 0
     if reason:
-        reply = {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
-                                        "permissionDecisionReason": "tstack guard：" + reason}}
+        # Without a place to remember that it was shown, a denial would repeat forever: add context instead.
+        detail = ({"permissionDecision": "deny", "permissionDecisionReason": "tstack guard：" + reason} if deny
+                  else {"additionalContext": "tstack guard：" + reason})
+        reply = {"hookSpecificOutput": dict(hookEventName="PreToolUse", **detail)}
         # Claude Code reads hook output as UTF-8; Windows consoles default to a legacy code page.
         sys.stdout.buffer.write(json.dumps(reply, ensure_ascii=False).encode("utf-8") + b"\n")
     return 0

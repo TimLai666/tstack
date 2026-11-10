@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 
 SCRIPT = Path(__file__).resolve().parent / "guard.py"
@@ -87,9 +88,19 @@ class Rules(unittest.TestCase):
 
 
 class Hook(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.home = Path(tmp.name) / "home"
+        self.data = Path(tmp.name) / "plugin-data"
+        self.home.mkdir()
+
     def run_hook(self, payload, raw=None, **env):
+        # A private home: host facts are read from ~/.tstack and must never come from the real one.
+        base = dict(os.environ, HOME=str(self.home), USERPROFILE=str(self.home), CLAUDE_PLUGIN_DATA=str(self.data))
+        base.update(env)
         result = subprocess.run([sys.executable, str(SCRIPT)], input=raw if raw is not None else json.dumps(payload),
-                                capture_output=True, text=True, encoding="utf-8", timeout=20, env=dict(os.environ, **env))
+                                capture_output=True, text=True, encoding="utf-8", timeout=20, env=base)
         self.assertEqual(result.returncode, 0, result.stderr)
         return result.stdout
 
@@ -107,6 +118,87 @@ class Hook(unittest.TestCase):
         self.assertEqual(self.run_hook({"tool_name": "Bash"}), "")
         blocked = {"tool_name": "Bash", "tool_input": {"command": "git add -A"}}
         self.assertEqual(self.run_hook(blocked, TSTACK_GUARD="off"), "")
+
+
+class HostTargets(unittest.TestCase):
+    def targets(self, command):
+        return guard.remote_hosts(command)
+
+    def test_ssh_like_commands_name_their_host(self):
+        cases = {
+            "ssh devbox": ["devbox"],
+            "ssh user@DevBox.local uptime": ["devbox.local"],
+            "ssh -p 2222 -i ~/.ssh/key -o StrictHostKeyChecking=no deploy@prod-api 'ls /srv'": ["prod-api"],
+            "ssh -J jump devbox": ["devbox"],
+            "mosh devbox": ["devbox"],
+            "sftp deploy@devbox": ["devbox"],
+            "scp build.tar.gz deploy@devbox:/srv/app/": ["devbox"],
+            "scp -P 2222 devbox:/var/log/app.log ./logs/": ["devbox"],
+            "rsync -az ./dist/ devbox:/srv/www/": ["devbox"],
+            "cd app && ssh devbox 'docker ps' | head": ["devbox"],
+            "ssh devbox && scp a prod-api:/tmp/a": ["devbox", "prod-api"],
+        }
+        for command, expected in cases.items():
+            self.assertEqual(self.targets(command), expected, command)
+
+    def test_local_commands_and_paths_name_no_host(self):
+        for command in ("ls -la", "git push origin main", "scp a.txt b.txt", "rsync -a ./src/ ./backup/",
+                        "cp C:/Users/me/a.txt D:/b.txt", "ssh", "ssh -V", "echo 'ssh devbox'", "ssh-keygen -t ed25519",
+                        "rsync -a /var/data/ /mnt/backup/", "scp ./a:b ./c"):
+            self.assertEqual(self.targets(command), [], command)
+
+
+class HostFacts(Hook):
+    def fact(self, host, key, insight):
+        path = self.home / ".tstack" / "hosts" / host / "learnings.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps({"ts": "2026-01-01T00:00:00Z", "type": "tool", "key": key, "insight": insight,
+                                     "confidence": 9, "source": "test"}, ensure_ascii=False) + "\n")
+
+    def bash(self, command, session="s1", **env):
+        return self.run_hook({"hook_event_name": "PreToolUse", "tool_name": "Bash", "session_id": session,
+                              "tool_input": {"command": command}}, **env)
+
+    def test_first_connection_to_a_host_with_facts_is_denied_with_the_facts(self):
+        self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
+        data = json.loads(self.bash("ssh deploy@devbox 'docker ps'"))["hookSpecificOutput"]
+        self.assertEqual(data["permissionDecision"], "deny")
+        self.assertIn("devbox 上 docker 要加 sudo", data["permissionDecisionReason"])
+        self.assertIn("重新執行", data["permissionDecisionReason"])
+
+    def test_the_same_host_is_not_denied_twice_in_a_session_but_is_in_another(self):
+        self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
+        self.assertIn("deny", self.bash("ssh devbox"))
+        self.assertEqual(self.bash("ssh devbox uptime"), "")
+        self.assertEqual(self.bash("scp a devbox:/tmp/a"), "")
+        self.assertIn("deny", self.bash("ssh devbox", session="s2"))
+
+    def test_each_host_gets_its_own_notice_and_hosts_without_facts_pass(self):
+        self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
+        self.fact("prod-api", "deploy-user-only", "prod-api 只能用 deploy 帳號登入")
+        self.assertEqual(self.bash("ssh staging uptime"), "")
+        self.assertIn("docker 要加 sudo", self.bash("ssh devbox"))
+        self.assertIn("deploy 帳號", self.bash("ssh prod-api"))
+
+    def test_a_dangerous_command_is_reported_before_host_facts(self):
+        self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
+        out = json.loads(self.bash("git add -A && ssh devbox"))["hookSpecificOutput"]
+        self.assertIn("git add -- <路徑>", out["permissionDecisionReason"])
+
+    def test_without_a_place_to_remember_it_adds_context_instead_of_denying(self):
+        self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
+        data = json.loads(self.bash("ssh devbox", CLAUDE_PLUGIN_DATA=""))["hookSpecificOutput"]
+        self.assertNotIn("permissionDecision", data)
+        self.assertIn("docker 要加 sudo", data["additionalContext"])
+
+    def test_switch_off_and_unreadable_facts_never_block(self):
+        self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
+        self.assertEqual(self.bash("ssh devbox", TSTACK_GUARD="off"), "")
+        broken = self.home / ".tstack" / "hosts" / "broken" / "learnings.jsonl"
+        broken.parent.mkdir(parents=True)
+        broken.write_text("{not json\n", encoding="utf-8")
+        self.assertEqual(self.bash("ssh broken"), "")
 
 
 if __name__ == "__main__":

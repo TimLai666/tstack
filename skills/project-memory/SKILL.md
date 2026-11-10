@@ -8,7 +8,7 @@ allowed-tools:
   - Edit
   - AskUserQuestion
 metadata:
-  version: "1.14.1"
+  version: "1.15.0"
 ---
 
 ## Purpose and workflow
@@ -161,7 +161,7 @@ Some facts are about a machine, not a project, and hold in every project worked 
 - `NAME` is the name used to reach the host, such as its SSH alias. Use the same name every time.
 - Host facts are recorded from this machine and stay on it. Nothing is written on the remote host.
 - Each fact is at most 300 characters: the condition, then what to do. Leave the story of how it was found out.
-- `load` prints the machine facts in full and the names of the hosts that have facts. Before working on a remote host, run `load --host NAME`.
+- `load` prints the machine facts in full and the names of the hosts that have facts. Before working on a remote host, run `load --host NAME`. In Claude Code the tstack guard hook shows that host's facts on the first `ssh`, `mosh`, `sftp`, `scp` or `rsync` command that names it; run the load yourself when the host is reached another way, such as through a jump host or a name held in a variable.
 - A fact that something is absent, not installed or impossible says how that was checked. Before relying on one whose recorded date is old, or after the environment changed, check again; when it no longer holds, re-add the same key with the current state.
 - Record the location of a credential, never its value.
 - The second-occurrence rule above applies here too.

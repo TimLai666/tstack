@@ -56,7 +56,9 @@ tstack 是一個整體，只支援整組安裝。各個 skill 會直接引用彼
 | 依名稱結束程序：`pkill`、`killall`、`taskkill /IM`、沒有 `-Id` 的 `Stop-Process` | 用 PID 結束自己啟動的那一個 |
 | Windows 上的 `/tmp/` 路徑 | session 的暫存目錄或專案內的絕對路徑 |
 
-需要關掉防護時，在啟動 Claude Code 的環境設定 `TSTACK_GUARD=off`。
+同一支 hook 也負責遠端主機的事實：指令是用 `ssh`、`mosh`、`sftp`、`scp` 或 `rsync` 連到某台主機，而記憶裡有那台的記錄時，第一次會擋下來並把記錄直接顯示給 agent，讀完重下同一個指令就會通過。每段對話、每台主機只擋一次；沒有記錄的主機不受影響。
+
+需要關掉這支 hook 時，在啟動 Claude Code 的環境設定 `TSTACK_GUARD=off`。
 
 ## 記憶放在哪裡
 
@@ -66,7 +68,7 @@ tstack 是一個整體，只支援整組安裝。各個 skill 會直接引用彼
 |---|---|---|
 | 單一專案的經驗 | `projects/<專案>/learnings.jsonl` | 在那個專案開對話時 |
 | 這台機器的事實，例如沒裝某個工具、某個路徑不能執行程式 | `machine/learnings.jsonl` | 在這台機器的每個專案開對話時 |
-| 從這台連過去的遠端主機的事實 | `hosts/<主機名稱>/learnings.jsonl` | 開對話時只列出主機名稱，要到那台工作前才載入 |
+| 從這台連過去的遠端主機的事實 | `hosts/<主機名稱>/learnings.jsonl` | 開對話時只列出主機名稱；第一次連到那台時由 hook 帶入 |
 
 機器與遠端主機的事實每筆最多 300 字，只寫條件與做法。遠端主機的事實存在本機，不會寫到遠端。
 
