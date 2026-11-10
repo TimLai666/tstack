@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "Software engineering guidelines for any software change. It is the core of the tstack stack: it names which tstack skill to use at each point of the work and owns the rules they share. This skill MUST be loaded before requirement clarification, architecture/design, implementation, refactoring, code review, testing, shipping, or creating Git commits (including standalone commit requests), and MUST NOT be skipped because the change is a one-liner. Covers simplicity, complete delivery based on a coherent implementation design, testing-first for high-impact changes with TDD (Test-Driven Development), and verifiable success criteria. Triggers on: 任何軟體規劃, 需求釐清, 架構設計, 寫 code, 改 code, 做功能, 修 bug, refactor, 開發, coding, development, 實作, 實現, 寫程式, 改程式, 加功能, 修問題, code review, 測試, 重構, init, 初始化專案, 建立 CLAUDE.md, 建立 AGENTS.md"
 metadata:
-  version: "2.3.0"
+  version: "2.4.0"
 ---
 
 ## The Stack
@@ -11,7 +11,7 @@ This skill is the core of tstack. tstack is installed as a whole: every other ts
 
 | When | Use |
 |---|---|
-| Starting work in a project without its memory in context; when the work wraps up or something costly was learned | **project-memory** |
+| Starting work in a project without its memory in context; when the work wraps up or something costly was learned; a fact about this machine or a remote host was found; before working on a remote host | **project-memory** |
 | Architecture, module boundaries or the split into tickets is undecided | **eng-architect** |
 | A failure whose cause is unknown, a red CI pipeline, the same error a second time, or an expected result that never appeared | **investigate** |
 | Code changed and not yet verified; before pushing; before calling something fixed or done | **test-and-fix** |

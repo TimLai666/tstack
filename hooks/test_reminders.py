@@ -67,6 +67,29 @@ class Reminders(unittest.TestCase):
                 handle.write(json.dumps({"ts": "2026-01-01T00:00:00Z", "type": "pitfall", "key": key,
                                          "insight": insight, "confidence": 8, "source": "test"}, ensure_ascii=False) + "\n")
 
+    def machine_fact(self, key, insight):
+        path = self.home / ".tstack" / "machine" / "learnings.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps({"ts": "2026-01-01T00:00:00Z", "type": "tool", "key": key, "insight": insight,
+                                     "confidence": 9, "source": "test"}, ensure_ascii=False) + "\n")
+
+    def test_session_start_carries_machine_facts_even_without_project_memory(self):
+        self.machine_fact("temp-folder-blocks-exe", "暫存資料夾不能執行 exe")
+        text = self.session_start()
+        self.assertIn("暫存資料夾不能執行 exe", text)
+        self.assertIn("不用再執行 load", text)
+        self.assertNotIn("還沒有記憶", text)
+
+    def test_long_project_memory_still_leaves_machine_facts_in_full(self):
+        self.machine_fact("temp-folder-blocks-exe", "暫存資料夾不能執行 exe")
+        self.remember(*[("long-rule-%02d" % i, "很長的經驗" * 150) for i in range(20)])
+        text = self.session_start()
+        self.assertLess(len(text), 10000)
+        self.assertIn("long-rule-19", text)
+        self.assertIn("暫存資料夾不能執行 exe", text)
+        self.assertIn("執行 load", text)
+
     def session_start(self, **payload):
         return self.context("session-start", "SessionStart", dict(source="startup", **payload))["additionalContext"]
 

@@ -21,10 +21,12 @@ MEMORY_SCRIPT = Path(__file__).resolve().parent.parent / "skills" / "project-mem
 CONTEXT_BUDGET = 9000
 
 INTRO = "這個環境裝了 tstack plugin。"
-MEMORY_LOADED = "以下是 project-memory 已替你載入的本專案記憶，這次對話不用再執行 load，要查某一筆的全文時用 search：\n\n"
-MEMORY_EMPTY = "本專案在 project-memory 還沒有記憶。"
+MEMORY_LOADED = ("以下是 project-memory 已替你載入的本專案記憶與這台機器的事實，這次對話不用再執行 load，"
+                 "要查某一筆的全文時用 search：\n\n")
+MEMORY_EMPTY = "本專案在 project-memory 還沒有記憶，這台機器也還沒有記錄任何事實。"
 MEMORY_KEYS = ("本專案的記憶太長，hook 放不下全文，以下只列出各筆的 key。"
                "開始工作前先依 project-memory skill 執行 load 讀完整內容：\n")
+MACHINE_UNREAD = "\n\n這台機器的事實也放不下，一併由 load 讀取。"
 MEMORY_UNREAD = "開始工作前，先依 project-memory skill 載入本專案的記憶。"
 SKILLS = ("\n\n規劃、寫程式、改程式、審查或 commit 前，先載入 software-engineering-guidelines skill。"
           "要開 subagent、外派其他 CLI、變更既有 API，或交付規格、文章、報告前，先載入 agent-delegation skill。")
@@ -56,14 +58,19 @@ def session_start(cwd):
         loaded = run_memory(cwd, "load")
         if loaded is None:
             raise OSError("memory script failed")
-        if loaded.startswith("NO_LEARNINGS"):
+        if loaded.startswith("NO_LEARNINGS") and "# Machine memory" not in loaded and "# Remote hosts" not in loaded:
             memory = MEMORY_EMPTY
         elif len(INTRO + MEMORY_LOADED + loaded + SKILLS) <= CONTEXT_BUDGET:
             memory = MEMORY_LOADED + loaded
         else:
             entries = json.loads(run_memory(cwd, "load", "--json") or "[]")
             keys = "\n".join("- %s（%s）" % (e.get("key"), e.get("type")) for e in entries)
-            memory = (MEMORY_KEYS + keys)[:CONTEXT_BUDGET - len(INTRO + SKILLS)]
+            room = CONTEXT_BUDGET - len(INTRO + SKILLS)
+            memory = (MEMORY_KEYS + keys)[:room - len(MACHINE_UNREAD)]
+            facts = run_memory(cwd, "load", "--machine") or ""
+            if facts.startswith("# Machine memory"):
+                # Machine facts are short by rule, so keep them in full when they still fit.
+                memory += "\n\n" + facts if len(memory) + len(facts) + 2 <= room else MACHINE_UNREAD
     except Exception:  # Fall back to asking for the load; never leave the session without the reminder.
         memory = MEMORY_UNREAD
     return INTRO + memory + SKILLS

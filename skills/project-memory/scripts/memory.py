@@ -3,15 +3,26 @@
 
 One learning per JSON line in ~/.tstack/projects/<slug>/learnings.jsonl.
 A store left in ~/.mystack by earlier versions is moved over on every run.
+Facts about this machine that hold in every project go in
+~/.tstack/machine/learnings.jsonl; pass --machine to work on that store.
+Facts about a machine reached from here, for example over SSH, go in
+~/.tstack/hosts/<name>/learnings.jsonl on this machine; pass --host NAME.
 The store is agent-neutral on purpose: Claude, Codex, Cursor and others read and
 write the same file, so a lesson learned in one agent is visible in the next.
 
 Usage:
-  memory.py load [--all] [--json]
-  memory.py add --type T --key K --insight S --confidence N [--files a,b] [--source X] [--absorbs k1,k2]
-  memory.py search QUERY [--json]
-  memory.py stats
-  memory.py path
+  memory.py load [--all] [--json] [--machine | --host NAME]
+  memory.py add --type T --key K --insight S --confidence N [--machine | --host NAME]
+                [--files a,b] [--source X] [--absorbs k1,k2]
+  memory.py search QUERY [--json] [--machine | --host NAME]
+  memory.py stats [--machine | --host NAME]
+  memory.py path [--machine | --host NAME]
+
+load prints the project's memory, then the machine facts, then the names of the
+remote hosts that have facts. --machine or --host NAME limits load, search, stats
+and path to that store, and makes add write there. NAME is the name used to reach
+the host, such as its SSH alias. --json and --all cover the project store unless
+one of the two is given.
 """
 
 import argparse
@@ -34,6 +45,10 @@ BASE = os.path.join(HOME, ".tstack")
 LEGACY_BASE = os.path.join(HOME, ".mystack")
 ROOT = os.path.join(BASE, "projects")
 STORE_FILE = "learnings.jsonl"
+MACHINE_PATH = os.path.join(BASE, "machine", STORE_FILE)
+HOSTS_ROOT = os.path.join(BASE, "hosts")
+# Machine facts are shown in full in every session, so each one stays short.
+MACHINE_INSIGHT_LIMIT = 300
 
 
 def _append_missing_lines(src, dst):
@@ -129,8 +144,62 @@ def branch(cwd=None):
         return ""
 
 
-def store_path(cwd=None):
-    return os.path.join(ROOT, slug(cwd), STORE_FILE)
+def host_name(raw):
+    """A host's folder name, or None when the name cannot be one."""
+    name = (raw or "").strip().lower()
+    return name if re.match(r"^[a-z0-9][a-z0-9._-]*$", name) and ".." not in name else None
+
+
+def store_path(cwd=None, machine=False, host=None):
+    if host:
+        return os.path.join(HOSTS_ROOT, host, STORE_FILE)
+    return MACHINE_PATH if machine else os.path.join(ROOT, slug(cwd), STORE_FILE)
+
+
+def scope(args):
+    """(machine, host) for this command, or None after reporting a bad combination or name."""
+    raw = getattr(args, "host", None)
+    if raw is None:
+        return args.machine, None
+    host = host_name(raw)
+    if args.machine or not host:
+        print("ERROR: %s" % ("--machine and --host cannot be combined" if args.machine else
+                             "--host %r is not usable; give the name used to reach the host, "
+                             "made of letters, digits, dots, hyphens and underscores" % raw), file=sys.stderr)
+        return None
+    return False, host
+
+
+def hosts_with_facts():
+    """[(name, live fact count)] for every remote host that has a store."""
+    found = []
+    if os.path.isdir(HOSTS_ROOT):
+        for name in sorted(os.listdir(HOSTS_ROOT)):
+            count = len(live_entries(os.path.join(HOSTS_ROOT, name, STORE_FILE))[0])
+            if count:
+                found.append((name, count))
+    return found
+
+
+def live_entries(path):
+    """Deduplicated entries that still print on their own, plus damaged line numbers."""
+    entries, corrupt = read_all(path)
+    entries = dedupe(entries)
+    hidden = absorbed_keys(entries)
+    return [e for e in entries if e["key"] not in hidden], corrupt
+
+
+def render_machine(entries, corrupt, host=None):
+    """Every fact about a machine in full, with the day it was recorded so its age can be judged."""
+    out = ["# %s — %d fact(s)" % ("Host memory: %s" % host if host else "Machine memory", len(entries))]
+    for e in entries:
+        absorbs = e.get("absorbs") or []
+        merged = "  (absorbs %s)" % ", ".join(absorbs) if absorbs else ""
+        out.append("- **%s** (%s/10, %s) — %s%s" % (
+            e["key"], e.get("confidence", "?"), e.get("ts", "")[:10] or "undated", e.get("insight", ""), merged))
+    if corrupt:
+        out.append("\n⚠ %d unparsable line(s) skipped: %s" % (len(corrupt), corrupt))
+    return "\n".join(out)
 
 
 def read_all(path):
@@ -248,28 +317,49 @@ def add_reminder():
         "  python3 %s add --type <pitfall|pattern|preference|architecture|tool> "
         "--key <describes-the-lesson> --insight '<conditions, failed routes, verified method and evidence>' "
         "--confidence <7-10> --source '<agent-or-skill-name>'\n"
+        "A fact about this machine or its tools that holds in every project (what is or is not\n"
+        "installed, a path that cannot run programs, where a credential is configured) goes in the\n"
+        "machine store instead: add --machine, at most %d characters, as condition then what to do.\n"
+        "The same kind of fact about a machine reached from here goes in that host's store: add --host <name>.\n"
         "Draft the fields and save qualifying entries without waiting to be asked.\n"
         "Report saved entries; if nothing qualifies, no announcement is needed."
-        % os.path.abspath(__file__)
+        % (os.path.abspath(__file__), MACHINE_INSIGHT_LIMIT)
     )
 
 
 def cmd_load(args):
+    chosen = scope(args)
+    if chosen is None:
+        return 2
+    only_machine, host = chosen
+    if only_machine or host:
+        path = store_path(machine=only_machine, host=host)
+        entries, corrupt = live_entries(path)
+        if args.json:
+            print(json.dumps(entries, ensure_ascii=False, indent=2))
+        else:
+            print(render_machine(entries, corrupt, host) if entries else "NO_LEARNINGS (%s)" % path)
+        return 0
     path = store_path()
-    entries, corrupt = read_all(path)
-    entries = dedupe(entries)
-    # Filtered here rather than inside render(), so `search` still finds an
-    # absorbed entry under its old key.
-    hidden = absorbed_keys(entries)
-    entries = [e for e in entries if e["key"] not in hidden]
+    # Absorbed keys are dropped here rather than inside render(), so `search`
+    # still finds an absorbed entry under its old key.
+    entries, corrupt = live_entries(path)
     if args.json:
         print(json.dumps(entries, ensure_ascii=False, indent=2))
         return 0
     print(render(entries, corrupt, path,
                  "# Project memory — %d learning(s)" % len(entries), expand_all=args.all))
     # --json is machine output and --all is the export path that SKILL.md pastes
-    # into AGENTS.md; a prompt aimed at the current session belongs in neither.
+    # into AGENTS.md; machine facts and a prompt aimed at the current session
+    # belong in neither.
     if not args.all:
+        machine, machine_corrupt = live_entries(MACHINE_PATH)
+        if machine:
+            print("\n" + render_machine(machine, machine_corrupt))
+        hosts = hosts_with_facts()
+        if hosts:
+            print("\n# Remote hosts with recorded facts: %s\nBefore working on one of them, run `load --host <name>`."
+                  % ", ".join("%s (%d)" % pair for pair in hosts))
         print(add_reminder())
     return 0
 
@@ -306,7 +396,16 @@ def cmd_add(args):
         print("WARNING: --key starts with the generic word %r; a specific key is "
               "easier to spot in the index" % key.split("-")[0], file=sys.stderr)
 
-    path = store_path()
+    chosen = scope(args)
+    if chosen is None:
+        return 2
+    machine, host = chosen
+    if (machine or host) and len(args.insight.strip()) > MACHINE_INSIGHT_LIMIT:
+        print("ERROR: a machine fact is at most %d characters (this one has %d); write the condition "
+              "and what to do, and leave the story out" % (MACHINE_INSIGHT_LIMIT, len(args.insight.strip())),
+              file=sys.stderr)
+        return 2
+    path = store_path(machine=machine, host=host)
     # Self-absorption would be a no-op anyway (the timestamps are equal), but it
     # reads as a typo for a key the author meant to name, so say so.
     absorbs = [k for k in (_kebab(a) for a in args.absorbs.split(",")) if k and k != key]
@@ -325,7 +424,7 @@ def cmd_add(args):
         "insight": args.insight.strip(),
         "confidence": args.confidence,
         "source": args.source,
-        "branch": args.branch or branch(),
+        "branch": "" if machine or host else args.branch or branch(),
         "files": [f.strip() for f in args.files.split(",") if f.strip()] if args.files else [],
     }
     if absorbs:
@@ -338,23 +437,38 @@ def cmd_add(args):
 
 
 def cmd_search(args):
-    path = store_path()
-    entries, corrupt = read_all(path)
+    chosen = scope(args)
+    if chosen is None:
+        return 2
+    only_machine, host = chosen
     q = args.query.lower()
-    hits = [e for e in dedupe(entries)
-            if q in json.dumps(e, ensure_ascii=False).lower()]
+
+    def hits_in(path):
+        entries, corrupt = read_all(path)
+        return [e for e in dedupe(entries) if q in json.dumps(e, ensure_ascii=False).lower()], corrupt
+
+    path = store_path()
+    project, corrupt = ([], []) if only_machine or host else hits_in(path)
+    facts_path = store_path(machine=True, host=host)
+    facts, facts_corrupt = hits_in(facts_path)
     if args.json:
-        print(json.dumps(hits, ensure_ascii=False, indent=2))
+        print(json.dumps(project + facts, ensure_ascii=False, indent=2))
         return 0
-    if not hits:
-        print("NO_MATCHES for %r in %s" % (args.query, path))
+    if not project and not facts:
+        print("NO_MATCHES for %r in %s" % (args.query, facts_path if only_machine or host else path))
         return 0
-    print(render(hits, corrupt, path, "# Matches for %r — %d" % (args.query, len(hits)), expand_all=True))
+    if project:
+        print(render(project, corrupt, path, "# Matches for %r — %d" % (args.query, len(project)), expand_all=True))
+    if facts:
+        print(("\n" if project else "") + render_machine(facts, facts_corrupt, host))
     return 0
 
 
 def cmd_stats(args):
-    path = store_path()
+    chosen = scope(args)
+    if chosen is None:
+        return 2
+    path = store_path(machine=chosen[0], host=chosen[1])
     entries, corrupt = read_all(path)
     uniq = dedupe(entries)
     # Counted the same way load prints, so the two never disagree about how much
@@ -383,7 +497,10 @@ def cmd_stats(args):
 
 
 def cmd_path(args):
-    print(store_path())
+    chosen = scope(args)
+    if chosen is None:
+        return 2
+    print(store_path(machine=chosen[0], host=chosen[1]))
     return 0
 
 
@@ -395,6 +512,8 @@ def main():
     lo = sub.add_parser("load", help="print deduplicated memory for this project")
     lo.add_argument("--json", action="store_true")
     lo.add_argument("--all", action="store_true", help="expand every entry, not just the ones only recorded here")
+    lo.add_argument("--machine", action="store_true", help="only the machine facts")
+    lo.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     lo.set_defaults(func=cmd_load)
 
     ad = sub.add_parser("add", help="append one learning")
@@ -407,17 +526,27 @@ def main():
     ad.add_argument("--branch", default="")
     ad.add_argument("--absorbs", default="",
                     help="comma-separated keys this entry now covers; they stop printing on their own line")
+    ad.add_argument("--machine", action="store_true",
+                    help="record a fact about this machine that holds in every project; at most %d characters"
+                         % MACHINE_INSIGHT_LIMIT)
+    ad.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     ad.set_defaults(func=cmd_add)
 
     se = sub.add_parser("search", help="filter learnings by substring")
     se.add_argument("query")
     se.add_argument("--json", action="store_true")
+    se.add_argument("--machine", action="store_true", help="search only the machine facts")
+    se.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     se.set_defaults(func=cmd_search)
 
     st = sub.add_parser("stats", help="counts and average confidence")
+    st.add_argument("--machine", action="store_true", help="count the machine facts")
+    st.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     st.set_defaults(func=cmd_stats)
 
     pa = sub.add_parser("path", help="print the store path for this project")
+    pa.add_argument("--machine", action="store_true", help="print the machine store path")
+    pa.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     pa.set_defaults(func=cmd_path)
 
     args = p.parse_args()
