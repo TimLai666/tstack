@@ -1,9 +1,25 @@
 ---
 name: software-engineering-guidelines
-description: "Software engineering guidelines for any software change. This skill MUST be loaded before requirement clarification, architecture/design, implementation, refactoring, code review, testing, shipping, or creating Git commits (including standalone commit requests), and MUST NOT be skipped because the change is a one-liner. Covers simplicity, complete delivery based on a coherent implementation design, testing-first for high-impact changes with TDD (Test-Driven Development), and verifiable success criteria. Triggers on: 任何軟體規劃, 需求釐清, 架構設計, 寫 code, 改 code, 做功能, 修 bug, refactor, 開發, coding, development, 實作, 實現, 寫程式, 改程式, 加功能, 修問題, code review, 測試, 重構, init, 初始化專案, 建立 CLAUDE.md, 建立 AGENTS.md"
+description: "Software engineering guidelines for any software change. It is the core of the tstack stack: it names which tstack skill to use at each point of the work and owns the rules they share. This skill MUST be loaded before requirement clarification, architecture/design, implementation, refactoring, code review, testing, shipping, or creating Git commits (including standalone commit requests), and MUST NOT be skipped because the change is a one-liner. Covers simplicity, complete delivery based on a coherent implementation design, testing-first for high-impact changes with TDD (Test-Driven Development), and verifiable success criteria. Triggers on: 任何軟體規劃, 需求釐清, 架構設計, 寫 code, 改 code, 做功能, 修 bug, refactor, 開發, coding, development, 實作, 實現, 寫程式, 改程式, 加功能, 修問題, code review, 測試, 重構, init, 初始化專案, 建立 CLAUDE.md, 建立 AGENTS.md"
 metadata:
-  version: "1.14.0"
+  version: "2.0.0"
 ---
+
+## The Stack
+
+This skill is the core of tstack. tstack is installed as a whole: every other tstack skill links here for the rules they share, and this skill names the one to use at each point of the work. Load the named skill at that point; do not work from memory of what it says.
+
+| When | Use |
+|---|---|
+| Starting work in a project, and again when the work wraps up or something costly was learned | **project-memory** |
+| Architecture, module boundaries or the split into tickets is undecided | **eng-architect** |
+| A failure whose cause is unknown, a red CI pipeline, the same error a second time, or an expected result that never appeared | **investigate** |
+| Code changed and not yet verified; before pushing; before calling something fixed or done | **test-and-fix** |
+| A diff is about to be committed as substantial work, opened as a PR or MR, or merged; the user hands over a diff | **diff-inspector**, which hands security-relevant changes to **security-scan** |
+| Screens were built or changed | **ui-review** |
+| A security scan or hardening of the project is requested | **security-scan** |
+| Pushing, opening or updating a PR or MR, merging | **ship-it** |
+| Dispatching a subagent or another CLI; changing an existing API's name, signature, usage or behavior; delivering a specification, article or report | **agent-delegation** |
 
 ## Core Principles
 
@@ -85,7 +101,7 @@ Baseline rule:
 
 Rules:
 
-- **Bug fixes need a test that reproduces the bug; use the test-first requirements above to determine timing.**
+- **Bug fixes need a regression test: it reproduces the original failure under its triggering conditions, fails on the pre-fix code and passes with the fix, and asserts observable behavior rather than private implementation details.** Use the test-first requirements above to determine timing.
 - **Before refactoring, establish the result of relevant tests; rerun them after the change.**
 - **Don't weaken a test just to make it pass.** Unless the test itself is wrong.
 - **For behavior-changing edits to skills, prompts, or agent workflows, compare the current and candidate versions on the same tasks in fresh contexts with the same model, tools, data access, and resource limits.** Scale the comparison to the change. Inspect actual decisions, artifacts, acceptance results, unsupported retries, premature stops, and cost. Keep acceptance cases separate from cases used to revise the instructions. Retain the current version as an eligible outcome; inconclusive comparisons do not establish improvement.
@@ -114,7 +130,7 @@ Derive concrete success criteria from the request and available project evidence
 - Place independent slots in separate files.
 - Scale the skeleton to the task. A single-location change needs only its expected results and check.
 
-Fill the slots in the order below until their checks and the acceptance flows pass. When work is handed to other agents, follow **agent-delegation** when it is installed. Otherwise give each agent its slot's signature, expected results, and checks. The agent that fills a slot does not edit its checks. Review the returned work yourself before accepting it.
+Fill the slots in the order below until their checks and the acceptance flows pass. When work is handed to other agents, follow **agent-delegation**. The agent that fills a slot does not edit its checks.
 
 #### Whole-Goal Priority
 
@@ -133,7 +149,27 @@ Apply these checks around a meaningful experiment, implementation attempt, or re
 4. Before retrying, identify new evidence, a changed condition, or a distinct diagnostic check and what it can establish. When none is available, stop repeating that attempt and continue independent work that can advance the goal. Request help only for a material evidence, access, expertise, or authorization gap. Do not stop solely because an arbitrary number of attempts failed, or change acceptance criteria to make an attempt pass.
 5. Preserve the best supported candidate and enough evidence to compare later revisions. Before continuing, handing off, or resuming, update and read the existing task record for confirmed results, failed approaches and their conditions, evidence locations, unresolved questions, and the next discriminating check. Link revisions to the candidate they changed; do not count repeated versions as separate gains. Use the existing coordination file, or `docs/software-engineering-guidelines/` when a persistent record is needed, and preserve unrelated content.
 
-### Progress and Background Status at Every Turn End
+## Shared Conventions
+
+Rules that several tstack skills rely on. Each is defined once here; the other skills link to it.
+
+### Evidence for Claims
+
+- Before concluding that something is impossible, absent, not installed, unsupported, or already confirmed, name the check that was run and the scope it covered. A timeout, a redirect, an empty result and a single failed lookup are not such checks.
+- A cause that is not verified is a hypothesis. Label it as one, and do not write it into code comments, docstrings, agent instruction files, skills or project memory as a fact.
+- Retrying follows item 4 of [Evidence-Guided Iterations](#evidence-guided-iterations).
+
+### Staging and Commits
+
+- Stage with explicit paths. `git add -A`, `git add .`, `git add --all`, `git commit -a` and `git commit -am` are not used. List what is left out of the commit and why; do not silently stash, discard or include unrelated changes.
+- Follow the user's or the project's commit arrangement. Without one, a fix and its regression test go in separate commits. When a test is written and when it is committed are separate decisions.
+- Before writing a commit message, read [references/commit-messages.md](references/commit-messages.md).
+
+### Secrets
+
+Never print the value of a secret, token, password, key or sensitive setting: not in replies, reports, commands, command output that can be avoided, delegation prompts, logs or commits. Refer to it by key name and location.
+
+### Turn-End Report
 
 End every turn of any ongoing task with a progress bar tied to the original goal: completed/total agreed items, current work, and what remains before completion. Use the existing plan or checklist and identify primary flows that are still unimplemented or unverified. Count only verified work that meets the agreed acceptance and delivery conditions; show pending acceptance separately.
 
@@ -147,96 +183,35 @@ Every time the main conversation stops, also state on its own line what is still
 
 Check the actual state before writing this line; do not infer it from what was started earlier.
 
----
-
-### 6. Tool and API Discoverability
-
-When designing or changing our CLI tools, MCP tools, or APIs, put their supported operations and usage in the interface itself.
-
-- **CLI:** Provide an overview listing all supported commands. A bare invocation should show the overview when it has no existing operation to perform. Always implement `--help`, with parameters, required values, defaults, examples, and errors documented in each command's help. A single-operation script can use its top-level help for both overview and details.
-- **API:** Provide an overview endpoint listing all supported public endpoints and their methods, with links to each operation's usage. Use the API base path when available; preserve an existing base operation by linking to a dedicated overview instead. Publish OpenAPI JSON covering parameters, request and response schemas, authentication, and errors. Each operation's documentation must be discoverable from the overview.
-- **MCP:** Document each operation in its registered tool description and input schema, including usage constraints and return behavior. Tool registration supplies discovery, so a separate overview tool is not required.
-- **Skills:** Explain tool selection, workflow, and decision-relevant constraints. Point to the tool's overview, help, registered schema, or OpenAPI document instead of duplicating its complete command and parameter manual in a skill or its references.
-- **Updates:** Change the overview, command help, operation descriptions, and OpenAPI JSON together with the affected functionality. Prefer generating them from the implementation's command or route definitions. Verify that every supported operation is discoverable and that documented examples, parameters, and responses match actual behavior before delivery.
-
-### 7. Docker Compose Environment Variables
-
-When creating or modifying Docker Compose files:
-
-- MUST use braced variable interpolation (`${VAR}`) for externally supplied values. Declare container environment variables explicitly under `environment`, for example `LOG_LEVEL: ${LOG_LEVEL}`. MUST NOT use the service-level `env_file` attribute.
-- MUST use `${VAR:?必須設定 VAR}` for every required variable, for example `DATABASE_URL: ${DATABASE_URL:?必須設定 DATABASE_URL}`. Required variables must reject both unset and empty values. MUST NOT supply fallback defaults for required variables.
-- Supply interpolation values through the shell environment, Compose's default `.env`, or the CLI `--env-file` option. These are interpolation sources, distinct from the prohibited service-level `env_file` attribute. Keep actual secrets out of version control and list required variable names in `.env.example` without real credentials.
-- Before delivery, validate with `docker compose config --quiet` using the same files and interpolation sources as the startup command. Verify that valid values pass and each required variable fails when unset or empty. Do not print or retain resolved configuration containing secrets.
-
 ## Workflow
 
 ### A. Before Writing Code
 
-1. Establish the requirement and approach (Principle 1).
-2. Define success criteria (Principle 5).
-3. Select verification and establish required pre-change results (Principle 4).
-4. Write the skeleton (Principle 5).
+1. Load this project's memory through **project-memory**.
+2. Establish the requirement and approach (Principle 1). When architecture or the split into tickets is undecided, use **eng-architect**.
+3. Define success criteria (Principle 5).
+4. Select verification and establish required pre-change results (Principle 4).
+5. Write the skeleton (Principle 5).
 
 ### B. While Writing Code
 
 Fill the skeleton using Principles 2–4 and Principle 5's whole-goal priorities. Before and after each meaningful attempt, apply the iteration checks and use the result to choose the next action.
 
+- A failure whose cause is not established goes to **investigate** before any fix.
+- Work handed to a subagent or another CLI, and any change to an existing API, goes through **agent-delegation**.
+- When designing or changing a CLI, an MCP tool or an API, read [references/tool-discoverability.md](references/tool-discoverability.md).
+- When creating or modifying Docker Compose files, read [references/docker-compose.md](references/docker-compose.md).
+
 ### C. After Completion
 
-1. Complete and report verification (Principle 4).
-2. Review the Pre-Ship Checklist.
-3. Before ending the turn, compare the result with the full authorized outcome. Continue any required work that can still be completed, then report progress against the original goal using Principle 5.
+1. Verify with **test-and-fix** and report the results (Principle 4).
+2. Review the diff with **diff-inspector** when the change is substantial or about to become a PR, MR or merge. Run **ui-review** when screens changed.
+3. Review the Pre-Ship Checklist.
+4. Commit under [Staging and Commits](#staging-and-commits). Push, open a PR or MR, or merge through **ship-it**.
+5. Record qualifying lessons through **project-memory**.
+6. Before ending the turn, compare the result with the full authorized outcome. Continue any required work that can still be completed, then give the [Turn-End Report](#turn-end-report).
 
 ---
-
-## Commit Messages
-
-Follow the user's explicit instructions first, then the project's documented
-commit-message rules. Before drafting a commit, read the relevant project
-instructions (such as `AGENTS.md` and `CONTRIBUTING.md`) and any saved preference
-through **project-memory** when it is installed. Commit history alone does not establish a documented
-rule. Reuse an already confirmed choice without asking again.
-
-If no documented rule or confirmed choice exists, inspect recent commit
-messages. When they follow the default below, or the project has no commits,
-use the default without asking. Ask only when the inspected history contains a
-different style: show the observed difference and ask whether to adopt the
-default or retain a custom project style. Wait for that decision before creating
-the commit. If the user declines the default without specifying an alternative,
-ask which format they want. Do not record automatic fallback as a user decision.
-
-After confirmation, record a custom project style in the project's `AGENTS.md`,
-including its format and any specified language, preserving unrelated content.
-If the style is already documented elsewhere, link to that source instead of
-duplicating it. If the user adopts this skill's default, use it and record that
-choice through **project-memory** as preference `commit-message-style`, with
-source `software-engineering-guidelines`, so later commits do not repeat the
-question. Without **project-memory**, record the adopted default in the project's
-`AGENTS.md` the same way as a custom style. A one-commit exception applies only to that commit and must not be
-saved as the project's ongoing style. Report any failure to save a decision.
-
-The default format is Conventional Commits:
-
-```text
-<type>(<optional-scope>): <summary>
-```
-
-Use an appropriate type such as `feat`, `fix`, `docs`, `refactor`, `test`, `build`,
-`ci`, `perf`, `style`, `chore`, or `revert`. Omit the scope when it adds no useful
-context. Write a concise, imperative summary of the actual change; add a body
-when the reason or consequences need explanation. Mark breaking changes with
-`!` or a `BREAKING CHANGE:` footer when applicable.
-
-Default to English for the subject and body unless the user or project specifies
-another language. Resolve format and language independently: a project-specific
-format does not change the default language unless it also specifies one.
-
-Examples:
-
-```text
-fix(auth): handle expired sessions
-docs: clarify installation steps
-```
 
 ## Pre-Ship Checklist
 

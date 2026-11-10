@@ -71,7 +71,7 @@ git add -- <path> <path>
 git diff --cached --stat
 ```
 
-When creating commits, follow the [commit-message rules](../software-engineering-guidelines/SKILL.md#commit-messages) before writing the message.
+When creating commits, follow the [commit-message rules](../software-engineering-guidelines/references/commit-messages.md) before writing the message.
 
 ## Step 3 — Check the target before pushing
 

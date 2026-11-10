@@ -17,11 +17,13 @@ Claude Code：
 /plugin install tstack@tstack
 ```
 
-其他支援 Agent Skills 的工具可以只裝 skill（不含 hook）：
+其他支援 Agent Skills 的工具用下面的指令，並選擇安裝全部 skill（不含 hook）：
 
 ```
-npx skills add TimLai666/tstack
+npx skills add TimLai666/tstack --all
 ```
+
+tstack 是一個整體，只支援整組安裝。各個 skill 會直接引用彼此的內容，`software-engineering-guidelines` 是核心，負責指出什麼情況該用哪一個 skill，並保存所有 skill 共用的規則。只裝其中幾個會讓引用落空。
 
 ## Skills
 
@@ -40,7 +42,7 @@ npx skills add TimLai666/tstack
 
 ## Hooks
 
-只有以 plugin 安裝時才有 hook。skill 本身不依賴 hook，只裝 skill 一樣能用。
+只有以 plugin 安裝時才有 hook。skill 本身不依賴 hook，用 `npx skills` 整組安裝時一樣能用。
 
 **提醒**（`hooks/reminders.py`）：開始工作時提醒載入專案記憶與工程準則，派 subagent 前提醒載入派工規範，commit 與 subagent 回報後提醒記錄經驗。
 

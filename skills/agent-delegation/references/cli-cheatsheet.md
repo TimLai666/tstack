@@ -16,7 +16,7 @@ CLI 更新後核對實際介面。旗標不支援時保留錯誤並交由 script
 
 ## 內建工具交接
 
-`native_required` 的模型選擇、派工與回報依 [SKILL.md](../SKILL.md#script-執行與內建工具交接) 執行。
+`native_required` 的模型選擇、派工與回報依 [script-execution.md](script-execution.md) 執行。
 
 ## 對話續接
 
