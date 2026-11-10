@@ -1,6 +1,6 @@
 ---
 name: ship-it
-description: "Deliver committed work on GitHub or GitLab: push, open or update a PR or MR, and merge. This skill MUST be used when pushing after a commit, opening or updating a PR or MR, or merging, and MUST NOT be skipped because the change is small. It MUST NOT merge before every check on the exact head commit has passed and automated review feedback is resolved. Triggers on: push、推上去、推到 dev、開 PR、開 MR、合併、merge、全綠後合併、ship-it"
+description: "Deliver committed work on GitHub or GitLab: push, open or update a PR or MR, and merge. This skill MUST be used when pushing after a commit, opening or updating a PR or MR, or merging, and MUST NOT be skipped because the change is small. It SHOULD be used when the user asks to prepare a completed feature for review. It MUST NOT merge before every check on the exact head commit has passed and automated review feedback is resolved. Triggers on: push、推上去、推到 dev、開 PR、開 MR、準備 PR、整理分支交付、合併、merge、全綠後合併、ship-it"
 allowed-tools:
   - Bash
   - Read

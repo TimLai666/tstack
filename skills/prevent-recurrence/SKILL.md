@@ -46,7 +46,7 @@ An exception to a check goes on the offending line, with the reason.
 
 ## Step 4 — Record what enforces what
 
-Record through **project-memory** one entry per class: the rule in one sentence and what enforces it. When an existing entry describes a rule that nothing enforced and the mistake happened again, replace it. Remove an entry once its mistake can no longer happen.
+Record through **project-memory** one entry per class: the rule in one sentence and what enforces it. When an existing entry describes a rule that nothing enforced and the mistake happened again, add the entry again under the same key with what now enforces it. Once the mistake can no longer happen, add it again under the same key saying so and naming the check; the store is append-only, so nothing is deleted.
 
 ## Report
 

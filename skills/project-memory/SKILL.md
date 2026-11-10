@@ -1,6 +1,6 @@
 ---
 name: project-memory
-description: "Shared cross-agent memory in four stores: project lessons, the user's preferences for every project, facts about this machine, and facts about remote hosts. This skill MUST be invoked when starting work in a project whose memory is not already in context, and again as the work wraps up to record what was learned. A cross-project preference MUST go in the global store, not in the user's instruction files; a machine fact MUST go in the machine or host store. It MUST NOT be used for task lists or open bugs. Triggers on: 記一下, 之前踩過什麼雷, 有什麼教訓, remember this, 把這個記起來, 以後都這樣, 這台沒裝"
+description: "Shared cross-agent memory in four stores: project lessons, the user's preferences for every project, facts about this machine, and facts about remote hosts. This skill MUST be invoked when starting work in a project whose memory is not already in context, and again as the work wraps up to record what was learned. It MUST also be invoked on the triggers below, and SHOULD be invoked whenever the user states something worth remembering. A cross-project preference MUST go in the global store, not in the user's instruction files; a machine fact MUST go in the machine or host store. It MUST NOT be used for task lists or open bugs. Triggers on: 記一下, 之前踩過什麼雷, 有什麼教訓, remember this, 把這個記起來, 以後都這樣, 這台沒裝"
 allowed-tools:
   - Bash
   - Read

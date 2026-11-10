@@ -36,7 +36,7 @@ MERGE = ("`glab mr merge` 不寫明時預設開啟 auto-merge，還沒有 pipeli
          "一律加上 `--sha <MR 目前的 head commit SHA>`，並寫明要哪一種："
          "該 SHA 已經全綠就用 `--auto-merge=false` 立刻合併；"
          "檢查還在跑、要全綠後合併，而且平台等的條件與全綠相同時，才用 `--auto-merge` 交給平台等。"
-         "該 SHA 還沒有 pipeline 時兩種都不要下，先等 pipeline 出現。細節見 ship-it 的 Step 8。")
+         "該 SHA 還沒有 pipeline 時兩種都不要下，先等 pipeline 出現。細節見 ship-it 的 Step 8 與它的 references/gitlab.md。")
 KILL_BY_NAME = ("不依程式名稱結束程序，同名的程序可能是使用者或其他流程開的。"
                 "只結束自己啟動的那一個：POSIX 用 `kill <PID>`，Windows 用 `taskkill /PID <PID>` 或 `Stop-Process -Id <PID>`。")
 HOST_FACTS = ("連到 %s 之前，先讀 project-memory 裡這台主機的記錄：\n\n%s\n\n"

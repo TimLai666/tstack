@@ -1,6 +1,6 @@
 ---
 name: acceptance-review
-description: "Check finished work against what was originally asked: every requirement is matched to a result that was actually exercised, and the original problem is shown to be solved. This skill MUST be used before reporting substantial work as done or handing it back, and when the user asks whether the result meets the request. Work this conversation produced MUST be checked by an independent reviewer who is not given the implementer's summary. Triggers on: 驗收、有沒有做到、有沒有符合需求、有沒有解決問題、做完了嗎、acceptance review"
+description: "Check finished work against what was originally asked: every requirement is matched to a result that was actually exercised, and the original problem is shown to be solved. This skill MUST be used before reporting substantial work as done or handing it back, and when the user asks whether the result meets the request. Work this conversation produced MUST be checked by an independent reviewer who is not given the implementer's summary. It MUST NOT replace diff-review, security-scan or test-and-fix. Triggers on: 驗收、有沒有做到、有沒有符合需求、有沒有解決問題、做完了嗎、acceptance review"
 allowed-tools:
   - Bash
   - Read

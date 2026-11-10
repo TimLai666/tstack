@@ -1,6 +1,6 @@
 ---
 name: ui-review
-description: "Review a built user interface as it actually renders: score it, scan for generic AI-made patterns, and check it against the project's design baseline. This skill MUST be used when the user asks for a UI review, a design review of implemented screens, or an AI slop scan, and for the screens a diff changed. It MUST inspect rendered screens, and MUST NOT be used to set a design direction or to change DESIGN.md. Triggers on: UI 審查、畫面審查、介面審查、看一下做出來的畫面、design review、UI review、AI slop scan"
+description: "Review a built user interface as it actually renders: score it, scan for generic AI-made patterns, and check it against the project's design baseline. This skill MUST be used when the user asks for a UI review, a design review of implemented screens, or an AI slop scan, and for the screens a diff changed. It SHOULD be used after screens are implemented or changed, before the work is handed back. It MUST inspect rendered screens and MUST NOT judge from source code or design files alone, and MUST NOT be used to set a design direction or to change DESIGN.md. Triggers on: UI 審查、畫面審查、介面審查、看一下做出來的畫面、design review、UI review、AI slop scan"
 allowed-tools:
   - Bash
   - Read

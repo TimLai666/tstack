@@ -1,6 +1,6 @@
 ---
 name: security-scan
-description: "Find security vulnerabilities in code the user owns, then fix and verify them: a whole project, or one diff handed over by diff-review. This skill MUST be used when the user asks for a security scan, audit or hardening, and for the security part of a diff review. It MUST fetch the current CWE Top 25, OWASP and related lists at scan time and MUST NOT rely on remembered editions. It MUST NOT be used against systems the user does not own or is not authorized to test. Triggers on: 資安掃描、資安審查、漏洞掃描、找漏洞、補漏洞、security scan、security audit"
+description: "Find security vulnerabilities in code the user owns, then fix and verify them: a whole project, or one diff handed over by diff-review. This skill MUST be used when the user asks for a security scan, audit or hardening, and for the security part of a diff review. It SHOULD be used before a first public release and after adding authentication, payment, file upload or anything that takes outside input. It MUST fetch the current CWE Top 25, OWASP and related lists at scan time and MUST NOT rely on remembered editions. It MUST NOT be used against systems or code the user does not own or is not authorized to test. Triggers on: 資安掃描、資安審查、漏洞掃描、找漏洞、補漏洞、security scan、security audit"
 allowed-tools:
   - Bash
   - Read

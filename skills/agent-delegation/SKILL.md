@@ -1,6 +1,6 @@
 ---
 name: agent-delegation
-description: "Rules and script for handing work to a subagent or another CLI (OpenCode, Antigravity, Copilot, Codex, Claude). This skill MUST be loaded before dispatching any subagent or CLI, even for a small task, before changing an existing API's name, signature, usage or behavior, and before delivering a specification, article or report. New delegation MUST go through scripts/dispatch.py. A dispatched worker MUST NOT apply this skill or delegate further. Triggers on: subagent、派工、分工、agy、opencode、copilot、codex、誰來寫、用哪個模型、介面變更"
+description: "Rules and script for handing work to a subagent or another CLI (OpenCode, Antigravity, Copilot, Codex, Claude). This skill MUST be loaded before dispatching any subagent or CLI, even for a small task, before changing an existing API's name, signature, usage or behavior, and before delivering a specification, article or report. New delegation MUST go through scripts/dispatch.py and its task-local levels, and MUST NOT skip tools based on earlier turns. A main agent MUST NOT dispatch through its own CLI. A dispatched worker MUST NOT apply this skill or delegate further. Triggers on: subagent、派工、分工、antigravity、agy、opencode、copilot、codex、誰來寫、用哪個模型、介面變更"
 metadata:
   version: "3.0.1"
 ---
@@ -79,7 +79,7 @@ Copilot 宿主依當前執行環境判定，不把登入、模型設定或繼承
 
 派實作前，主 agent 先照核心的 [Skeleton First](../software-engineering-guidelines/SKILL.md#skeleton-first) 寫好骨架，每個格子都有簽名與想要的結果清單。
 
-邏輯短到交代與審查比直接寫還費工，或說不清楚要改哪裡的格子，主 agent 自己寫。其餘格子照下列順序派：
+哪些格子派出去、哪些自己填，依核心 [Skeleton First](../software-engineering-guidelines/SKILL.md#skeleton-first) 的工作量判斷。派出去的格子照下列順序：
 
 1. 派測試 agent，照想要的結果寫測試，不寫實作。
 2. 主 agent 審測試：逐條對照想要的結果，並在空格子上跑一次。有測試通過的退回重寫。

@@ -1,6 +1,6 @@
 ---
 name: diff-review
-description: "Review a code diff. This skill MUST be used when the user provides a diff or asks for a code, PR or MR review, and before substantial or high-risk code is committed, handed back, opened as a PR or MR, or merged. It MUST NOT be skipped because the diff is small. A diff this conversation wrote MUST go to an independent reviewer; only a small, low-risk change gets a lightweight self-review. It hands security-relevant changes to security-scan and changed screens to ui-review, and checks what a change could break elsewhere. It MUST NOT be used for changes limited to documentation, prose, images or formatting. Triggers on: 幫我 review, 看 diff, PR review, MR review, code review, 影響範圍, 看看程式有沒有問題"
+description: "Review a code diff. This skill MUST be used when the user provides a diff or asks for a code, PR or MR review, and before substantial or high-risk code is committed, handed back, opened as a PR or MR, or merged. It MUST NOT be skipped because the diff is small. A diff this conversation wrote MUST go to an independent reviewer; only a small, low-risk change gets a lightweight self-review. It MUST hand security-relevant changes to security-scan and changed screens to ui-review, and it checks what a change could break elsewhere. It MUST NOT be used for changes limited to documentation, prose, images or formatting. Triggers on: 幫我 review, 看 diff, PR review, MR review, code review, 影響範圍, 看看程式有沒有問題"
 allowed-tools:
   - Bash
   - Read
@@ -42,7 +42,7 @@ Read the whole diff once against the request and the checks in [references/techn
    - the original request and acceptance criteria, so the reviewer can check scope
    - how to obtain the diff: the base and the command, or the PR or MR
    - the skill file to follow, by absolute path: this file for the code review, the **security-scan** skill in diff mode, the **ui-review** skill for the changed screens
-   - that no file may be modified, and that findings use the core's [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity) format
+   - that no project file may be modified, that a reproduction script goes in a temporary directory outside the project, and that findings use the core's [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity) format
 4. Add the [Adversarial review](#adversarial-review) when its condition holds.
 5. When the reviewers return, check each finding against the code or the rendered result. Keep what holds, and move what cannot be confirmed to Needs investigation with the missing fact.
 
@@ -73,6 +73,12 @@ Identify the relevant code diff from the user's input, current worktree, pull re
 ## Findings
 
 Report in the format and scale of the core's [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity). For each finding, cite the file and line, describe the trigger and impact, and recommend a proportionate action. Refer to a secret as the core's [Secrets](../software-engineering-guidelines/SKILL.md#secrets) rule requires.
+
+---
+
+## Blast-radius check
+
+Read [references/blast-radius.md](references/blast-radius.md) and run it in each of these cases: the user asks what a change could break or affect; a playbook step calls for it; the diff is a fix or a refactoring; the review is a lightweight self-review. In a dispatched review, the reviewer runs it and reports it with the findings.
 
 ---
 
@@ -142,7 +148,7 @@ Security handoff: [RUN — touches: ... / NOT NEEDED — reason]
 UI handoff: [RUN — screens: ... / NOT NEEDED — reason]
 
 ### Findings
-- [P0-P3] [CONFIRMED] location - trigger, impact, description, recommended action
+- [P0-P3] [CONFIRMED] location - trigger, impact, description, recommended action - ran: | read: evidence
 
 ### Needs investigation
 - [NEEDS INVESTIGATION] location - observed evidence, possible failure, missing fact, verification step

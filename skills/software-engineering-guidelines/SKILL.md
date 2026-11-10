@@ -1,8 +1,8 @@
 ---
 name: software-engineering-guidelines
-description: "The core of tstack and the guidelines for any software change. It names which tstack skill to use at each point of the work, gives the step list for each kind of task, and owns the rules the other skills share. This skill MUST be loaded before planning, designing, writing or changing code, reviewing, testing, shipping, or creating a Git commit, and MUST NOT be skipped because the change is a one-liner. Triggers on: 寫 code, 改 code, 做功能, 修 bug, refactor, 重構, 開發, 實作, 寫程式, 架構設計, 需求釐清, code review, 測試, commit, 初始化專案, 建立 AGENTS.md"
+description: "The core of tstack and the guidelines for any software change. It names which tstack skill to use at each point of the work, gives the step list for each kind of task, and owns the rules the other skills share. This skill MUST be loaded before planning, designing, writing or changing code, reviewing, testing, shipping, or creating a Git commit (including a standalone commit request), and MUST NOT be skipped because the change is a one-liner. Triggers on: 寫 code, 改 code, 做功能, 修 bug, refactor, 重構, 開發, 實作, 寫程式, 架構設計, 需求釐清, code review, 測試, commit, init, 初始化專案, 建立 AGENTS.md, 建立 CLAUDE.md"
 metadata:
-  version: "3.0.0"
+  version: "3.0.1"
 ---
 
 ## The Stack
@@ -59,7 +59,7 @@ Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, sim
 
 **Touch everything the task needs and nothing else. Clean up only your own mess.**
 
-- Finish the full authorized outcome in the turn: implementation, integration, verification and necessary repairs. A feature covers every layer, entry point and edge case it needs. A fix covers the root cause, every occurrence of the same pattern and the related edge cases.
+- Finish the full authorized outcome in the turn: implementation, integration, verification and necessary repairs. Do not hold required work back for a later turn. When a real blocker prevents completion, finish what is independent of it and report the exact remaining gap. A feature covers every layer, entry point and edge case it needs. A fix covers the root cause, every occurrence of the same pattern and the related edge cases.
 - Don't "improve" adjacent code, comments or formatting, refactor what is not broken, or delete pre-existing dead code. Match the existing style. Remove what your own change made unused.
 - Mention out-of-scope issues you find and record them in the project's follow-up location.
 - Write and change files with the editing tools. Content that spans lines or contains non-ASCII characters, quotes or backslashes does not go through shell quoting or a heredoc.
@@ -72,7 +72,7 @@ Read [references/changing-code.md](references/changing-code.md) before any of th
 
 **Choose verification that demonstrates the change works and matches its impact.**
 
-- Every behavior-changing change needs test coverage. Run the full suite according to the project's rules, and the linter and type checker when the project has them. Unresolved failures mean verification is incomplete.
+- Every behavior-changing change needs test coverage. A change to text, formatting or documentation gets a check suited to that content. Run the full suite according to the project's rules, and the linter and type checker when the project has them. Unresolved failures mean verification is incomplete.
 - A large change, a broad-scope change or a major new feature MUST be done test-first: write the failing test, then implement. It is large when it touches several modules or layers, changes a public boundary such as an API contract, data model, access rule or core flow, or adds a core feature or reworks a high-risk path (payment, authentication, permissions, data migration, state transitions).
 - Before a check writes to an external system, confirm that a test environment exists and how the written data will be removed. With neither, do not write to it for verification; ask the user how to verify.
 - Don't weaken a test just to make it pass, unless the test itself is wrong.
@@ -97,7 +97,7 @@ Before filling in logic for a new project, feature, or fix, write a skeleton tha
 - Place independent slots in separate files.
 - Scale the skeleton to the task. A single-location change needs only its expected results and check.
 
-Then decide, slot by slot, who fills it, by the amount of work:
+Fill the slots until their checks and the acceptance flows pass. Decide, slot by slot, who fills it, by the amount of work:
 
 - Dispatch a slot through **agent-delegation** when filling it is sizable: more than about a screenful of logic, several independent slots that can be filled at the same time, or bulk repetitive edits. The agent that fills a slot does not edit its checks.
 - Fill a slot yourself when it is short enough that briefing and reviewing would cost more than writing it, or when you cannot yet say exactly what it has to do.
@@ -135,7 +135,7 @@ The exception is a small, low-risk change of its own: a few lines that are easy 
 
 **diff-review**, **security-scan**, **ui-review** and **acceptance-review** report with this format and scale, so their results merge into one list.
 
-A finding is confirmed only when code or observed behavior shows a concrete failure scenario. Each confirmed finding names its evidence: `ran:` with the command and what it printed, or `read:` with the lines that show it. When the failure can be exercised in a local or test environment, run it; a finding that could have been run and was only read is reported as needing investigation. A concern backed by evidence but missing a decisive fact is reported as needing investigation, with the missing fact and how to verify it. Speculation and style preferences are not findings.
+A finding is confirmed only when code or observed behavior shows a concrete failure scenario. Each confirmed finding names its evidence: `ran:` with the command and what it printed, `seen:` with the screen and state that was looked at, or `read:` with the lines that show it. Run the failure whenever that is possible within what the reviewer may do: an existing test or command, or a throwaway script kept in a temporary directory outside the project. A finding that could have been run that way and was only read is reported as needing investigation. When it cannot be run, `read:` confirms it only if the lines leave no doubt. A concern backed by evidence but missing a decisive fact is reported as needing investigation, with the missing fact and how to verify it. Speculation and style preferences are not findings.
 
 | Level | Meaning |
 |---|---|
@@ -147,7 +147,7 @@ A finding is confirmed only when code or observed behavior shows a concrete fail
 Each review skill adds the criteria for assigning these levels in its own domain.
 
 ```text
-[P0-P3] [CONFIRMED] location - trigger, impact, description, recommended action
+[P0-P3] [CONFIRMED] location - trigger, impact, description, recommended action - ran: | seen: | read: evidence
 [NEEDS INVESTIGATION] location - observed evidence, possible failure, missing fact, verification step
 ```
 
@@ -185,7 +185,7 @@ Check the actual state before writing this line; do not infer it from what was s
 | Designing anything larger than a single-location change | [references/design.md](references/design.md) |
 | Scripting a change; recording a follow-up; a new repository or `.gitattributes`; writing documents, rules, prompts or skills; touching `AGENTS.md` or `CLAUDE.md` | [references/changing-code.md](references/changing-code.md) |
 | Choosing test timing, refactoring, editing skills or prompts | [references/testing.md](references/testing.md) |
-| A second attempt at something that failed; a series of experiments | [references/iterations.md](references/iterations.md) |
+| A second attempt at something that failed; a series of experiments; handing work off, pausing it or resuming it | [references/iterations.md](references/iterations.md) |
 | Writing a commit message | [references/commit-messages.md](references/commit-messages.md) |
 | Designing or changing a CLI, an MCP tool or an API | [references/tool-discoverability.md](references/tool-discoverability.md) |
 | Creating or modifying Docker Compose files | [references/docker-compose.md](references/docker-compose.md) |
