@@ -204,6 +204,20 @@ class Reminders(unittest.TestCase):
                     seen.add((event, hook["command"].rsplit(" ", 1)[-1]))
         self.assertEqual(seen, expected)
         self.assertEqual(guards, [("PreToolUse", "Bash|PowerShell")])
+        matchers = {hook["command"].rsplit(" ", 1)[-1]: group["matcher"]
+                    for groups in config.values() for group in groups for hook in group["hooks"]}
+        self.assertEqual(set(matchers["session-start"].split("|")), {"startup", "resume", "clear", "compact", "fork"})
+        self.assertEqual(matchers["post-bash"], "Bash|PowerShell")
+
+    def test_commit_from_powershell_also_reminds(self):
+        for command in ("git commit -m 'x'; git push", "git -C repo commit -m \"fix: y\""):
+            out = self.context("post-bash", "PostToolUse", {"tool_name": "PowerShell", "tool_input": {"command": command}})
+            self.assertIn("project-memory", out["additionalContext"])
+
+    def test_forked_session_gets_the_memory_too(self):
+        self.remember(("retry-needs-token", "呼叫付款 API 前要先換新的 token"))
+        text = self.context("session-start", "SessionStart", {"source": "fork"})["additionalContext"]
+        self.assertIn("呼叫付款 API 前要先換新的 token", text)
 
 
 if __name__ == "__main__":
