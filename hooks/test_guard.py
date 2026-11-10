@@ -48,13 +48,23 @@ class Rules(unittest.TestCase):
                         "git config core.autocrlf false", "git -c safe.directory=/repo status", "git config --global -l"):
             self.allowed(command)
 
-    def test_merge_request_merge_needs_pinned_sha_and_no_auto_merge(self):
+    def test_merge_request_merge_needs_pinned_sha_and_an_explicit_auto_merge_choice(self):
         for command in ("glab mr merge 12", "glab mr merge 12 --auto-merge --yes", "glab mr merge 12 --sha abc --yes",
                         "glab mr merge 12 --auto-merge=false", "glab -R g/p mr merge 12 --yes", "glab mr accept 12"):
             self.blocked(command, guard.MERGE)
-        for command in ("glab mr merge 12 --sha abc123 --auto-merge=false --yes", "glab mr view 12", "glab mr list",
+        for command in ("glab mr merge 12 --sha abc123 --auto-merge=false --yes", "glab mr merge 12 --sha abc123 --auto-merge --yes",
+                        "glab mr merge 12 --sha=abc123 --auto-merge=true", "glab mr view 12", "glab mr list",
                         "glab mr create --title merge", "gh pr merge 3 --match-head-commit abc"):
             self.allowed(command)
+
+    def test_commands_the_skills_prescribe_are_not_blocked(self):
+        for command in ("git add --renormalize .", "git add -- src/a.py", "git commit -m 'chore: normalize line endings'",
+                        "git -c safe.directory=/repo status", "git push origin main", "kill 1234",
+                        'glab mr merge 7 --sha "$_SHIP_SHA" --auto-merge=false --yes',
+                        'glab mr merge 7 --sha "$_SHIP_SHA" --auto-merge --yes',
+                        'gh pr merge 7 --match-head-commit "$_SHIP_SHA"', 'gh pr merge 7 --auto --match-head-commit "$_SHIP_SHA"'):
+            self.allowed(command)
+        self.blocked("git add --renormalize . && git add -A", guard.ADD_ALL)
 
     def test_killing_by_name_is_blocked_and_by_pid_allowed(self):
         for command in ("taskkill /IM EXCEL.EXE /F", "taskkill /f /im python.exe", "Stop-Process -Name WINWORD -Force",

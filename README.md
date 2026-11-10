@@ -44,15 +44,15 @@ tstack 是一個整體，只支援整組安裝。各個 skill 會直接引用彼
 
 只有以 plugin 安裝時才有 hook。skill 本身不依賴 hook，用 `npx skills` 整組安裝時一樣能用。
 
-**記憶與提醒**（`hooks/reminders.py`）：開新對話時（包含恢復、清空、壓縮後與分叉出來的對話）直接把這個專案的記憶與這台機器的事實放進對話，不用再多一次載入；記憶太長放不下時改列出各筆的 key。另外在幾個時間點提醒：開始工作前載入工程準則，派 subagent 前載入派工規範，commit 與 subagent 回報後記錄經驗。
+**記憶與提醒**（`hooks/reminders.py`）：開新對話時（包含恢復、清空、壓縮後與分叉出來的對話）直接把這個專案的記憶與這台機器的事實放進對話，不用再多一次載入；記憶太長放不下時改列出各筆的 key。另外在幾個時間點提醒：開始工作前載入工程準則，commit 與 subagent 回報後記錄經驗。開 subagent 前如果這段對話還沒載入派工規範，會擋下那一次並要求先載入，每段對話只擋一次。
 
 **指令防護**（`hooks/guard.py`）：攔下幾種反覆造成損害的指令，並在拒絕訊息裡給出替代做法。
 
 | 攔下的指令 | 改用 |
 |---|---|
-| `git add -A`、`git add --all`、`git add .`、`git commit -a` | `git add -- <路徑>` 逐一列出檔案 |
+| `git add -A`、`git add --all`、`git add .`、`git commit -a`（`git add --renormalize .` 除外） | `git add -- <路徑>` 逐一列出檔案 |
 | 寫入 `git config --global` 或 `--system` | `git -c <名稱>=<值> <指令>` |
-| `glab mr merge` 沒有同時帶 `--sha` 與 `--auto-merge=false` | 確認該 SHA 的 pipeline 成功後，帶上這兩個參數合併 |
+| `glab mr merge` 沒有帶 `--sha`，或沒有寫明 auto-merge 要開還是關 | 帶上 `--sha`。pipeline 已成功用 `--auto-merge=false` 立刻合併；還在跑且要全綠後合併用 `--auto-merge`；還沒有 pipeline 就先等 |
 | 依名稱結束程序：`pkill`、`killall`、`taskkill /IM`、沒有 `-Id` 的 `Stop-Process` | 用 PID 結束自己啟動的那一個 |
 | Windows 上的 `/tmp/` 路徑 | session 的暫存目錄或專案內的絕對路徑 |
 

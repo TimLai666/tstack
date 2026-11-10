@@ -24,9 +24,11 @@ COMMIT_ALL = ("`git commit -a` 會把所有已追蹤的改動一起提交。"
               "先用 `git add -- <路徑>` 列出這次要交付的檔案，再執行不帶 -a 的 `git commit`。")
 GLOBAL_CONFIG = ("不改 git 的全域或系統設定。只影響這一次指令時用 `git -c <名稱>=<值> <指令>`，"
                  "例如 `git -c safe.directory=<路徑> status`；確實要長期生效時，請使用者自己設定。")
-MERGE = ("`glab mr merge` 預設開啟 auto-merge，還沒有 pipeline 時會直接合併。"
-         "先讀 MR 目前的 head commit SHA，確認該 SHA 的 pipeline 是 success，"
-         "再執行 `glab mr merge <編號> --sha <SHA> --auto-merge=false --yes`。pipeline 不存在、執行中或失敗都不合併。")
+MERGE = ("`glab mr merge` 不寫明時預設開啟 auto-merge，還沒有 pipeline 就會直接合併。"
+         "一律加上 `--sha <MR 目前的 head commit SHA>`，並寫明要哪一種："
+         "該 SHA 的 pipeline 已經 success 就用 `--auto-merge=false` 立刻合併；"
+         "pipeline 還在跑、使用者要求全綠後合併，就用 `--auto-merge` 交給平台等。"
+         "該 SHA 還沒有 pipeline 時兩種都不要下，先等 pipeline 出現。細節見 ship-it 的 Step 8。")
 KILL_BY_NAME = ("不依程式名稱結束程序，同名的程序可能是使用者或其他流程開的。"
                 "只結束自己啟動的那一個：POSIX 用 `kill <PID>`，Windows 用 `taskkill /PID <PID>` 或 `Stop-Process -Id <PID>`。")
 WINDOWS_TMP = ("Windows 上各個 shell 與程式對 `/tmp` 的解讀不同，寫進去的檔案別的程式讀不到。"
@@ -78,6 +80,8 @@ def check_git(args):
         return None
     sub, rest = args[i], args[i + 1:]
     if sub == "add":
+        if "--renormalize" in rest:
+            return None  # Rewrites line endings of tracked files only; the core prescribes it for a new .gitattributes.
         if "--all" in rest or "." in rest or "A" in short_flags(rest):
             return ADD_ALL
     elif sub == "commit":
@@ -104,7 +108,8 @@ def check_segment(words):
         plain = [a for a in lowered if not a.startswith("-")]
         if any(pair in (("mr", "merge"), ("mr", "accept")) for pair in zip(plain, plain[1:])):
             pinned = any(a == "--sha" or a.startswith("--sha=") for a in lowered)
-            if not pinned or "--auto-merge=false" not in lowered:
+            chosen = any(a == "--auto-merge" or a.startswith("--auto-merge=") for a in lowered)
+            if not pinned or not chosen:
                 return MERGE
     if name in ("pkill", "killall"):
         return KILL_BY_NAME

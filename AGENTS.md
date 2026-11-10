@@ -54,13 +54,13 @@ tstack 只支援整組安裝，skill 可以直接依賴其他 skill 存在，不
 | 交接 | 階段 skill 指向流程的下一個 skill | 寫明交接條件與交出的內容 |
 | 呼叫服務 | 階段 skill 指向 `agent-delegation` 或 `project-memory` | 呼叫方帶著自己的標準與內容去 |
 
-- 核心不引用階段 skill 的條文，只在路由表點名它們。`agent-delegation` 與 `project-memory` 不引用階段 skill。
+- 核心可以點名階段 skill，用在路由表、流程步驟與共用約定的適用對象，但不連進它們的檔案，也不引用它們的條文。`agent-delegation` 與 `project-memory` 不引用階段 skill。
 - 被引用的規則要有自己的標題，讓連結能指到它。改標題、改名或搬移時，同步更新所有指向它的連結。
 - 什麼情況用哪個 skill，寫在核心的路由表。新增或調整 skill 時同步更新那張表。
 
 ## Hooks
 
-- `reminders.py` 在開新對話時執行 `project-memory` 的腳本，把本專案的記憶直接放進對話；其餘時間點只提醒並指向 skill。它不重複 skill 的規則。
+- `reminders.py` 在開新對話時執行 `project-memory` 的腳本，把本專案的記憶直接放進對話；開 subagent 前，這段對話還沒載入派工規範時會拒絕那一次呼叫，每段對話只擋一次；其餘時間點只提醒並指向 skill。它不重複 skill 的規則。
 - hook 放進對話的內容上限是 10,000 字元，超過會被換成預覽。帶入內容的 hook 要自己控制長度，放不下時改成提示怎麼取得。
 - `guard.py` 只攔誤擋機率低、後果明確的指令，拒絕訊息必須寫出替代做法。新增攔截規則前先取得使用者同意。
 - skill 的內容與流程不得依賴 hook：Codex、OpenCode 等其他 CLI 載入同一批 skill 時沒有 hook。hook 替 skill 省掉的步驟，skill 裡仍要寫明沒有 hook 時怎麼做。被 `guard.py` 攔下的做法，對應的 skill 也要寫明同一條規則。

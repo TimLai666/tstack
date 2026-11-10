@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "2.3.0"
+  version: "2.4.0"
 ---
 
 ## Overview
@@ -157,24 +157,28 @@ Report which operations actually succeeded.
 
 ## Step 8 — Merge only on a successful pipeline
 
-Merge only when the user or the project's recorded rule authorizes it.
+Merge only when the user or the project's recorded rule authorizes it. A request such as「全綠之後合併」is that authorization, and it is not finished until the PR or MR is confirmed merged.
 
 1. Read the head commit SHA of the PR or MR from the platform, not from the local branch.
-2. Read the pipeline for that exact SHA. Only `success` allows a merge. Running, failed, cancelled, skipped and absent all mean not verified: no pipeline for the head commit is not a pass.
-3. Merge with the SHA pinned, so a commit pushed in between cannot ride along.
+2. Read the pipeline for that exact SHA.
+3. Act on its state:
 
-| Platform | Head SHA | Merge |
-|---|---|---|
-| GitHub | `gh pr view <number> --json headRefOid` | `gh pr merge <number> --match-head-commit "$_SHIP_SHA"` |
-| GitLab | `glab mr view <number> --output json` (`sha`) | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge=false --yes` |
+| Pipeline for the head SHA | Do |
+|---|---|
+| Succeeded | Merge now, pinned to the SHA |
+| Running or pending, and the merge is wanted once it is green | Hand the wait to the platform: set auto-merge pinned to the SHA, so the merge happens even if this conversation ends. Say that it has not merged yet |
+| Failed, cancelled or skipped | Do not merge. Handle the failure within scope or report it |
+| Absent | Do not merge and do not set auto-merge: with no pipeline the platform merges at once. Wait for the pipeline to appear, then start again from item 1 |
 
-Do not let the platform decide for you. `glab mr merge` turns auto-merge on by
-default and can merge while no pipeline exists yet; `gh pr merge --auto` hands
-the decision to branch rules. Use an auto-merge option only when the user asked
-for it, and say that the merge has not happened yet.
+| Platform | Head SHA | Merge now | Merge when green |
+|---|---|---|---|
+| GitHub | `gh pr view <number> --json headRefOid` | `gh pr merge <number> --match-head-commit "$_SHIP_SHA"` | `gh pr merge <number> --auto --match-head-commit "$_SHIP_SHA"` |
+| GitLab | `glab mr view <number> --output json` (`sha`) | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge=false --yes` | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge --yes` |
 
-When the pipeline is still running and waiting is part of the request, wait for
-its result and then repeat this step from item 1.
+- Always pin the SHA, so a commit pushed in between cannot ride along, and always state the auto-merge choice. `glab mr merge` without it turns auto-merge on by default.
+- GitHub's auto-merge waits only for the branch's required checks. When the branch has none, it merges at once: do not use it there. Wait for the pipeline yourself and merge when it has succeeded.
+- After setting auto-merge, or while waiting yourself, watch the pipeline in the background with the Step 9 watch command so that its end brings the conversation back. Then confirm the PR or MR state. Merged ends the task. A failed pipeline means nothing was merged: handle it within scope, and repeat this step once it is fixed.
+- Until the merge is confirmed, name the pending merge in the core's [Turn-End Report](../software-engineering-guidelines/SKILL.md#turn-end-report).
 
 ## Step 9 — Check CI and deployment, record lessons
 
