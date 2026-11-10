@@ -650,7 +650,7 @@ def output_result(state, path):
                             if native else
                             "此層尚未啟動執行者。解除佔用後用 --outcome dispatch-failed 在同一層重來。" if state["status"] == "not_started" else
                             ("外部 CLI 失敗，檔案沒有變動。讀 attempts 最後一筆的 error、output、model_probe 與 fatal_error 判斷原因；"
-                             "launch_error 為 true 時先依 SKILL.md「CLI 未安裝」查證。判定這一層無法執行後，用 dispatch --dispatch-id "
+                             "launch_error 為 true 時先依 references/dispatch-flow.md「CLI 未安裝」查證。判定這一層無法執行後，用 dispatch --dispatch-id "
                              + state["dispatch_id"] + " --outcome dispatch-failed --failure-reason '<錯誤原文與判斷>' 接下一層；"
                              "查證確認未安裝時另加 --not-installed，之後的派工會自動跳過此工具。")
                             if state["status"] == "cli_failed" else
@@ -1086,7 +1086,7 @@ exit 0：已產生上述狀態（不代表成果合格）；exit 2：參數、�
                         "驗證失敗需先檢查半成品；completed 表示主 agent 驗收完成")
     q.add_argument("--failure-reason", help="失敗結果必填，提供實際錯誤或驗證輸出")
     q.add_argument("--not-installed", action="store_true",
-                   help="選填，只搭配 dispatch-failed。主 agent 已依 SKILL.md「CLI 未安裝」查證此工具確實沒安裝時加上，"
+                   help="選填，只搭配 dispatch-failed。主 agent 已依 references/dispatch-flow.md「CLI 未安裝」查證此工具確實沒安裝時加上，"
                         "--failure-reason 寫查證指令與結果。PATH 不變且指令仍找不到時，7 天內的新派工自動跳過此工具並在 attempts 附上這份證據")
     q.add_argument("--feedback", help="選填，已核對的教訓、保留的半成品與修正要求，會累積帶進接手 prompt")
     q.add_argument("--partial-work-reviewed", action="store_true", help="verification-failed 必填，主 agent 已檢查程序、磁碟及半成品")
