@@ -19,8 +19,7 @@ including its format and any specified language, preserving unrelated content.
 If the style is already documented elsewhere, link to that source instead of
 duplicating it. If the user adopts this skill's default, use it and record that
 choice through **project-memory** as preference `commit-message-style`, with
-source `software-engineering-guidelines`, so later commits do not repeat the
-question. A one-commit exception applies only to that commit and must not be
+source `software-engineering-guidelines`. A one-commit exception applies only to that commit and must not be
 saved as the project's ongoing style. Report any failure to save a decision.
 
 The default format is Conventional Commits:

@@ -15,11 +15,13 @@ Judge completion over the whole agreed feature or problem. Order intermediate wo
 
 When editing existing code:
 
-- Don't "improve" adjacent code, comments, or formatting; don't refactor things that aren't broken; don't delete pre-existing dead code. Mention what you spot and suggest how to handle it — see the recording rule below.
+- Don't "improve" adjacent code, comments, or formatting; don't refactor things that aren't broken; don't delete pre-existing dead code. Mention what you spot and suggest how to handle it, under the recording rule below.
 - Match existing style, even if you'd do it differently.
 - Remove imports/variables/functions that YOUR changes made unused.
 - Write and change files with the editing tools. Content that spans lines or contains non-ASCII characters, quotes or backslashes does not go through shell quoting or a heredoc.
 - When a change has to be scripted, read the target first, confirm the number of matches the script will replace, write the result to a temporary file, and swap it in only after checking it. Before overwriting, restoring or discarding a file, read its full diff, including uncommitted work that is not yours.
+
+Every changed line traces directly to the user's request.
 
 **Recording rule:** Mention discovered out-of-scope issues to the user and record them using the project's existing follow-up location and conventions. If none are established, use `## Follow-ups` in the project's `AGENTS.md`, creating the section or file if needed. Preserve existing content and avoid duplicate records. When an issue is resolved, follow the project's completion convention; under the default `Follow-ups` arrangement, remove the resolved entry. See [references/follow-ups-example.md](follow-ups-example.md) for the default format and examples.
 
@@ -44,5 +46,3 @@ This covers every `CLAUDE.md` in the project, not only the one at the root. The 
 - Do this when initializing project docs (e.g. `/init`) and before adding to either file. List every `CLAUDE.md` in the project first and handle all of them, each against the `AGENTS.md` beside it. When it is noticed during unrelated work, do it as a change of its own, in a separate commit.
 
 An `AGENTS.md` at any directory level contains only what an agent must follow or check on every turn of work in that scope: operating rules and agent-facing reminders such as `## Follow-ups`. Project or module introductions, background, structure overviews, and usage notes go in the `README.md` at the same level. Move misplaced content to the correct file when editing either one.
-
-The test: Every changed line should trace directly to the user's request.

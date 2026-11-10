@@ -7,7 +7,7 @@ metadata:
 
 ## The Stack
 
-This skill is the core of tstack. tstack is installed as a whole: every other tstack skill links here for the rules they share, and this skill names the one to use at each point of the work. Load the named skill at that point; do not work from memory of what it says.
+tstack is installed as a whole. At each point of the work in this table, load the named skill; do not work from memory of what it says.
 
 | When | Use |
 |---|---|
@@ -30,7 +30,7 @@ Every task follows a playbook: an ordered list of steps for that kind of task. A
 
 ## Core Principles
 
-Each principle is stated here in short. Read the reference named under it at the point it describes.
+Read the reference named under each principle at the point it describes.
 
 ### 1. Think Before Coding
 
@@ -53,7 +53,7 @@ Before designing anything larger than a single-location change, read [references
 - When the goal can be met either by removing code or by adding code, remove code. The removal stays within the task's scope and keeps every other behavior intact.
 - Use concise, maintainable implementations. Do not rewrite accepted code solely to reduce line count while required outcomes remain incomplete.
 
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+If a senior engineer would call it overcomplicated, simplify.
 
 ### 3. Complete, Surgical Changes
 
@@ -64,7 +64,7 @@ Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, sim
 - Mention out-of-scope issues you find and record them in the project's follow-up location.
 - Write and change files with the editing tools. Content that spans lines or contains non-ASCII characters, quotes or backslashes does not go through shell quoting or a heredoc.
 
-The test: every changed line should trace directly to the user's request.
+Every changed line traces directly to the user's request.
 
 Read [references/changing-code.md](references/changing-code.md) before any of these: scripting a change, or overwriting, restoring or discarding a file; recording a follow-up; creating a repository or its `.gitattributes`; writing documents, rules, prompts or skills; creating or editing `AGENTS.md` or `CLAUDE.md`.
 
@@ -104,8 +104,6 @@ Fill the slots until their checks and the acceptance flows pass. Decide, slot by
 - Say in the report which slots were dispatched and which were not, with the reason.
 
 ## Shared Conventions
-
-Rules that several tstack skills rely on. Each is defined once here; the other skills link to it.
 
 ### Evidence for Claims
 

@@ -14,11 +14,11 @@ Baseline rule:
 - For small, local, low-risk fixes, add/update tests around the change (before or immediately after implementation is acceptable if justified).
 - For large changes, broad-scope changes, or major new features, you MUST apply TDD: write the failing test first, then implement — don't write code and backfill tests.
 
-判斷大改動的指標（任一符合即可）：
+A change is large when any one of these holds:
 
-1. 觸及多個模組或層級（例如 UI、API、資料層同時調整）。
-2. 變更公開行為邊界，如 API 契約、資料模型、存取規則、核心流程。
-3. 新增核心新功能，或重構高風險路徑（付款、認證、權限、資料遷移、狀態轉換）。
+1. It touches several modules or layers (for example, UI, API and data layer change together).
+2. It changes a public behavior boundary, such as an API contract, data model, access rule or core flow.
+3. It adds a core new feature, or refactors a high-risk path (payment, authentication, permissions, data migration, state transitions).
 
 Rules:
 
