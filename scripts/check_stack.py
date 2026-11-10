@@ -30,8 +30,7 @@ import sys
 CORE = "software-engineering-guidelines"
 SERVICES = ("agent-delegation", "project-memory")
 EXTERNAL_SKILLS = ("human-writing",)  # Named in the stack, shipped elsewhere.
-FALLBACKS = (r"when it is installed", r"if (it is )?installed", r"is not installed, ", r"when installed",
-             r"裝了[^。\n]{0,30}就照", r"有 \*\*[a-z-]+\*\* 時")
+FALLBACKS = (r"when it is installed", r"if (it is )?installed", r"is not installed, ", r"when installed")
 LINK = re.compile(r"\]\(([^)\s]+)\)")
 BOLD_NAME = re.compile(r"\*\*([a-z]+(?:-[a-z]+)*)\*\*")
 SEMVER = re.compile(r'^"\d+\.\d+\.\d+"$')

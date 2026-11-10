@@ -73,7 +73,7 @@ class ACL(C.Structure):
 def ensure_private(path, directory=False):
     """Create a private directory; refuse existing ACLs granting other users access."""
     if path.exists() and getattr(path.lstat(), "st_file_attributes", 0) & 0x400:
-        raise OSError("狀態路徑不可是 reparse point：" + str(path))
+        raise OSError("A state path must not be a reparse point: " + str(path))
     if directory and not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
         descriptor = W.LPVOID()
@@ -93,10 +93,10 @@ def ensure_private(path, directory=False):
         raise C.WinError(error)
     try:
         if not acl:
-            raise OSError("狀態路徑必須有私有 DACL：" + str(path))
+            raise OSError("A state path must have a private DACL: " + str(path))
         trusted = {user_sid(), "S-1-5-18", "S-1-5-32-544"}
         if not owner or sid_text(owner) not in trusted:
-            raise OSError("狀態路徑擁有者不符目前使用者或系統管理員：" + str(path))
+            raise OSError("The state path owner is not the current user or an administrator: " + str(path))
         for i in range(C.cast(acl, C.POINTER(ACL)).contents.count):
             ace = W.LPVOID()
             checked(get_ace(acl, i, C.byref(ace)))
@@ -106,7 +106,7 @@ def ensure_private(path, directory=False):
             if header[0] == 1:  # Deny ACE grants no access.
                 continue
             if header[0] != 0 or sid_text(ace.value + 8) not in trusted:
-                raise OSError("既有狀態路徑授權其他使用者存取，不會修改其權限：" + str(path))
+                raise OSError("An existing state path grants access to other users; its permissions will not be modified: " + str(path))
     finally:
         local_free(descriptor)
 
@@ -180,7 +180,7 @@ def executable_argv(argv):
     """Resolve executable files and standard npm shims without passing prompts to cmd.exe."""
     program = shutil.which(argv[0])
     if not program:
-        raise FileNotFoundError(2, "找不到 CLI", argv[0])
+        raise FileNotFoundError(2, "CLI not found", argv[0])
     path = Path(program)
     if path.suffix.lower() in (".cmd", ".bat"):
         content = path.read_text(encoding="utf-8-sig").strip()
@@ -194,12 +194,12 @@ def executable_argv(argv):
         match = re.fullmatch(re.escape(header + node_block) +
                              r'"%dp0%\\([^"\r\n]+\.(?:js|cjs|mjs))" +%\*', content, re.I)
         if not match:
-            raise OSError("無法安全辨識此 batch CLI，請安裝可執行檔或標準 npm shim：" + program)
+            raise OSError("Cannot safely identify this batch CLI; install the executable or a standard npm shim: " + program)
         entry = (path.parent / match[1]).resolve(strict=True)
         node = path.parent / "node.exe"
         runtime = str(node) if node.is_file() else shutil.which("node.exe")
         if not runtime or Path(runtime).suffix.lower() != ".exe":
-            raise FileNotFoundError(2, "npm CLI 需要 node.exe", str(path))
+            raise FileNotFoundError(2, "npm CLI requires node.exe", str(path))
         return [runtime, str(entry), *argv[1:]]
     return [program, *argv[1:]]
 
@@ -213,7 +213,7 @@ def start(argv, cwd, out, err):
     try:
         job = checked(create_job(None, job_name(proc.pid)))
         if C.get_last_error() == 183:
-            raise OSError("Windows Job 名稱已被占用，不會沿用既有 Job")
+            raise OSError("The Windows Job name is already taken; an existing Job will not be reused")
         limits = ExtendedLimits()
         limits.basic.flags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
         checked(set_job(job, 9, C.byref(limits), C.sizeof(limits)))
@@ -241,7 +241,7 @@ def terminate(proc):
     deadline = time.monotonic() + 5
     while active_count(job):
         if time.monotonic() >= deadline:
-            raise OSError("尚未確認 Windows Job 的所有工作程序已停止")
+            raise OSError("Not confirmed that every worker in the Windows Job has stopped")
         time.sleep(.05)
     proc.wait(timeout=5)
     close(job)

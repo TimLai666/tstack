@@ -9,7 +9,7 @@
   ],
   "tasks": {
     "testing": {
-      "label": "寫測試",
+      "label": "Write tests",
       "access": "tests",
       "verification_retries": 2,
       "levels": [
@@ -49,7 +49,7 @@
       ]
     },
     "implementation": {
-      "label": "填格子實作、照清單修 bug",
+      "label": "Fill in the implementation, fix bugs from a checklist",
       "access": "implementation",
       "verification_retries": 2,
       "levels": [
@@ -89,7 +89,7 @@
       ]
     },
     "frontend": {
-      "label": "前端設計、版面、樣式",
+      "label": "Front-end design, layout, styling",
       "access": "write",
       "verification_retries": 1,
       "levels": [
@@ -111,7 +111,7 @@
       ]
     },
     "exploration": {
-      "label": "快速唯讀探索、找檔案",
+      "label": "Quick read-only exploration, finding files",
       "access": "read",
       "verification_retries": 1,
       "levels": [
@@ -145,7 +145,7 @@
       ]
     },
     "chores": {
-      "label": "機械性文件段落、證據整理、大量套版改寫",
+      "label": "Mechanical prose sections, evidence collection, bulk template rewrites",
       "access": "write",
       "verification_retries": 1,
       "levels": [
@@ -179,7 +179,7 @@
       ]
     },
     "classification": {
-      "label": "分類、打標籤、編碼",
+      "label": "Classification, tagging, qualitative coding",
       "access": "write",
       "verification_retries": 1,
       "levels": [
@@ -203,7 +203,7 @@
       ]
     },
     "review": {
-      "label": "審 diff、找漏洞、對契約",
+      "label": "Review a diff, find vulnerabilities, check against the contract",
       "access": "read",
       "verification_retries": 1,
       "levels": [
@@ -226,7 +226,7 @@
       ]
     },
     "acceptance": {
-      "label": "驗收審查：對照原始需求實際操作成果",
+      "label": "Acceptance review: operate the result against the original requirements",
       "access": "sandbox",
       "verification_retries": 1,
       "levels": [
@@ -249,7 +249,7 @@
       ]
     },
     "research": {
-      "label": "深度研究的深度層",
+      "label": "The deep level of deep research",
       "access": "sandbox",
       "verification_retries": 1,
       "levels": [
@@ -267,7 +267,7 @@
       ]
     },
     "decision": {
-      "label": "方案取捨、技術選型、單一模組設計",
+      "label": "Option trade-offs, technology choice, single-module design",
       "access": "read",
       "verification_retries": 1,
       "levels": [
@@ -290,7 +290,7 @@
       ]
     },
     "rules": {
-      "label": "寫 skill、prompt、規則與複雜架構",
+      "label": "Write skills, prompts, rules and complex architecture",
       "access": "write",
       "verification_retries": 1,
       "levels": [
