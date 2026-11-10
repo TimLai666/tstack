@@ -9,7 +9,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.5.0"
+  version: "1.5.1"
 ---
 
 ## Core rule
@@ -89,7 +89,7 @@ Add the regression test required by the core's [Regression Tests](../software-en
 
 Repeat the original reproduction with the fix and verify the regression coverage before and after it. Run relevant checks for affected behavior and follow the project's full-suite rules. Confirm temporary diagnostic changes have been cleaned up or intentionally retained.
 
-If the symptom persists, use the observed result to revisit the hypothesis and data flow. Another fix attempt needs what item 4 of the core's [Evidence-Guided Iterations](../software-engineering-guidelines/SKILL.md#evidence-guided-iterations) requires; otherwise go to Step 7.
+If the symptom persists, use the observed result to revisit the hypothesis and data flow. Another fix attempt needs what the core's [Evidence for Claims](../software-engineering-guidelines/SKILL.md#evidence-for-claims) requires of a retry; otherwise go to Step 7.
 
 ## Step 7 — Stop or request help when evidence cannot advance
 

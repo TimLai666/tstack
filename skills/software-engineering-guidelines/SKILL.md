@@ -1,8 +1,8 @@
 ---
 name: software-engineering-guidelines
-description: "Software engineering guidelines for any software change. It is the core of the tstack stack: it names which tstack skill to use at each point of the work and owns the rules they share. This skill MUST be loaded before requirement clarification, architecture/design, implementation, refactoring, code review, testing, shipping, or creating Git commits (including standalone commit requests), and MUST NOT be skipped because the change is a one-liner. Covers simplicity, complete delivery based on a coherent implementation design, testing-first for high-impact changes with TDD (Test-Driven Development), and verifiable success criteria. Triggers on: 任何軟體規劃, 需求釐清, 架構設計, 寫 code, 改 code, 做功能, 修 bug, refactor, 開發, coding, development, 實作, 實現, 寫程式, 改程式, 加功能, 修問題, code review, 測試, 重構, init, 初始化專案, 建立 CLAUDE.md, 建立 AGENTS.md"
+description: "The core of tstack and the guidelines for any software change. It names which tstack skill to use at each point of the work, gives the step list for each kind of task, and owns the rules the other skills share. This skill MUST be loaded before planning, designing, writing or changing code, reviewing, testing, shipping, or creating a Git commit, and MUST NOT be skipped because the change is a one-liner. Triggers on: 寫 code, 改 code, 做功能, 修 bug, refactor, 重構, 開發, 實作, 寫程式, 架構設計, 需求釐清, code review, 測試, commit, 初始化專案, 建立 AGENTS.md"
 metadata:
-  version: "2.8.2"
+  version: "3.0.0"
 ---
 
 ## The Stack
@@ -17,24 +17,30 @@ This skill is the core of tstack. tstack is installed as a whole: every other ts
 | Code changed and not yet verified; before pushing; before calling something fixed or done | **test-and-fix** |
 | Substantial or high-risk code is about to be committed or handed back, opened as a PR or MR, or merged; the user hands over a diff | **diff-review**, which hands security-relevant changes to **security-scan** and changed screens to **ui-review** |
 | A review of built screens is requested on its own | **ui-review** |
+| The user asks what a change could break elsewhere | **diff-review**, with its blast-radius check |
 | Substantial work is about to be reported as done or handed back; the user asks whether the result meets the request | **acceptance-review** |
 | A security scan or hardening of the project is requested | **security-scan** |
 | Pushing, opening or updating a PR or MR, merging | **ship-it** |
+| The same kind of mistake happened a second time; the user asks to turn a rule into a check | **prevent-recurrence** |
 | Dispatching a subagent or another CLI; changing an existing API's name, signature, usage or behavior; delivering a specification, article or report | **agent-delegation** |
 
+## Playbooks
+
+Every task follows a playbook: an ordered list of steps for that kind of task. At the start of a task, open [references/playbooks.md](references/playbooks.md), pick the one that matches (Feature, Bug fix, Refactoring, Investigation or Small change), and copy its steps into the task list word for word. A step that does not apply stays in the list as `skip: <reason>`.
+
 ## Core Principles
+
+Each principle is stated here in short. Read the reference named under it at the point it describes.
 
 ### 1. Think Before Coding
 
 **Verify what you can. Make material assumptions and tradeoffs clear.**
 
-Before implementing:
+- Own the implementation design. Resolve routine details from the code, documentation, existing conventions and focused checks; do not turn design work into a questionnaire.
+- Ask the user only when a gap remains after checking and would materially affect the result, scope, authorization or an important tradeoff. Give a recommendation, and continue independent work meanwhile.
+- Work out a coherent design for the full authorized outcome before filling components, and choose the simplest approach that satisfies all agreed requirements. If a simpler approach exists, say so. Push back when warranted.
 
-- Own the implementation design. Resolve routine technical details from the code, documentation, existing conventions, and focused checks. Use reasonable assumptions within the authorized scope, explaining them when they help the user assess the result. Do not turn internal design work into an exhaustive questionnaire or require approval for each implementation detail.
-- Ask the user only when a gap remains after checking available information and would materially affect the result, scope, authorization, or an important tradeoff. Explain the relevant difference and recommend an approach. Continue independent work while that decision is pending.
-- If a simpler approach exists, say so. Push back when warranted.
-- Work out a coherent design for the full authorized outcome before filling individual components. Trace required flows through responsibilities, interfaces, data lifecycle, dependencies, failure and recovery behavior, and acceptance checks. Consider relevant boundary cases, duplicate or concurrent operations, interruption, compatibility, and downstream effects before coding. Scale the depth to the task and resolve foreseeable gaps before they become implementation rework.
-- Compare materially different approaches against correctness, compatibility, maintainability, and actual resource constraints. Choose the simplest approach that satisfies the full agreed requirements. Validate uncertain assumptions that could invalidate it with focused checks, then proceed once material decisions have sufficient support. Apply the design and required quality from the first implementation. Revisit settled decisions when new evidence or changed requirements warrants it.
+Before designing anything larger than a single-location change, read [references/design.md](references/design.md).
 
 ### 2. Simplicity First
 
@@ -53,92 +59,33 @@ Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, sim
 
 **Touch everything the task needs and nothing else. Clean up only your own mess.**
 
-Plan each turn to finish the full authorized outcome, including implementation, integration, verification, and necessary repairs. Do not reserve required work for a later turn or wait for another prompt to finish it. Intermediate milestones organize the work within the turn; they are not delivery boundaries unless the user explicitly requested staged delivery. If a real blocker prevents completion, finish independent work and report the exact remaining gap and what is needed to resolve it.
-
-Judge completion over the whole agreed feature or problem. Order intermediate work by Principle 5's whole-goal priorities:
-
-- A feature covers every layer, entry point, and edge case it needs.
-- A fix covers the root cause, every occurrence of the same pattern, and the related edge cases. Do not stop at the reported spot.
-
-When editing existing code:
-
-- Don't "improve" adjacent code, comments, or formatting; don't refactor things that aren't broken; don't delete pre-existing dead code. Mention what you spot and suggest how to handle it — see the recording rule below.
-- Match existing style, even if you'd do it differently.
-- Remove imports/variables/functions that YOUR changes made unused.
+- Finish the full authorized outcome in the turn: implementation, integration, verification and necessary repairs. A feature covers every layer, entry point and edge case it needs. A fix covers the root cause, every occurrence of the same pattern and the related edge cases.
+- Don't "improve" adjacent code, comments or formatting, refactor what is not broken, or delete pre-existing dead code. Match the existing style. Remove what your own change made unused.
+- Mention out-of-scope issues you find and record them in the project's follow-up location.
 - Write and change files with the editing tools. Content that spans lines or contains non-ASCII characters, quotes or backslashes does not go through shell quoting or a heredoc.
-- When a change has to be scripted, read the target first, confirm the number of matches the script will replace, write the result to a temporary file, and swap it in only after checking it. Before overwriting, restoring or discarding a file, read its full diff, including uncommitted work that is not yours.
 
-**Recording rule:** Mention discovered out-of-scope issues to the user and record them using the project's existing follow-up location and conventions. If none are established, use `## Follow-ups` in the project's `AGENTS.md`, creating the section or file if needed. Preserve existing content and avoid duplicate records. When an issue is resolved, follow the project's completion convention; under the default `Follow-ups` arrangement, remove the resolved entry. See [references/follow-ups-example.md](references/follow-ups-example.md) for the default format and examples.
+The test: every changed line should trace directly to the user's request.
 
-**Git attributes:** Every Git repository has a root `.gitattributes`. When it is missing, create it while initializing the project or before the first commit of the current work. Start with `* text=auto eol=lf`, then add the entries the project's files need, such as `binary` for binary formats and `eol=crlf` for Windows scripts (`*.bat`, `*.cmd`). In a repository that already has commits, run `git add --renormalize .` after adding the file and commit the file with the resulting normalization as a separate commit. Preserve existing entries.
-
-**Writing documents, rules, prompts, and skills:** Before editing existing content, load `human-writing` and apply [principle 8A](https://github.com/TimLai666/skills/blob/main/plugins/writing-and-design/skills/human-writing/references/human-writing-principles.md#8a-write-the-current-document-for-its-current-reader) for placement, consolidation, and consistency checks. If that skill is unavailable, read the linked rule before editing. When writing rules, prompts, or skills, state the rule itself. Do not explain the reason behind it, and do not write it as a change record (for example, a date and what it was changed from). Update the rule text in place.
-
-#### Agent Context Files
-
-At every directory level of a project, `AGENTS.md` is the single home for agent instructions, and a `CLAUDE.md` in the same directory contains exactly this one line and nothing else:
-
-```md
-@AGENTS.md
-```
-
-Write the line verbatim, with no heading, explanation or other wording. Any other content, including a differently worded pointer, is replaced with it. Create missing files as needed.
-
-This covers every `CLAUDE.md` in the project, not only the one at the root. The line in a nested `CLAUDE.md` refers to the `AGENTS.md` in that same directory; when that directory has none, create it there and move the content into it, rather than into the root file. Dependency and vendored directories are left alone.
-
-- An instruction to add or change content in `CLAUDE.md` is applied to `AGENTS.md`.
-- When `CLAUDE.md` holds instructions of its own, move them into `AGENTS.md`. Read both files in full, carry every rule over without dropping or rewording it, and place each one where it belongs in `AGENTS.md`. Where the two files contradict each other, ask the user which rule stands. Replace the content of `CLAUDE.md` with that line only after confirming every instruction is present in `AGENTS.md`.
-- Do this when initializing project docs (e.g. `/init`) and before adding to either file. List every `CLAUDE.md` in the project first and handle all of them, each against the `AGENTS.md` beside it. When it is noticed during unrelated work, do it as a change of its own, in a separate commit.
-
-An `AGENTS.md` at any directory level contains only what an agent must follow or check on every turn of work in that scope: operating rules and agent-facing reminders such as `## Follow-ups`. Project or module introductions, background, structure overviews, and usage notes go in the `README.md` at the same level. Move misplaced content to the correct file when editing either one.
-
-The test: Every changed line should trace directly to the user's request.
+Read [references/changing-code.md](references/changing-code.md) before any of these: scripting a change, or overwriting, restoring or discarding a file; recording a follow-up; creating a repository or its `.gitattributes`; writing documents, rules, prompts or skills; creating or editing `AGENTS.md` or `CLAUDE.md`.
 
 ### 4. Testing Strategy (Test-First + scoped TDD)
 
 **Choose verification that demonstrates the change works and matches its impact.**
 
-Baseline rule:
-
-- Every behavior-changing change needs test coverage.
-- For text, formatting, or documentation changes, use checks suited to the affected content.
-- Run the full test suite according to the project's rules.
+- Every behavior-changing change needs test coverage. Run the full suite according to the project's rules, and the linter and type checker when the project has them. Unresolved failures mean verification is incomplete.
+- A large change, a broad-scope change or a major new feature MUST be done test-first: write the failing test, then implement. It is large when it touches several modules or layers, changes a public boundary such as an API contract, data model, access rule or core flow, or adds a core feature or reworks a high-risk path (payment, authentication, permissions, data migration, state transitions).
 - Before a check writes to an external system, confirm that a test environment exists and how the written data will be removed. With neither, do not write to it for verification; ask the user how to verify.
-- Run the project's linter and type checker when provided, and report their results alongside the tests. Unresolved failures mean verification is incomplete.
-- For small, local, low-risk fixes, add/update tests around the change (before or immediately after implementation is acceptable if justified).
-- For large changes, broad-scope changes, or major new features, you MUST apply TDD: write the failing test first, then implement — don't write code and backfill tests.
+- Don't weaken a test just to make it pass, unless the test itself is wrong.
 
-判斷大改動的指標（任一符合即可）：
-
-1. 觸及多個模組或層級（例如 UI、API、資料層同時調整）。
-2. 變更公開行為邊界，如 API 契約、資料模型、存取規則、核心流程。
-3. 新增核心新功能，或重構高風險路徑（付款、認證、權限、資料遷移、狀態轉換）。
-
-Rules:
-
-- **Before refactoring, establish the result of relevant tests; rerun them after the change.**
-- **Don't weaken a test just to make it pass.** Unless the test itself is wrong.
-- **For behavior-changing edits to skills, prompts, or agent workflows, compare the current and candidate versions on the same tasks in fresh contexts with the same model, tools, data access, and resource limits.** Scale the comparison to the change. Inspect actual decisions, artifacts, acceptance results, unsupported retries, premature stops, and cost. Keep acceptance cases separate from cases used to revise the instructions. Retain the current version as an eligible outcome; inconclusive comparisons do not establish improvement.
-
-#### Regression Tests
-
-Every bug fix has a regression test. It reproduces the original failure under its triggering conditions, fails on the pre-fix code, passes with the fix, and asserts observable behavior rather than private implementation details. The test-first requirements above decide whether it is written before or after the fix. When reproduction is intermittent or the required environment is unavailable, report that limit and what remains unverified instead of claiming a proven fix.
+Read [references/testing.md](references/testing.md) when choosing the timing of tests for a small fix, before refactoring, and before editing skills, prompts or agent workflows.
 
 ### 5. Goal-Driven Execution
 
 **Define success criteria. Use observed progress to choose each next step.**
 
-Transform tasks into verifiable goals — e.g. "Add validation" → "Write tests for invalid inputs, then make them pass".
-
-For multi-step tasks, state a brief plan:
-
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Derive concrete success criteria from the request and available project evidence. Resolve routine gaps yourself and apply Principle 1's clarification threshold to material unknowns.
+- Turn the task into verifiable goals, and for multi-step work state each step with its check.
+- In multi-part work, choose the next work from the primary flows that are still unimplemented or unverified before deepening a part that already works.
+- Before a second attempt at something that failed, and when the work is a series of experiments, read [references/iterations.md](references/iterations.md).
 
 #### Skeleton First
 
@@ -150,24 +97,11 @@ Before filling in logic for a new project, feature, or fix, write a skeleton tha
 - Place independent slots in separate files.
 - Scale the skeleton to the task. A single-location change needs only its expected results and check.
 
-Fill the slots in the order below until their checks and the acceptance flows pass. When work is handed to other agents, follow **agent-delegation**. The agent that fills a slot does not edit its checks.
+Then decide, slot by slot, who fills it, by the amount of work:
 
-#### Whole-Goal Priority
-
-- For multi-part work, identify the required outcomes, their dependencies, and which primary flows remain unimplemented or unverified. Choose the next work from these gaps before deepening an already working part.
-- Implement production-intended components according to the agreed design, with the correctness and interfaces their role requires. Integrate and verify a complete primary flow early, then cover the remaining primary flows before optional local refinement. Do not substitute a knowingly inadequate design or disposable implementation for required work. Scaffolding, disconnected components, and mock outputs do not establish working coverage. Keep intermediate gaps explicit; complete all required edge cases and checks before delivery.
-- Once a part meets the criteria needed for the current integrated flow, move to the next uncovered outcome or blocking dependency. Defer extra abstraction, optimization beyond the agreed target, cosmetic polish, and repeated passing checks unless new evidence justifies them. Complete necessary local work first when correctness, safety, data integrity, or a downstream dependency prevents valid integration.
-- Follow an explicit user priority or narrowly scoped request. Do not expand the task to create breadth. Before returning to a covered part, identify the unmet requirement or new evidence that makes that work more valuable than the remaining gaps.
-
-#### Evidence-Guided Iterations
-
-Apply these checks around a meaningful experiment, implementation attempt, or revision within the ongoing work. Use them to verify and repair the complete implementation during the current turn, not to defer foreseeable requirements or delivery to another turn. Scale the record to the task; routine actions within an attempt do not each need a separate plan or report.
-
-1. Before an attempt, identify the acceptance gap or decision-relevant uncertainty it addresses and the observable result expected. For uncertain claims, state what would support, weaken, or leave them unresolved, including relevant alternative explanations. Prefer a feasible check that distinguishes alternatives at low cost; reuse applicable evidence.
-2. After the check, compare the result with the attempt's starting state and the best supported result under the same criteria. Identify verified improvement, a necessary repair or prerequisite, an informative negative result, repetition, regression, or insufficient evidence. Tie each claimed gain to evidence and the original goal. A prerequisite counts only toward the acceptance condition it enables; execution or compilation alone does not establish correctness or validate a research claim.
-3. Apply whole-goal priorities, then choose the next action by its expected contribution to the original goal, evidential value, and remaining cost. Preserve supported gains, repair an identified defect, or investigate alternatives that predict different outcomes. Revise or abandon a contradicted approach. For inconclusive results, improve the measurement or obtain missing evidence before drawing a conclusion. A negative result counts as progress only when a valid check rules out a relevant possibility or changes a justified decision.
-4. Before retrying, identify new evidence, a changed condition, or a distinct diagnostic check and what it can establish. When none is available, stop repeating that attempt and continue independent work that can advance the goal. Request help only for a material evidence, access, expertise, or authorization gap. Do not stop solely because an arbitrary number of attempts failed, or change acceptance criteria to make an attempt pass.
-5. Preserve the best supported candidate and enough evidence to compare later revisions. Before continuing, handing off, or resuming, update and read the existing task record for confirmed results, failed approaches and their conditions, evidence locations, unresolved questions, and the next discriminating check. Link revisions to the candidate they changed; do not count repeated versions as separate gains. Use the existing coordination file, or `docs/software-engineering-guidelines/` when a persistent record is needed, and preserve unrelated content.
+- Dispatch a slot through **agent-delegation** when filling it is sizable: more than about a screenful of logic, several independent slots that can be filled at the same time, or bulk repetitive edits. The agent that fills a slot does not edit its checks.
+- Fill a slot yourself when it is short enough that briefing and reviewing would cost more than writing it, or when you cannot yet say exactly what it has to do.
+- Say in the report which slots were dispatched and which were not, with the reason.
 
 ## Shared Conventions
 
@@ -177,11 +111,15 @@ Rules that several tstack skills rely on. Each is defined once here; the other s
 
 - Before concluding that something is impossible, absent, not installed, unsupported, or already confirmed, name the check that was run and the scope it covered. A timeout, a redirect, an empty result and a single failed lookup are not such checks.
 - A cause that is not verified is a hypothesis. Label it as one, and do not write it into code comments, docstrings, agent instruction files, skills or project memory as a fact.
-- Retrying follows item 4 of [Evidence-Guided Iterations](#evidence-guided-iterations).
+- A retry needs new evidence, a changed condition or a distinct diagnostic check. Without one, stop repeating the attempt and continue independent work. Do not stop only because some number of attempts failed, and do not change the acceptance criteria to make an attempt pass.
 
 ### Counterpart Operations
 
 A requested action brings its counterparts with it. For each feature, go through: create, edit and delete; the reverse of every action (add and remove, increase and decrease, lock and unlock); ordering; the settings or entry point from which it is reached; where its data is stored; import and export; the edit history. Each one is either in scope or named as out of scope.
+
+### Regression Tests
+
+Every bug fix has a regression test. It reproduces the original failure under its triggering conditions, fails on the pre-fix code, passes with the fix, and asserts observable behavior rather than private implementation details. The test-first requirements in [references/testing.md](references/testing.md) decide whether it is written before or after the fix. When reproduction is intermittent or the required environment is unavailable, report that limit and what remains unverified instead of claiming a proven fix.
 
 ### Independent Review
 
@@ -197,7 +135,7 @@ The exception is a small, low-risk change of its own: a few lines that are easy 
 
 **diff-review**, **security-scan**, **ui-review** and **acceptance-review** report with this format and scale, so their results merge into one list.
 
-A finding is confirmed only when code or observed behavior shows a concrete failure scenario. A concern backed by evidence but missing a decisive fact is reported as needing investigation, with the missing fact and how to verify it. Speculation and style preferences are not findings.
+A finding is confirmed only when code or observed behavior shows a concrete failure scenario. Each confirmed finding names its evidence: `ran:` with the command and what it printed, or `read:` with the lines that show it. When the failure can be exercised in a local or test environment, run it; a finding that could have been run and was only read is reported as needing investigation. A concern backed by evidence but missing a decisive fact is reported as needing investigation, with the missing fact and how to verify it. Speculation and style preferences are not findings.
 
 | Level | Meaning |
 |---|---|
@@ -239,39 +177,22 @@ Every time the main conversation stops, also state on its own line what is still
 
 Check the actual state before writing this line; do not infer it from what was started earlier.
 
-## Workflow
+## What to Read When
 
-### A. Before Writing Code
-
-1. Read this project's memory. In Claude Code the session-start hook puts it in context; when it is absent or lists keys only, load it through **project-memory**.
-2. Establish the requirement and approach (Principle 1). When architecture or the split into tickets is undecided, use **eng-architect**.
-3. Define success criteria (Principle 5).
-4. Select verification and establish required pre-change results (Principle 4).
-5. Write the skeleton (Principle 5).
-
-### B. While Writing Code
-
-Fill the skeleton using Principles 2–4 and Principle 5's whole-goal priorities. Before and after each meaningful attempt, apply the iteration checks and use the result to choose the next action.
-
-- A failure whose cause is not established goes to **investigate** before any fix.
-- Work handed to a subagent or another CLI, and any change to an existing API, goes through **agent-delegation**.
-- When designing or changing a CLI, an MCP tool or an API, read [references/tool-discoverability.md](references/tool-discoverability.md).
-- When creating or modifying Docker Compose files, read [references/docker-compose.md](references/docker-compose.md).
-
-### C. After Completion
-
-1. Verify with **test-and-fix** and report the results (Principle 4).
-2. Have the diff reviewed through **diff-review** when the change is substantial or high-risk, or about to become a PR, MR or merge. The review follows [Independent Review](#independent-review): reviewers in separate contexts cover the code, and security-relevant changes and changed screens where they apply.
-3. Before reporting substantial work as done, have the result checked against the original request through **acceptance-review**.
-4. Review the Pre-Ship Checklist.
-5. Commit under [Staging and Commits](#staging-and-commits). Push, open a PR or MR, or merge through **ship-it**.
-6. Record qualifying lessons through **project-memory**.
-7. Before ending the turn, compare the result with the full authorized outcome. Continue any required work that can still be completed, then give the [Turn-End Report](#turn-end-report).
-
----
+| When | Read |
+|---|---|
+| Starting any task | [references/playbooks.md](references/playbooks.md) |
+| Designing anything larger than a single-location change | [references/design.md](references/design.md) |
+| Scripting a change; recording a follow-up; a new repository or `.gitattributes`; writing documents, rules, prompts or skills; touching `AGENTS.md` or `CLAUDE.md` | [references/changing-code.md](references/changing-code.md) |
+| Choosing test timing, refactoring, editing skills or prompts | [references/testing.md](references/testing.md) |
+| A second attempt at something that failed; a series of experiments | [references/iterations.md](references/iterations.md) |
+| Writing a commit message | [references/commit-messages.md](references/commit-messages.md) |
+| Designing or changing a CLI, an MCP tool or an API | [references/tool-discoverability.md](references/tool-discoverability.md) |
+| Creating or modifying Docker Compose files | [references/docker-compose.md](references/docker-compose.md) |
 
 ## Pre-Ship Checklist
 
+- [ ] Every step of the playbook is done or marked `skip` with a reason.
 - [ ] Scope and simplicity reviewed against Principles 2–3.
 - [ ] The feature or problem is handled completely: root cause, same-pattern occurrences, and edge cases.
 - [ ] Verification completed under Principle 4, including the end-to-end acceptance flows.

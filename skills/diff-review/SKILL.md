@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "3.2.1"
+  version: "3.3.0"
 ---
 
 ## Who reviews
@@ -30,7 +30,7 @@ Small and low-risk is defined in the core's [Independent Review](../software-eng
 
 ### Lightweight review
 
-Read the whole diff once against the request and the technical checks that apply to it. Dispatch no one. When [UI handoff](#ui-handoff) applies, look at the changed screens yourself following **ui-review** and report it on the `UI handoff` line. Report with [Final output](#final-output) and state on the `Reviewed` line that it was a lightweight self-review.
+Read the whole diff once against the request and the technical checks that apply to it, and run the [blast-radius check](references/blast-radius.md). Dispatch no one. When [UI handoff](#ui-handoff) applies, look at the changed screens yourself following **ui-review** and report it on the `UI handoff` line. Report with [Final output](#final-output) and state on the `Reviewed` line that it was a lightweight self-review.
 
 ---
 

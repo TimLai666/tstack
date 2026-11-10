@@ -208,7 +208,7 @@ After the tickets and dependencies are established, select the next actionable t
 
 #### 5c — Create or update `AGENTS.md` and `CLAUDE.md`
 
-Follow the core's [Agent Context Files](../../software-engineering-guidelines/SKILL.md#agent-context-files) for which file holds the rules, what `CLAUDE.md` contains and what belongs in `README.md` instead.
+Follow the core's [Agent Context Files](../../software-engineering-guidelines/references/changing-code.md#agent-context-files) for which file holds the rules, what `CLAUDE.md` contains and what belongs in `README.md` instead.
 
 `AGENTS.md` must contain:
 - required artifacts — name each one and say when to read it, not just that it exists

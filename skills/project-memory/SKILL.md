@@ -8,7 +8,7 @@ allowed-tools:
   - Edit
   - AskUserQuestion
 metadata:
-  version: "1.16.1"
+  version: "1.16.2"
 ---
 
 ## Purpose and workflow
@@ -128,7 +128,8 @@ preservation rules and how to restore an absorbed key.
 - Project-specific lessons only. General programming knowledge does not belong here.
   What holds beyond this project goes in one of the [Global, machine and host stores](#global-machine-and-host-stores).
 - A pitfall met for the second time in this project MUST be recorded, even when
-  each occurrence was cheap.
+  each occurrence was cheap. Say in the report that it is a second occurrence, so the
+  core can route it to the skill that turns it into a check.
 - A rule the user was promised will be remembered is written in that same turn.
   Report its key and a one-sentence summary of what was saved.
 - Would the line be at home in `AGENTS.md`? Then write it there instead. This
