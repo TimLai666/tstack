@@ -14,7 +14,7 @@ metadata:
 
 ## Overview
 
-Answer one question: does what was delivered do what was asked? The reviewer starts from the request, goes to the running result, and reports every requirement that has no working result behind it.
+Answer one question: does what was delivered do what was asked? The answer comes from the delivered result, not from a diff, so this review applies with or without a PR. The reviewer starts from the request, goes to the running result, and reports every requirement that has no working result behind it.
 
 | Review of | Skill |
 |---|---|

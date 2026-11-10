@@ -50,7 +50,8 @@ class Contract(unittest.TestCase):
         request = dict(project_dir="/project", role="tester", prompt="Check the contract", allowed_files=[],
                        project_memory=[], verification=[], test_files=["tests.py"])
         readonly = dispatch.build_prompt(request, POLICY["tasks"]["exploration"], {})
-        self.assertIn("不得修改任何檔案", readonly)
+        self.assertIn("不得修改任何專案檔案", readonly)
+        self.assertIn("專案外的暫存目錄", readonly)
         testing = dispatch.build_prompt(dict(request, allowed_files=["tests.py"]), POLICY["tasks"]["testing"], {})
         self.assertIn("只寫測試，不寫實作", testing)
         self.assertNotIn("不得修改測試檔", testing)

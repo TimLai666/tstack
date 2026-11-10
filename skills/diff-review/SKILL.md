@@ -15,6 +15,12 @@ metadata:
   version: "4.0.1"
 ---
 
+## Overview
+
+This skill is the single entry for code review. It reviews the code, hands the security part to **security-scan** and the screens to **ui-review**, and merges what they return into one report.
+
+---
+
 ## Who reviews
 
 This follows the core's [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review).

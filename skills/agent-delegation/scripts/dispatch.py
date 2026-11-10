@@ -197,7 +197,7 @@ def build_prompt(r, task, state):
     if task["access"] == "sandbox":
         lines += ["沙盒目錄：" + r["sandbox_dir"], "專案檔一律不可修改。僅可在指定沙盒內試探，回報所有檔案、程序與設定副作用。"]
     if not scope and task["access"] != "sandbox":
-        lines += ["可改與不可改的檔案：不得修改任何檔案。"]
+        lines += ["可改與不可改的檔案：不得修改任何專案檔案。需要重現問題時，一次性的腳本只能放在專案外的暫存目錄，並在回報列出。"]
     else:
         lines += ["可改與不可改的檔案：" + json.dumps(scope or [r["sandbox_dir"]], ensure_ascii=False),
                   "沒列到的路徑一律不可修改。路徑相對於專案目錄，沙盒絕對路徑依原值使用。"]
