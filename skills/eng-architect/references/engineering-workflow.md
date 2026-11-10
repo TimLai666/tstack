@@ -208,7 +208,7 @@ After the tickets and dependencies are established, select the next actionable t
 
 #### 5c — Create or update `AGENTS.md` and `CLAUDE.md`
 
-Read [references/agent-context-files.md](agent-context-files.md) first.
+Follow the core's [Agent Context Files](../../software-engineering-guidelines/SKILL.md#agent-context-files) for which file holds the rules, what `CLAUDE.md` contains and what belongs in `README.md` instead.
 
 `AGENTS.md` must contain:
 - required artifacts — name each one and say when to read it, not just that it exists
@@ -241,12 +241,6 @@ Keep the architecture record registered even when the status record also links i
 | Anything else | the user, or a skill not listed here |
 
 Update your own sections in place. Never delete or rewrite a section you do not own — an unfamiliar section is someone else's working state, not clutter. The "must not become a personal note file" rule below applies to the sections this skill owns, not to the whole file.
-
-`CLAUDE.md` must contain only:
-
-```md
-Read `AGENTS.md` before doing any project work. Treat it as the project operating contract.
-```
 
 #### Convergence artifact contract
 

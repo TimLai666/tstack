@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 ## Overview
@@ -57,21 +57,13 @@ same repository, work in a separate worktree.
 git status --short
 ```
 
-Sort every modified and untracked file into this delivery or not. Before
-committing, list the files that are left out and why. Do not silently stash,
-discard or include unrelated changes.
-
-Stage with explicit paths only. `git add -A`, `git add .`, `git add --all`,
-`git commit -a` and `git commit -am` are not used, including in a fresh
-repository: list the paths. Leave out build output, caches, operating-system
-metadata files and binaries the task did not ask for.
+Sort every modified and untracked file into this delivery or not, then stage
+and commit under the core's [Staging and Commits](../software-engineering-guidelines/SKILL.md#staging-and-commits).
 
 ```bash
 git add -- <path> <path>
 git diff --cached --stat
 ```
-
-When creating commits, follow the [commit-message rules](../software-engineering-guidelines/references/commit-messages.md) before writing the message.
 
 ## Step 3 — Check the target before pushing
 
@@ -89,7 +81,7 @@ commits on a red branch.
 
 Scan the outgoing commits and diff for secrets, including keys, tokens,
 credentials and sensitive connection strings. If found, stop the push and report
-their locations without reproducing secret values.
+them as the core's [Secrets](../software-engineering-guidelines/SKILL.md#secrets) rule requires.
 
 ## Step 4 — Push and read the pipeline once
 

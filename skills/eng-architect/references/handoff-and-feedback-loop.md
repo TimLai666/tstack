@@ -8,7 +8,7 @@ After each milestone, blocker, or handoff:
 1. Update `delivery-status.md`
 2. Confirm the next ticket
 3. Update `AGENTS.md` if operating rules changed
-4. Leave `CLAUDE.md` alone unless its pointer is wrong
+4. Leave `CLAUDE.md` alone when it only points to `AGENTS.md`; otherwise follow the core's [Agent Context Files](../../software-engineering-guidelines/SKILL.md#agent-context-files)
 
 ## Minimum Handoff Payload
 

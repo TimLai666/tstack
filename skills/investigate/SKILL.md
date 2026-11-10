@@ -9,16 +9,14 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 ## Core rule
 
 **No fix without understanding the root cause.** Use verified evidence to explain how the cause produces the symptom. An apparently obvious cause still needs verification; an already established cause does not need a new round of hypotheses.
 
-**State only what was checked.** Before concluding that something is impossible, absent, not installed, unsupported by a site or service, or already confirmed, name the check that was run and the scope it covered. A timeout, a redirect, an empty result and a single failed lookup are not such checks.
-
-**A cause that is not verified stays a hypothesis.** Label it as one in the report. Do not write it into code comments, docstrings, `AGENTS.md`, `CLAUDE.md`, skills or project memory as a fact.
+Claims in the investigation and its report follow the core's [Evidence for Claims](../software-engineering-guidelines/SKILL.md#evidence-for-claims): name the check behind every conclusion, and keep an unverified cause labeled as a hypothesis.
 
 ## Step 1 — Understand the symptom
 
@@ -85,19 +83,17 @@ Identify the earliest verified point where actual behavior diverges from expecte
 
 Make the smallest change that addresses the verified root cause. Before editing, explain the cause and why the proposed change resolves it. Mention related unresolved problems only when they affect the user's outcome or the scope of this fix.
 
-Choose test-writing order according to project rules and risk. Add regression coverage that reproduces the original failure under its triggering conditions, fails on the pre-fix version, and passes with the fix. Assert the relevant observable behavior rather than private implementation details. If reproduction is intermittent or the required environment is unavailable, report the evidence limit and remaining verification instead of claiming a proven fix.
-
-Follow the user's or project's commit arrangement; otherwise keep the fix and regression test in separate commits, staging only their intended changes. Test-writing order and commit order are separate decisions: a test can be written first even when committed separately after the fix.
+Add the regression test required by the core's [Regression Tests](../software-engineering-guidelines/SKILL.md#regression-tests). Commit under [Staging and Commits](../software-engineering-guidelines/SKILL.md#staging-and-commits).
 
 ## Step 6 — Verify
 
 Repeat the original reproduction with the fix and verify the regression coverage before and after it. Run relevant checks for affected behavior and follow the project's full-suite rules. Confirm temporary diagnostic changes have been cleaned up or intentionally retained.
 
-If the symptom persists, use the observed result to revisit the hypothesis and data flow. Before another fix attempt, identify what new evidence justifies it. Apply the stopping conditions below when further attempts would repeat unsupported guesses.
+If the symptom persists, use the observed result to revisit the hypothesis and data flow. Another fix attempt needs what item 4 of the core's [Evidence-Guided Iterations](../software-engineering-guidelines/SKILL.md#evidence-guided-iterations) requires; otherwise go to Step 7.
 
 ## Step 7 — Stop or request help when evidence cannot advance
 
-Pause affected repair attempts when the next attempt has no new evidence or distinct diagnostic check, repeats a disproven guess, or requires unavailable information, access, expertise, or authorization. Continue independent investigation that can safely produce new evidence. An evidence-backed next step may proceed regardless of how many earlier attempts failed.
+Pause affected repair attempts when the next one fails that same requirement, repeats a disproven guess, or needs unavailable information, access, expertise, or authorization. Continue independent investigation that can safely produce new evidence.
 
 Report the actual blocker and a concrete next step:
 

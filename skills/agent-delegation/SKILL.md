@@ -14,7 +14,7 @@ description: >-
   Dispatched workers MUST NOT apply this skill or delegate. Ordinary prompts MUST
   carry project lessons; workers MUST report lessons for verification and recording.
 metadata:
-  version: "2.24.0"
+  version: "2.25.0"
 ---
 
 # Agent 派工規範
@@ -88,13 +88,7 @@ Copilot 宿主依當前執行環境判定，不把登入、模型設定或繼承
 
 ### 骨架與格子
 
-派實作前，主 agent 先寫骨架：
-
-- [ ] 骨架從頭到尾能跑，入口、資料形狀與空格子都在。
-- [ ] 每個格子有簽名（輸入、輸出、錯誤怎麼回報）與想要的結果清單，邊界情況各列一條。虛擬碼想到才附。
-- [ ] 有兩三條完整使用流程的驗收，全部格子填完後必跑。
-- [ ] 互不相依的格子落在不同檔案。
-- [ ] 修正的骨架是根因、所有要改的位置與每處的驗證。
+派實作前，主 agent 先照核心的 [Skeleton First](../software-engineering-guidelines/SKILL.md#skeleton-first) 寫好骨架，每個格子都有簽名與想要的結果清單。
 
 邏輯短到交代與審查比直接寫還費工，或說不清楚要改哪裡的格子，主 agent 自己寫。其餘格子照下列順序派：
 

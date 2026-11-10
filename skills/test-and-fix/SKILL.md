@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "1.5.0"
+  version: "1.6.0"
 ---
 
 ## Preamble
@@ -63,11 +63,11 @@ For each test:
 
 For each failure, locate the root cause first. If it cannot be established from the tested changes and evidence, invoke **investigate**.
 
-1. Add or update a regression test that fails without the fix and passes with it. Follow **software-engineering-guidelines** for timing: major or high-risk changes are test-first; small, local, low-risk fixes may add the test before or immediately after implementation.
+1. Add or update the regression test required by the core's [Regression Tests](../software-engineering-guidelines/SKILL.md#regression-tests).
 2. Make the minimal fix, then rerun the failing case and relevant regression checks.
-3. Commit according to the user's instructions and project conventions. If no commit arrangement is specified, retain the original default: commit the fix on its own, then commit its regression test separately. Writing a test first and committing it later are separate decisions. Stage only the intended changes, preserving unrelated work.
+3. Commit under the core's [Staging and Commits](../software-engineering-guidelines/SKILL.md#staging-and-commits).
 
-Every fixed bug needs regression coverage. Report verification gaps explicitly.
+Report verification gaps explicitly.
 
 ---
 

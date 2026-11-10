@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "2.0.0"
+  version: "2.0.1"
 ---
 
 ## Review timing
@@ -62,7 +62,7 @@ Put an issue in Findings only when relevant code or observed behavior confirms a
 
 For each finding:
 
-- cite the relevant file and line; for a secret, cite its key name and location, never its value
+- cite the relevant file and line; refer to a secret as the core's [Secrets](../software-engineering-guidelines/SKILL.md#secrets) rule requires
 - describe the trigger and impact
 - assign P0, P1, or P2 based on impact
 - label it `CONFIRMED`
@@ -88,7 +88,7 @@ This skill does not look for vulnerabilities. Run **security-scan** in diff mode
 
 State which of these the diff touches, or that it touches none, with the files that decided it. When unsure, hand over.
 
-Merge the returned findings into Findings using this mapping: 嚴重 to P0, 高 to P1, 中 and 低 to P2. Keep its evidence and location, and mark each as `security-scan`. If **security-scan** is not installed, say that the diff has security-relevant changes that were not reviewed, and list them under Needs investigation.
+Merge the returned findings into Findings using this mapping: 嚴重 to P0, 高 to P1, 中 and 低 to P2. Keep its evidence and location, and mark each as `security-scan`.
 
 ---
 
@@ -145,7 +145,7 @@ Use this structure:
 Scope: [CLEAN / DRIFT / MISSING]
 Reviewed: [diff source and scope]
 Adversarial review: [RUN — Trigger: reason]
-Security handoff: [RUN — touches: ... / NOT NEEDED — reason / NOT REVIEWED — security-scan unavailable]
+Security handoff: [RUN — touches: ... / NOT NEEDED — reason]
 
 ### Findings
 - [P0/P1/P2] [CONFIRMED] file:line - trigger, impact, description, and recommended action
