@@ -11,7 +11,7 @@ The store is agent-neutral on purpose: Claude, Codex, Cursor and others read and
 write the same file, so a lesson learned in one agent is visible in the next.
 
 Usage:
-  memory.py load [--all] [--json] [--machine | --host NAME]
+  memory.py load [--all] [--json] [--fit N] [--machine | --host NAME]
   memory.py add --type T --key K --insight S --confidence N [--machine | --host NAME]
                 [--files a,b] [--source X] [--absorbs k1,k2]
   memory.py search QUERY [--json] [--machine | --host NAME]
@@ -22,7 +22,10 @@ load prints the project's memory, then the machine facts, then the names of the
 remote hosts that have facts. --machine or --host NAME limits load, search, stats
 and path to that store, and makes add write there. NAME is the name used to reach
 the host, such as its SSH alias. --json and --all cover the project store unless
-one of the two is given.
+one of the two is given. load --fit N (at least 200) keeps the output within N
+characters: the project memory is reduced to its keys first, then the machine
+facts, then the project key list is shortened. The heading of every reduced
+section says "keys only:".
 """
 
 import argparse
@@ -49,6 +52,7 @@ MACHINE_PATH = os.path.join(BASE, "machine", STORE_FILE)
 HOSTS_ROOT = os.path.join(BASE, "hosts")
 # Machine facts are shown in full in every session, so each one stays short.
 MACHINE_INSIGHT_LIMIT = 300
+MIN_FIT = 200
 
 
 def _append_missing_lines(src, dst):
@@ -347,21 +351,57 @@ def cmd_load(args):
     if args.json:
         print(json.dumps(entries, ensure_ascii=False, indent=2))
         return 0
-    print(render(entries, corrupt, path,
-                 "# Project memory — %d learning(s)" % len(entries), expand_all=args.all))
+    project = render(entries, corrupt, path,
+                     "# Project memory — %d learning(s)" % len(entries), expand_all=args.all)
     # --json is machine output and --all is the export path that SKILL.md pastes
     # into AGENTS.md; machine facts and a prompt aimed at the current session
     # belong in neither.
-    if not args.all:
-        machine, machine_corrupt = live_entries(MACHINE_PATH)
-        if machine:
-            print("\n" + render_machine(machine, machine_corrupt))
-        hosts = hosts_with_facts()
-        if hosts:
-            print("\n# Remote hosts with recorded facts: %s\nBefore working on one of them, run `load --host <name>`."
-                  % ", ".join("%s (%d)" % pair for pair in hosts))
-        print(add_reminder())
+    if args.all:
+        print(project)
+        return 0
+    machine, machine_corrupt = live_entries(MACHINE_PATH)
+    facts = render_machine(machine, machine_corrupt) if machine else ""
+    hosts = hosts_with_facts()
+    remote = ("# Remote hosts with recorded facts: %s\nBefore working on one of them, run `load --host <name>`."
+              % ", ".join("%s (%d)" % pair for pair in hosts)) if hosts else ""
+
+    reminder = add_reminder()
+
+    def joined(head, facts_part):
+        return "\n\n".join(p for p in (head, facts_part, remote) if p) + "\n" + reminder
+
+    text = joined(project, facts)
+    if args.fit:
+        text = fitted(text, args.fit - 1, joined, project, entries, machine, facts)  # print adds the final newline
+    print(text)
     return 0
+
+
+def fitted(text, limit, joined, project, entries, machine, facts):
+    """The load output within limit characters, giving up what the reader can fetch again first."""
+    if len(text) <= limit:
+        return text
+    if entries:
+        header = ("# Project memory — %d learning(s), keys only: too long to show in full, run `load` for the text"
+                  % len(entries))
+        lines = ["- %s (%s)" % (e["key"], e.get("type", "other")) for e in entries]
+    else:
+        header, lines = project, []  # the NO_LEARNINGS line stays as it is
+    fact_keys = ("# Machine memory — %d fact(s), keys only: run `load --machine` for the text\n%s"
+                 % (len(machine), ", ".join(e["key"] for e in machine))) if machine else ""
+    for facts_part in ((facts, fact_keys) if machine else ("",)):
+        text = joined("\n".join([header] + lines), facts_part)
+        if len(text) <= limit:
+            return text
+    # Still too long: shorten only the project key list, so machine facts and hosts stay listed.
+    kept = list(lines)
+    while kept:
+        kept.pop()
+        more = "- … and %d more; run `load` to list them" % (len(lines) - len(kept))
+        text = joined("\n".join([header] + kept + [more]), fact_keys)
+        if len(text) <= limit:
+            return text
+    return "# Memory, keys only: too long for this limit, run `load` for everything"[:limit]
 
 
 def _kebab(s):
@@ -504,6 +544,13 @@ def cmd_path(args):
     return 0
 
 
+def fit_limit(raw):
+    value = int(raw)
+    if value < MIN_FIT:
+        raise argparse.ArgumentTypeError("must be at least %d, the room the shortest notice needs" % MIN_FIT)
+    return value
+
+
 def main():
     p = argparse.ArgumentParser(prog="memory.py", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -512,6 +559,9 @@ def main():
     lo = sub.add_parser("load", help="print deduplicated memory for this project")
     lo.add_argument("--json", action="store_true")
     lo.add_argument("--all", action="store_true", help="expand every entry, not just the ones only recorded here")
+    lo.add_argument("--fit", type=fit_limit, metavar="N",
+                    help="keep the output within N characters (at least %d) by reducing memory to keys; "
+                         "for callers with a size limit" % MIN_FIT)
     lo.add_argument("--machine", action="store_true", help="only the machine facts")
     lo.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     lo.set_defaults(func=cmd_load)

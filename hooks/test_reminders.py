@@ -90,6 +90,15 @@ class Reminders(unittest.TestCase):
         self.assertIn("暫存資料夾不能執行 exe", text)
         self.assertIn("執行 load", text)
 
+    def test_reduced_machine_facts_without_project_memory_still_ask_for_a_load(self):
+        for i in range(40):
+            self.machine_fact("machine-fact-number-%02d" % i, "機器事實" * 70)
+        text = self.session_start()
+        self.assertLess(len(text), 10000)
+        self.assertIn("machine-fact-number-39", text)
+        self.assertIn("執行 load", text)
+        self.assertNotIn("不用再執行 load", text)
+
     def session_start(self, **payload):
         return self.context("session-start", "SessionStart", dict(source="startup", **payload))["additionalContext"]
 

@@ -24,9 +24,8 @@ INTRO = "這個環境裝了 tstack plugin。"
 MEMORY_LOADED = ("以下是 project-memory 已替你載入的本專案記憶與這台機器的事實，這次對話不用再執行 load，"
                  "要查某一筆的全文時用 search：\n\n")
 MEMORY_EMPTY = "本專案在 project-memory 還沒有記憶，這台機器也還沒有記錄任何事實。"
-MEMORY_KEYS = ("本專案的記憶太長，hook 放不下全文，以下只列出各筆的 key。"
-               "開始工作前先依 project-memory skill 執行 load 讀完整內容：\n")
-MACHINE_UNREAD = "\n\n這台機器的事實也放不下，一併由 load 讀取。"
+MEMORY_KEYS = ("記憶太長，hook 放不下全文，以下有一部分只列出 key。"
+               "開始工作前先依 project-memory skill 執行 load 讀完整內容：\n\n")
 MEMORY_UNREAD = "開始工作前，先依 project-memory skill 載入本專案的記憶。"
 SKILLS = ("\n\n規劃、寫程式、改程式、審查或 commit 前，先載入 software-engineering-guidelines skill。"
           "要開 subagent、外派其他 CLI、變更既有 API，或交付規格、文章、報告前，先載入 agent-delegation skill。")
@@ -45,7 +44,7 @@ def context(event, text):
 def run_memory(cwd, *args):
     """Output of the project-memory script for the project in cwd, or None when it fails."""
     result = subprocess.run([sys.executable, str(MEMORY_SCRIPT), *args], cwd=cwd, capture_output=True,
-                            text=True, encoding="utf-8", errors="replace", timeout=4,
+                            text=True, encoding="utf-8", errors="replace", timeout=8,
                             env=dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1"))
     return result.stdout.strip() if result.returncode == 0 else None
 
@@ -55,22 +54,17 @@ def session_start(cwd):
     try:
         if not cwd or not os.path.isdir(cwd):
             raise OSError("no project directory")
-        loaded = run_memory(cwd, "load")
+        room = CONTEXT_BUDGET - len(INTRO + SKILLS) - max(len(MEMORY_LOADED), len(MEMORY_KEYS))
+        # One call only: the script trims its own output, so a busy machine cannot push the hook past its time limit.
+        loaded = run_memory(cwd, "load", "--fit", str(room))
         if loaded is None:
             raise OSError("memory script failed")
         if loaded.startswith("NO_LEARNINGS") and "# Machine memory" not in loaded and "# Remote hosts" not in loaded:
             memory = MEMORY_EMPTY
-        elif len(INTRO + MEMORY_LOADED + loaded + SKILLS) <= CONTEXT_BUDGET:
-            memory = MEMORY_LOADED + loaded
+        elif any(line.startswith("# ") and "keys only:" in line for line in loaded.split("\n")):
+            memory = MEMORY_KEYS + loaded
         else:
-            entries = json.loads(run_memory(cwd, "load", "--json") or "[]")
-            keys = "\n".join("- %s（%s）" % (e.get("key"), e.get("type")) for e in entries)
-            room = CONTEXT_BUDGET - len(INTRO + SKILLS)
-            memory = (MEMORY_KEYS + keys)[:room - len(MACHINE_UNREAD)]
-            facts = run_memory(cwd, "load", "--machine") or ""
-            if facts.startswith("# Machine memory"):
-                # Machine facts are short by rule, so keep them in full when they still fit.
-                memory += "\n\n" + facts if len(memory) + len(facts) + 2 <= room else MACHINE_UNREAD
+            memory = MEMORY_LOADED + loaded
     except Exception:  # Fall back to asking for the load; never leave the session without the reminder.
         memory = MEMORY_UNREAD
     return INTRO + memory + SKILLS

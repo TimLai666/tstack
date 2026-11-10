@@ -26,8 +26,8 @@ class MachineScope(unittest.TestCase):
         return subprocess.run([sys.executable, str(SCRIPT), *args], cwd=cwd or self.first, env=env,
                               capture_output=True, text=True, encoding="utf-8", timeout=30)
 
-    def add(self, key, insight, *extra, cwd=None):
-        result = self.run_memory("add", "--type", "tool", "--key", key, "--insight", insight,
+    def add(self, key, insight, *extra, cwd=None, kind="tool"):
+        result = self.run_memory("add", "--type", kind, "--key", key, "--insight", insight,
                                  "--confidence", "9", *extra, cwd=cwd)
         return result
 
@@ -87,6 +87,78 @@ class MachineScope(unittest.TestCase):
         shown = self.run_memory("load", "--machine").stdout
         self.assertIn("這台已經裝了 opencode", shown)
         self.assertNotIn("這台沒裝 opencode", shown)
+
+    def test_fit_keeps_the_full_text_when_it_is_short_enough(self):
+        self.add("uses-pnpm-workspace", "安裝一律用 corepack pnpm")
+        self.add("temp-folder-blocks-exe", "暫存資料夾不能執行 exe", "--machine")
+        self.assertEqual(self.run_memory("load", "--fit", "9000").stdout, self.run_memory("load").stdout)
+
+    def test_fit_collapses_the_project_to_keys_before_touching_machine_facts(self):
+        for i in range(12):
+            self.add("long-project-rule-%02d" % i, "很長的專案經驗" * 120, kind="pitfall")
+        self.add("temp-folder-blocks-exe", "暫存資料夾不能執行 exe", "--machine")
+        shown = self.run_memory("load", "--fit", "3000").stdout
+        self.assertLessEqual(len(shown), 3000)
+        self.assertIn("keys only:", shown.split("\n", 1)[0])
+        self.assertIn("# Machine memory — 1 fact(s)\n", shown)
+        self.assertIn("long-project-rule-00", shown)
+        self.assertIn("long-project-rule-11", shown)
+        self.assertNotIn("很長的專案經驗很長的專案經驗", shown)
+        self.assertIn("暫存資料夾不能執行 exe", shown)
+
+    def test_fit_falls_back_to_machine_keys_and_never_exceeds_the_limit(self):
+        for i in range(12):
+            self.add("long-project-rule-%02d" % i, "很長的專案經驗" * 120, kind="pitfall")
+        for i in range(12):
+            self.add("machine-fact-number-%02d" % i, "機器事實" * 70, "--machine")
+        for limit in (2500, 900, 300):
+            shown = self.run_memory("load", "--fit", str(limit)).stdout
+            self.assertLessEqual(len(shown), limit, limit)
+            self.assertNotIn("機器事實機器事實", shown)
+        self.assertIn("machine-fact-number-00", self.run_memory("load", "--fit", "2500").stdout)
+
+    def test_load_layout_keeps_a_blank_line_between_sections_and_before_the_reminder(self):
+        self.add("uses-pnpm-workspace", "安裝一律用 corepack pnpm", kind="pitfall")
+        self.add("temp-folder-blocks-exe", "暫存資料夾不能執行 exe", "--machine")
+        self.add("docker-needs-sudo", "docker 要加 sudo", "--host", "devbox")
+        shown = self.run_memory("load").stdout
+        self.assertRegex(shown, r"安裝一律用 corepack pnpm\n\n# Machine memory — 1 fact\(s\)\n- \*\*temp-folder-blocks-exe\*\*")
+        self.assertRegex(shown, r"暫存資料夾不能執行 exe\n\n# Remote hosts with recorded facts: devbox \(1\)\n")
+        self.assertIn("run `load --host <name>`.\n\n---\nBefore this session ends", shown)
+        self.assertTrue(shown.endswith("no announcement is needed.\n"))
+        alone = self.run_memory("load", cwd=self.second).stdout
+        self.assertTrue(alone.startswith("NO_LEARNINGS ("))
+
+    def test_fit_rejects_limits_too_small_to_carry_a_message(self):
+        for bad in ("0", "-5", "199"):
+            refused = self.run_memory("load", "--fit", bad)
+            self.assertEqual(refused.returncode, 2, bad)
+            self.assertIn("200", refused.stderr)
+
+    def test_fit_trims_only_the_project_key_list_and_keeps_the_rest(self):
+        for i in range(60):
+            self.add("project-rule-with-a-long-descriptive-key-%02d" % i, "很長的專案經驗" * 60, kind="pitfall")
+        for i in range(6):
+            self.add("machine-fact-number-%02d" % i, "機器事實" * 70, "--machine")
+        self.add("docker-needs-sudo", "docker 要加 sudo", "--host", "devbox")
+        shown = self.run_memory("load", "--fit", "2600").stdout
+        self.assertLessEqual(len(shown), 2600)
+        self.assertIn("keys only:", shown.split("\n", 1)[0])
+        self.assertIn("project-rule-with-a-long-descriptive-key-00", shown)
+        self.assertNotIn("project-rule-with-a-long-descriptive-key-59", shown)
+        self.assertRegex(shown, r"… and \d+ more; run `load` to list them")
+        self.assertIn("machine-fact-number-05", shown)
+        self.assertIn("devbox (1)", shown)
+        self.assertIn("Before this session ends", shown)
+
+    def test_fit_with_an_empty_project_keeps_the_no_learnings_line(self):
+        for i in range(40):
+            self.add("machine-fact-number-%02d" % i, "機器事實" * 70, "--machine")
+        shown = self.run_memory("load", "--fit", "3000", cwd=self.second).stdout
+        self.assertLessEqual(len(shown), 3000)
+        self.assertTrue(shown.startswith("NO_LEARNINGS ("))
+        self.assertIn("# Machine memory — 40 fact(s), keys only:", shown)
+        self.assertIn("machine-fact-number-39", shown)
 
     def test_path_and_stats_follow_the_machine_flag(self):
         self.assertIn(os.path.join(".tstack", "machine", "learnings.jsonl"), self.run_memory("path", "--machine").stdout)

@@ -83,3 +83,4 @@ tstack 只支援整組安裝，skill 可以直接依賴其他 skill 存在，不
 | ID | Task | Status |
 |---|---|---|
 | agent-delegation-opencode-startup-stall | opencode 有 4 次派工全程零輸出，紀錄停在啟動初期（`init`、`event connected`），沒有 provider 錯誤；同期另有 `database is locked`，疑似多條 opencode 搶同一個資料庫，未證實。遇到時用 `status` 的 `runtime` 判斷後 `cancel` | 待調查 |
+| project-memory-fit-small-limit | `memory.py load --fit N` 在 N 小於結尾提醒加各段標題的總長（約 1300 到 2000 字元）時，只輸出一行通用提示，機器事實的 key、遠端主機清單與 NO_LEARNINGS 都不見。hook 用的 N 約 7700，不受影響 | 待處理 |
