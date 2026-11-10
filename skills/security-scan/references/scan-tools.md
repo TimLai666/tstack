@@ -1,74 +1,74 @@
-# 掃描工具對照
+# Scan Tools
 
-工具掃描這條線用這張表。先看專案用了什麼，再逐一確認對應的工具能不能用，能用的都跑。
+Use these tables for the tool scan track. First see what the project uses, then confirm one by one whether the matching tools are usable, and run every usable one.
 
-## 使用規則
+## Usage rules
 
-1. 依專案裡實際存在的檔案判斷適用哪幾列，不靠猜。
-2. 逐一確認工具可用：隨語言工具鏈附帶的直接可用；獨立工具用 shell 的指令解析確認有沒有安裝，並看專案的設定檔、CI 設定與套件腳本有沒有已經接好的掃描指令。專案接好的指令優先，照它的參數跑。
-3. 可用的都跑。參數與輸出格式看該工具自己的 `--help`，這裡只列名稱。
-4. 沒安裝的不自行安裝，列進報告的建議，寫明它能補上哪一塊。
-5. 每一筆輸出都回到程式碼確認後才算發現。工具沒有報告不代表沒有漏洞。
-6. 報告的「範圍與依據」列出每個工具的名稱、版本、有沒有跑、沒跑的原因。
+1. Decide which rows apply from the files that actually exist in the project, not by guessing.
+2. Confirm one by one that each tool is usable: tools that ship with a language toolchain are usable directly; for a standalone tool, confirm whether it is installed with the shell's command resolution, and check whether the project's configuration files, CI configuration and package scripts already have a scan command wired up. A command the project has wired up takes priority; run it with its arguments.
+3. Run every usable tool. For arguments and output formats, see the tool's own `--help`; only names are listed here.
+4. Do not install a tool that is not installed yourself. List it in the report's recommendations, stating which gap it would cover.
+5. Every output item counts as a finding only after it is confirmed against the code. A tool reporting nothing does not mean there is no vulnerability.
+6. The report's "Scope and basis" lists each tool's name and version, whether it was run, and why it was not run.
 
-## 依賴套件的已知漏洞
+## Known vulnerabilities in dependencies
 
-| 專案裡有 | 隨工具鏈附帶 | 獨立工具 |
+| The project has | Ships with the toolchain | Standalone tool |
 |---|---|---|
 | `package-lock.json` | `npm audit` | |
 | `pnpm-lock.yaml` | `pnpm audit` | |
-| `yarn.lock` | `yarn npm audit`（Yarn 2 以上）、`yarn audit`（Yarn 1） | |
-| `bun.lock`、`bun.lockb` | `bun audit` | |
-| `requirements*.txt`、`pyproject.toml`、`poetry.lock`、`uv.lock` | | `pip-audit`。它讀 requirements 檔或已安裝的環境；只有 `poetry.lock` 或 `uv.lock` 時，先用該工具匯出 requirements，或改稽核已安裝好的環境 |
+| `yarn.lock` | `yarn npm audit` (Yarn 2 and later), `yarn audit` (Yarn 1) | |
+| `bun.lock`, `bun.lockb` | `bun audit` | |
+| `requirements*.txt`, `pyproject.toml`, `poetry.lock`, `uv.lock` | | `pip-audit`. It reads requirements files or an installed environment; when there is only `poetry.lock` or `uv.lock`, first export requirements with that tool, or audit an already installed environment instead |
 | `go.mod` | | `govulncheck` |
-| `Cargo.lock` | | `cargo audit`、`cargo deny` |
+| `Cargo.lock` | | `cargo audit`, `cargo deny` |
 | `Gemfile.lock` | | `bundler-audit` |
 | `composer.lock` | `composer audit` | |
-| `*.csproj`、`packages.lock.json` | `dotnet list package --vulnerable --include-transitive` | |
-| `pom.xml`、`build.gradle*` | | OWASP Dependency-Check 的 Maven 或 Gradle 外掛 |
-| 以上任何一種，或多種語言混用 | | `osv-scanner`、`trivy fs`、`grype` |
+| `*.csproj`, `packages.lock.json` | `dotnet list package --vulnerable --include-transitive` | |
+| `pom.xml`, `build.gradle*` | | The OWASP Dependency-Check Maven or Gradle plugin |
+| Any of the above, or several languages mixed | | `osv-scanner`, `trivy fs`, `grype` |
 
-沒有 lockfile 時先在報告指出這件事：版本沒有鎖定，稽核結果只代表當下解析到的版本。
+When there is no lockfile, first point this out in the report: versions are not locked, and the audit result only covers the versions resolved at that moment.
 
-程式碼託管平台如果已經開了依賴掃描，一併讀它的結果：GitHub 的 Dependabot 警示、GitLab 的依賴掃描報告。用該平台的 CLI 或 API 讀，讀不到就在報告寫明。
+When the code hosting platform already has dependency scanning enabled, read its results as well: GitHub's Dependabot alerts, GitLab's dependency scanning report. Read them with that platform's CLI or API; when they cannot be read, state so in the report.
 
-## 秘密
+## Secrets
 
-| 範圍 | 工具 |
+| Scope | Tool |
 |---|---|
-| 工作目錄與完整的 git 歷史 | `gitleaks`、`trufflehog` |
-| 平台已開的秘密掃描 | GitHub 的 secret scanning 警示、GitLab 的秘密偵測報告 |
+| Working directory and full git history | `gitleaks`, `trufflehog` |
+| Secret scanning already enabled on the platform | GitHub's secret scanning alerts, GitLab's secret detection report |
 
-兩個工具都沒有時，改用搜尋找常見的金鑰格式與 `password`、`secret`、`token`、`api_key` 這類名稱，並說明這只涵蓋目前的檔案，沒有涵蓋歷史紀錄。秘密的寫法照核心的 [Secrets](../../software-engineering-guidelines/SKILL.md#secrets)。
+When neither tool is available, search instead for common key formats and names like `password`, `secret`, `token`, `api_key`, and state that this covers only the current files, not the history. Write secrets as the core [Secrets](../../software-engineering-guidelines/SKILL.md#secrets) requires.
 
-## 靜態分析
+## Static analysis
 
-| 專案裡有 | 工具 |
+| The project has | Tool |
 |---|---|
-| 任何語言 | `semgrep`、CodeQL |
+| Any language | `semgrep`, CodeQL |
 | Python | `bandit` |
 | Go | `gosec` |
 | Ruby on Rails | `brakeman` |
-| JavaScript、TypeScript | 專案 ESLint 設定裡的安全規則外掛 |
-| Java、Kotlin | SpotBugs 搭配 Find Security Bugs |
-| C、C++ | 編譯器的警告與分析選項、`cppcheck`、`clang-tidy` |
+| JavaScript, TypeScript | Security rule plugins in the project's ESLint configuration |
+| Java, Kotlin | SpotBugs with Find Security Bugs |
+| C, C++ | Compiler warning and analysis options, `cppcheck`, `clang-tidy` |
 
-專案的 linter 與型別檢查若已包含安全規則，照專案的指令跑一次並讀結果。
+When the project's linter and type checking already include security rules, run them once with the project's commands and read the results.
 
-## 容器、基礎設施與 CI 設定
+## Containers, infrastructure and CI configuration
 
-| 專案裡有 | 工具 |
+| The project has | Tool |
 |---|---|
-| `Dockerfile` | `hadolint`、`trivy config` |
-| 已建好的映像檔 | `trivy image`、`grype`、`docker scout` |
-| Terraform、CloudFormation、Kubernetes 設定、Helm chart | `trivy config`、`checkov`、`kubesec` |
-| GitHub Actions 的 workflow | `zizmor`、`actionlint` |
+| `Dockerfile` | `hadolint`, `trivy config` |
+| Built images | `trivy image`, `grype`, `docker scout` |
+| Terraform, CloudFormation, Kubernetes configuration, Helm charts | `trivy config`, `checkov`, `kubesec` |
+| GitHub Actions workflows | `zizmor`, `actionlint` |
 
-## 執行中的服務
+## Running services
 
-只在本機或測試環境使用，而且使用者同意時才跑。不對正式環境與第三方服務執行。
+Run these only locally or in a test environment, and only when the user agrees. Do not run them against production or third-party services.
 
-| 目標 | 工具 |
+| Target | Tool |
 |---|---|
-| 本機啟動的網頁應用或 API | OWASP ZAP 的基準掃描、`nuclei` |
-| TLS 設定 | `testssl.sh` |
+| Web application or API started locally | OWASP ZAP baseline scan, `nuclei` |
+| TLS configuration | `testssl.sh` |

@@ -12,18 +12,18 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "4.0.1"
+  version: "4.1.0"
 ---
 
 ## Overview
 
-This skill is the single entry for code review. It reviews the code, hands the security part to **security-scan** and the screens to **ui-review**, and merges what they return into one report.
+This skill is the single entry for code review. Review the code, hand the security part to **security-scan** and the screens to **ui-review**, and merge what they return into one report.
 
 ---
 
 ## Who reviews
 
-This follows the core's [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review).
+Apply the core's [Independent Review](../software-engineering-guidelines/SKILL.md#independent-review).
 
 | You are | Do |
 |---|---|
@@ -45,7 +45,7 @@ Read the whole diff once against the request and the checks in [references/techn
 1. Establish the diff and its base as in [Establish review scope](#establish-review-scope).
 2. Decide which reviews apply: the code review always, and the ones [Security handoff](#security-handoff) and [UI handoff](#ui-handoff) call for. Deciding this is not reviewing.
 3. Load **agent-delegation** and dispatch one reviewer per review with the `review` task type, at the same time when more than one applies. Whether to continue an existing reviewer or start a new one follows its reuse rules: start reviewers so they can be resumed, and send a re-review back to the reviewer that reported the findings unless this review has to be isolated from that one. Each task states:
-   - the original request and acceptance criteria, so the reviewer can check scope
+   - the original request and acceptance criteria
    - how to obtain the diff: the base and the command, or the PR or MR
    - the skill file to follow, by absolute path: this file for the code review, the **security-scan** skill in diff mode, the **ui-review** skill for the changed screens
    - that no project file may be modified, that a reproduction script goes in a temporary directory outside the project, and that findings use the core's [Findings and Severity](../software-engineering-guidelines/SKILL.md#findings-and-severity) format
@@ -90,7 +90,7 @@ Read [references/blast-radius.md](references/blast-radius.md) and run it in each
 
 ## Security handoff
 
-This skill does not look for vulnerabilities. Run **security-scan** in diff mode on the same diff when it adds or changes any of the following:
+This review does not look for vulnerabilities. Run **security-scan** in diff mode on the same diff when it adds or changes any of the following:
 
 - handling of input from outside the process: requests, uploads, files, messages, webhooks, command-line arguments, model output
 - authentication, sessions, authorization, ownership or tenant checks
@@ -106,7 +106,7 @@ Merge the returned findings into Findings, keeping their level, evidence and loc
 
 ## UI handoff
 
-This skill does not judge how screens look or behave. Run **ui-review** on the affected screens when the diff adds or changes what a user sees: templates, components, styles, layout, copy, or the empty, loading and error states of a screen.
+This review does not judge how screens look or behave. Run **ui-review** on the affected screens when the diff adds or changes what a user sees: templates, components, styles, layout, copy, or the empty, loading and error states of a screen.
 
 State which screens the diff changes, or that it changes none, with the files that decided it. Merge the returned findings into Findings, keeping their level, evidence and location, and mark each as `ui-review`.
 

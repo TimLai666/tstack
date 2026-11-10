@@ -20,9 +20,9 @@ Follow the shared decision rules in SKILL.md. Collect unresolved tradeoffs durin
 
 ### Step 1 — Per-feature pass
 
-Take the feature list from the plan document — the scope items, each already phrased as something a person can do. Work them one at a time, in the order the plan gives, and finish one before opening the next. The whole-system picture is Step 2; it is assembled from what these passes decide, not drawn ahead of them.
+Take the feature list from the plan document: the scope items, each phrased as something a person can do. Work them one at a time, in the order the plan gives, and finish one before opening the next. Assemble the whole-system picture in Step 2 from what these passes decide; do not draw it ahead of them.
 
-No plan document, or a list still written by module? Fix that first — turn it into a feature list, preserving the agreed scope; confirm only unresolved scope choices, otherwise every pass below inherits the technical axis and the tickets come out layered.
+When there is no plan document, or the list is still written by module, first turn it into a feature list, preserving the agreed scope. Confirm only unresolved scope choices.
 
 For each feature, run 1a through 1e, then move to the next feature.
 
@@ -56,7 +56,7 @@ For every operation in this feature that can fail:
 | DB write | Connection timeout | ActiveRecord | 500 + alert | Plan: yes |
 | Email send | SMTP failure | EmailWorker | Silent retry x3 | Plan: yes |
 
-Anti-pattern: `rescue StandardError` or `catch Exception` is a code smell. Call it out.
+Call out `rescue StandardError` or `catch Exception` as a code smell.
 
 #### 1c — Shadow paths
 
@@ -85,7 +85,7 @@ Flag any `?` as a gap.
 A seam is a place where behavior can be swapped without editing the code under test — where the fakes get injected. Decide where this feature is tested before deciding what kinds of tests to write.
 
 - Prefer existing seams to new ones, including one an earlier feature already chose. A seam that exists only to make testing possible is an architecture change, not a test decision.
-- Take the highest seam that still reaches the behavior. High seams survive internal refactors; low seams go red when a private method moves.
+- Take the highest seam that still reaches the behavior.
 - If a new seam is needed, propose it at the highest point possible.
 
 Example — "place order, then send confirmation email":
@@ -114,7 +114,7 @@ Assemble the per-feature flows into one picture: entry points, data flow, state 
 
 Present the consolidated diagram and record the resulting decisions. Ask about material unresolved tradeoffs or changes to an agreed approach.
 
-This is where features that quietly disagree surface — two of them assuming different boundaries, different storage, or incompatible state names. Say which two, say what each assumed, and go back to the feature that has to give way. A confirmation that never sends anything back is theatre; the diagram earns its place by catching exactly this.
+When features disagree, such as two of them assuming different boundaries, different storage, or incompatible state names, say which two, say what each assumed, and go back to the feature that has to give way.
 
 #### 2b — Collapse the seams
 
@@ -124,9 +124,9 @@ Where several features can share one higher seam, propose the collapse and say w
 
 #### 2c — Fill the test matrix
 
-Two rules before writing a single row:
+Before writing any row:
 
-- Test external behavior only. A test that breaks when internals are rewritten but behavior is unchanged is testing the wrong thing.
+- Test external behavior only.
 - Find prior art. Locate existing tests of the same shape in the codebase and follow their structure instead of inventing a new one.
 
 | Test type | What to cover | Priority |
@@ -146,13 +146,13 @@ For each migration: reversible? locks tables? needs backfill? can run while old 
 
 ### Step 4 — Record shared technical decisions
 
-Use the project's existing architecture decision document. For the default full-handoff setup, write `ENG.md` to the project root. `ENG.md` is a **state file**: one per project, updated in place. Never date-stamp or branch-stamp the filename — git already provides version history and branch isolation, and a second copy would leave re-sync with no single target to read.
+Use the project's existing architecture decision document. For the default full-handoff setup, write `ENG.md` to the project root. `ENG.md` is a **state file**: one per project, updated in place. Never date-stamp or branch-stamp the filename.
 
 Keep shared architecture, testing strategy, standing assumptions, and migration order here. When tickets exist, keep path-specific acceptance criteria on their owning tickets and link to them. For architecture-only work, retain the requested analysis as described in the per-feature pass.
 
 The next architecture review and agents changing these decisions read this record. Register its actual path and reading triggers in the project's coordination file during handoff (Step 5c).
 
-**Read before writing.** If the selected architecture document exists, read it first and update the sections that changed. Do not regenerate from scratch — a re-sync that rewrites blind loses the prior run's seam decisions.
+**Read before writing.** If the selected architecture document exists, read it first and update the sections that changed. Do not regenerate from scratch.
 
 ```markdown
 # Engineering Plan: [project]
@@ -177,7 +177,7 @@ _[date] - eng-architect - [repo]:[branch]_
 - [assumption] - risk: [consequence]
 ```
 
-The title names the project, not the feature. One file serves every feature in the repo, so a feature name in the heading goes stale the moment the next run touches it.
+The title names the project, not the feature.
 
 ### Step 5 — Prepare development handoff
 
@@ -196,7 +196,7 @@ Present the ticket set as a numbered list with title, blockers, and delivered be
 Tickets land where the Preamble established:
 
 - **Plain markdown** — one file per ticket under `docs/tickets/`, numbered in dependency order. Use that directory as the backlog when handing off implementation.
-- **OpenSpec** — one ticket is one change, never one task. Map each change to one milestone id in `delivery-status.md`; that milestone order carries the blocking edges, because OpenSpec has none between changes. Use the `openspec` skill for CLI commands, delta syntax, validation and archive flow if it is installed; if it is not, use the project's documented tooling when available. Otherwise report the missing capability and ask before switching an established ticket workflow; continue preparing the ticket content.
+- **OpenSpec** — one ticket is one change, never one task. Map each change to one milestone id in `delivery-status.md`; that milestone order carries the blocking edges between changes. Use the `openspec` skill for CLI commands, delta syntax, validation and archive flow if it is installed; if it is not, use the project's documented tooling when available. Otherwise report the missing capability and ask before switching an established ticket workflow; continue preparing the ticket content.
 
 Keep dependency ordering in the chosen ticket system or its designated status record, not in `ENG.md`.
 
@@ -230,9 +230,9 @@ Register actual artifact paths and when to read them. Default full-handoff examp
   Pick up anything whose blockers are all done.
 ```
 
-Keep the architecture record registered even when the status record also links it, so an agent starting from a single ticket knows when to read it.
+Keep the architecture record registered even when the status record also links it.
 
-**`AGENTS.md` is shared. Own your sections, leave the rest alone.** Other skills maintain their own sections in the same file and none of them announce themselves here:
+**`AGENTS.md` is shared. Own your sections, leave the rest alone.** Other skills maintain their own sections in the same file:
 
 | Section | Owner |
 |---|---|
@@ -241,7 +241,7 @@ Keep the architecture record registered even when the status record also links i
 | `## Zeabur 部署規範` | `set-zeabur-conventions` |
 | Anything else | the user, or a skill not listed here |
 
-Update your own sections in place. Never delete or rewrite a section you do not own — an unfamiliar section is someone else's working state, not clutter. The "must not become a personal note file" rule below applies to the sections this skill owns, not to the whole file.
+Update your own sections in place. Never delete or rewrite a section you do not own, including an unfamiliar one. The "must not become a personal note file" rule below applies to the sections this skill owns, not to the whole file.
 
 #### Convergence artifact contract
 

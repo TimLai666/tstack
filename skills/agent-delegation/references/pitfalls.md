@@ -1,22 +1,22 @@
-# 派工陷阱檢核表
+# Dispatch pitfall checklist
 
-每次回報前逐列核對，不符合的派工退回或補正。
+Before every report, check each row; send back or correct any dispatch that does not comply.
 
-| 陷阱 | 檢核方式 |
+| Pitfall | How to check |
 | --- | --- |
-| 沒辨識宿主就派工，結果呼叫自己 | 回報第一行必須有「宿主：」，且工具清單裡沒有宿主自己的 CLI 指令，宿主自己的那欄用的是內建 subagent 工具 |
-| 被派工的 agent 也載入本 skill 再往下派 | 被派工者的回報裡不得出現任何派工動作。出現就退回，檢查 prompt 第一行有沒有執行者標記 |
-| 沒寫骨架就派實作 | 派實作前，骨架、該格子的想要的結果與審過的測試都已存在 |
-| 很難的格子沒有 opencode 失敗紀錄就跳過 OpenCode | 跳過 OpenCode 時，回報要指出這次任務裡 opencode 在哪個同類型格子交出不完整或沒過驗證的結果，並附該次輸出 |
-| 為了複用既有 agent 而換模型或跳級 | 新建與複用都須符合本次任務的當前層級。回退附上本次任務依規則所需的實際失敗證據，不以其他任務的額度耗盡或既有 agent 的模型代替 |
-| 測試在空格子上就通過 | 審測試時在空格子跑一次，回報附上全部失敗的輸出 |
-| 實作 agent 改測試讓自己過關 | 收件時 `git diff` 列出的檔案不含測試檔 |
-| 兩個 agent 同時改同一個檔 | 派第二個前重跑 `git status --short`，路徑重疊就等第一個完成 |
-| 只看 subagent 摘要就採用 | 回報裡必須有主 agent 自己跑的驗證輸出 |
-| 模型不存在時換成決策表以外的種類 | 回報的模型必須屬於決策表該列的種類，且與派工前記下的一致 |
-| Codex 用錯模型 | Review、驗收審查、深度研究與決策的模型是 GPT-6 以上且名稱含 sol。luna 只用於決策表的寫測試／實作／修 bug、快速唯讀探索、雜事與分類列，前端設計不派 luna |
-| effort 沒照預設或超過上限 | 有 effort 旗標的派工是 `medium`，調高時回報寫出理由，任何派工都沒有 `max`，Opus 接手寫程式格子是 `low`。agy 的 Claude 與宿主內建的 subagent 工具沒有這個旗標，不檢核 |
-| 同一個 CLI 同時跑超過三條 | 派工前列出該 CLI 正在跑的派工，加上這次不超過三條 |
-| Opus 沒按決策表派工 | 回報的模型名稱含 opus 時，該次派工必須屬於決策表明列 Opus 的任務並遵守接手順序。接手寫程式格子時附上 Sonnet 在同一個格子連續兩次沒過驗證的輸出；以 `claude -p` 派出時旗標含 `--effort low` |
-| 分類任務沒按決策表選模型 | Copilot 使用 Auto，其他工具的模型名稱必須含 haiku 或 luna，不得含 opus 或 sonnet |
-| 任務派給 5.5 以下的 Sonnet 或 Haiku | 回報的模型名稱含 sonnet 或 haiku 時，版本必須是 5.5 以上 |
+| Dispatching without identifying the host, so the host calls itself | The first line of the report MUST contain "宿主：", the tool list contains no command of the host's own CLI, and the host's own entry uses the built-in subagent tool |
+| A dispatched agent also loads this skill and dispatches further | A dispatched worker's report MUST NOT contain any dispatch action. If it does, send it back and check whether the first line of the prompt carries the worker marker |
+| Dispatching implementation without a skeleton | Before dispatching implementation, the skeleton, the slot's expected results and the reviewed tests all exist |
+| Skipping OpenCode for a hard slot without an opencode failure record | When OpenCode is skipped, the report names the slot of the same type in this task where opencode delivered an incomplete result or one that failed verification, and attaches that run's output |
+| Changing model or skipping a level in order to reuse an existing agent | Both new and reused sessions MUST match this task's current level. A fallback attaches the actual failure evidence from this task that the rules require; quota exhaustion from other tasks or an existing agent's model does not substitute for it |
+| Tests pass on the empty slots | When reviewing tests, run them once on the empty slots; the report attaches output in which all of them fail |
+| The implementation agent changes the tests to pass | At acceptance, the files listed by `git diff` do not include test files |
+| Two agents change the same file at the same time | Before dispatching the second, rerun `git status --short`; if paths overlap, wait for the first to finish |
+| Adopting work after reading only the subagent's summary | The report MUST contain verification output that the main agent ran itself |
+| Switching to a kind outside the decision table when a model does not exist | The reported model MUST belong to the kind in that decision table row and match what was recorded before dispatch |
+| Codex uses the wrong model | The model for review, acceptance review, deep research and decision is GPT-6 or later with sol in its name. luna is used only for the decision table rows for writing tests / implementation / fixing bugs, fast read-only exploration, chores and classification; frontend design is not dispatched to luna |
+| effort not at the default or above the limit | Dispatches that have an effort flag use `medium`; when raised, the report states the reason. No dispatch uses `max`. Opus taking over a coding slot uses `low`. agy's Claude and the host's built-in subagent tool have no such flag and are not checked |
+| More than three runs of the same CLI at once | Before dispatching, list that CLI's running dispatches; including this one, there are no more than three |
+| Opus not dispatched according to the decision table | When the reported model name contains opus, that dispatch MUST belong to a task for which the decision table lists Opus, and follow the handover order. When taking over a coding slot, attach the output of Sonnet failing verification twice in a row on the same slot; when dispatched with `claude -p`, the flags include `--effort low` |
+| Classification task not using the decision table's model choice | Copilot uses Auto; for other tools the model name MUST contain haiku or luna and MUST NOT contain opus or sonnet |
+| Task dispatched to a Sonnet or Haiku below 5.5 | When the reported model name contains sonnet or haiku, the version MUST be 5.5 or later |

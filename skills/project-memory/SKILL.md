@@ -8,7 +8,7 @@ allowed-tools:
   - Edit
   - AskUserQuestion
 metadata:
-  version: "1.16.3"
+  version: "1.17.0"
 ---
 
 ## Purpose and workflow
@@ -21,8 +21,7 @@ Keep project-specific solutions that took repeated failed attempts or substantia
 ## The script
 
 All reads and writes go through `scripts/memory.py` in this skill's own
-directory. Do not hand-build JSON with `echo` — an insight containing a quote or
-backslash silently corrupts the file.
+directory. Do not hand-build JSON with `echo`.
 
 Requires `python3` (stdlib only, no packages). If it is missing, say so rather
 than falling back to shell string-building.
@@ -52,10 +51,8 @@ Add `--global`, `--machine` or `--host NAME` to any of them to work on one of th
 python3 "$_MEM" load
 ```
 
-The output is layered by where else the knowledge exists. `pitfall`, `pattern` and
-`preference` print in full, because nothing else in the project writes them down.
-`architecture` and `tool` print as a bare key list, because `AGENTS.md` and the
-code already carry them and the agent is about to read those anyway:
+`pitfall`, `pattern` and `preference` entries print in full. `architecture` and
+`tool` entries print as a bare key list:
 
 ```
 ## Only recorded here (pitfall, pattern, preference)
@@ -66,10 +63,9 @@ code already carry them and the agent is about to read those anyway:
 - **tool**: rg-over-grep
 ```
 
-Every key is always listed, however large the store gets. Collapsing detail is
-fine; hiding that an entry exists is not — a key you cannot see is one you will
-never search for. When a key looks related to what you are about to do, run
-`search <key>` before you touch that area:
+Every key is always listed, however large the store gets. When a key looks
+related to what you are about to do, run `search <key>` before you touch that
+area:
 
 ```bash
 python3 "$_MEM" search n-plus-one-products
@@ -92,12 +88,10 @@ asking the user to supply or approve each field. Report what was saved.
 1. **Type** — `pitfall` for something that actually went wrong, `pattern` for a
    way of working that turned out to hold, `preference` for how the user wants
    things done. Those three load in full. `architecture` and `tool` describe how
-   the project is put together and load as keys only, because a file in the repo
-   already says it. Pick by which of those the entry is, not by how important it
-   feels or by which one gets shown.
-2. **Key** — kebab-case, and it must describe the lesson. Most entries appear in
-   `load` as nothing but their key, so `lesson-001` is invisible in practice
-   while `n-plus-one-products` is findable. The script rejects generic and
+   the project is put together and load as keys only. Pick by which of those the
+   entry is, not by how important it feels or by which one gets shown.
+2. **Key** — kebab-case, and it must describe the lesson, for example
+   `n-plus-one-products`, not `lesson-001`. The script rejects generic and
    numbered keys.
 3. **Insight** — a concise, reusable lesson: applicable conditions, failed approaches worth avoiding, the verified solution and its evidence or location. Include the root cause when confirmed; label anything still uncertain.
 4. **Confidence** — 1-10
@@ -128,12 +122,11 @@ preservation rules and how to restore an absorbed key.
 - Project-specific lessons only. General programming knowledge does not belong here.
   What holds beyond this project goes in one of the [Global, machine and host stores](#global-machine-and-host-stores).
 - A pitfall met for the second time in this project MUST be recorded, even when
-  each occurrence was cheap. Say in the report that it is a second occurrence, so the
-  core can route it to the skill that turns it into a check.
+  each occurrence was cheap. Say in the report that it is a second occurrence.
 - A rule the user was promised will be remembered is written in that same turn.
   Report its key and a one-sentence summary of what was saved.
-- Would the line be at home in `AGENTS.md`? Then write it there instead. This
-  store is for what only surfaces while doing the work: what broke, what the fix
+- A line that would be at home in `AGENTS.md` is written there instead. This
+  store holds what only surfaces while doing the work: what broke, what the fix
   turned out to be, what the user wants done differently next time.
 - For technical lessons, record repeated failed attempts followed by a verified
   solution, or a useful approach found only after substantial searching, time or
@@ -149,8 +142,6 @@ preservation rules and how to restore an absorbed key.
 ---
 
 ## Global, machine and host stores
-
-Some things worth remembering are not about one project.
 
 | It is about | Record with | Stored on this machine at |
 |---|---|---|
@@ -202,7 +193,7 @@ including suspected stale entries, to the main agent rather than writing the
 store themselves. The main agent verifies, deduplicates and records qualifying
 lessons or confirmed corrections without asking for approval.
 
-One call, no format duplication:
+Record each lesson with one call:
 
 ```bash
 python3 <project-memory>/scripts/memory.py add \

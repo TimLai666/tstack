@@ -26,25 +26,25 @@ GIT_VALUE_OPTIONS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--e
 CONFIG_READS = {"--get", "--get-all", "--get-regexp", "--get-urlmatch", "--list", "-l",
                 "--show-origin", "--show-scope", "get", "list"}
 
-ADD_ALL = ("`git add -A`、`git add --all`、`git add .` 會把不屬於這次範圍的檔案一起加進去。"
-           "先跑 `git status --short`，再用 `git add -- <路徑> <路徑>` 逐一列出要交付的檔案。")
-COMMIT_ALL = ("`git commit -a` 會把所有已追蹤的改動一起提交。"
-              "先用 `git add -- <路徑>` 列出這次要交付的檔案，再執行不帶 -a 的 `git commit`。")
-GLOBAL_CONFIG = ("不改 git 的全域或系統設定。只影響這一次指令時用 `git -c <名稱>=<值> <指令>`，"
-                 "例如 `git -c safe.directory=<路徑> status`；確實要長期生效時，請使用者自己設定。")
-MERGE = ("`glab mr merge` 不寫明時預設開啟 auto-merge，還沒有 pipeline 就會直接合併。"
-         "一律加上 `--sha <MR 目前的 head commit SHA>`，並寫明要哪一種："
-         "該 SHA 已經全綠就用 `--auto-merge=false` 立刻合併；"
-         "檢查還在跑、要全綠後合併，而且平台等的條件與全綠相同時，才用 `--auto-merge` 交給平台等。"
-         "該 SHA 還沒有 pipeline 時兩種都不要下，先等 pipeline 出現。細節見 ship-it 的 Step 8 與它的 references/gitlab.md。")
-KILL_BY_NAME = ("不依程式名稱結束程序，同名的程序可能是使用者或其他流程開的。"
-                "只結束自己啟動的那一個：POSIX 用 `kill <PID>`，Windows 用 `taskkill /PID <PID>` 或 `Stop-Process -Id <PID>`。")
-HOST_FACTS = ("連到 %s 之前，先讀 project-memory 裡這台主機的記錄：\n\n%s\n\n"
-              "讀完後重新執行同一個指令。這個提醒在每段對話裡，每台主機只出現一次。")
+ADD_ALL = ("`git add -A`, `git add --all` and `git add .` also stage files outside this change. "
+           "Run `git status --short` first, then list the files to deliver one by one with `git add -- <path> <path>`.")
+COMMIT_ALL = ("`git commit -a` commits every change to tracked files. "
+              "List the files to deliver with `git add -- <path>` first, then run `git commit` without -a.")
+GLOBAL_CONFIG = ("Do not change the global or system git settings. To affect only this command use `git -c <name>=<value> <command>`, "
+                 "for example `git -c safe.directory=<path> status`; for a lasting change, ask the user to set it themselves.")
+MERGE = ("`glab mr merge` turns on auto-merge by default when not told otherwise, so it merges directly while there is no pipeline yet. "
+         "Always add `--sha <the current head commit SHA of the MR>` and state which kind: "
+         "when that SHA is already fully green, use `--auto-merge=false` to merge right away; "
+         "use `--auto-merge` and let the platform wait only when checks are still running, the merge should wait for green, and the platform's wait conditions match full green. "
+         "When that SHA has no pipeline yet, issue neither and wait for the pipeline to appear. Details are in Step 8 of ship-it and its references/gitlab.md.")
+KILL_BY_NAME = ("Do not end processes by program name; a process with the same name may belong to the user or another workflow. "
+                "End only the one you started: use `kill <PID>` on POSIX, `taskkill /PID <PID>` or `Stop-Process -Id <PID>` on Windows.")
+HOST_FACTS = ("Before connecting to %s, read what project-memory records about this host:\n\n%s\n\n"
+              "After reading, run the same command again. This notice appears once per host in each conversation.")
 MEMORY_SCRIPT = Path(__file__).resolve().parent.parent / "skills" / "project-memory" / "scripts" / "memory.py"
 # Hook context over 10,000 characters is replaced by a preview, so the notice stays well under it.
 NOTICE_BUDGET = 8000
-HOST_FACTS_CUT = "\n… 這台主機的記錄太長，放不下全文。用 project-memory 的 `load --host %s` 讀完整內容。"
+HOST_FACTS_CUT = "\n… the record for this host is too long to include in full. Read all of it with `load --host %s` from project-memory."
 LOOKUP_SECONDS = 6
 # Short options that take a value, so the word after them is not the host.
 VALUE_OPTIONS = {"ssh": set("bcDEeFIiJLlmOopQRSWw"), "mosh": set("p"), "sftp": set("BbcDFiJlPoRSsX"),
@@ -56,8 +56,8 @@ WRAPPER_LONG_VALUE_OPTIONS = {"--user", "--group", "--host", "--prompt", "--chdi
 REMOTE_PATH = re.compile(r"^(?:[^@/\\:\s]+@)?([A-Za-z0-9][A-Za-z0-9._-]*):")
 REMOTE_URL = re.compile(r"^(?:ssh|sftp|scp|rsync)://(?:[^@/\s]+@)?([A-Za-z0-9][A-Za-z0-9._-]*)")
 
-WINDOWS_TMP = ("Windows 上各個 shell 與程式對 `/tmp` 的解讀不同，寫進去的檔案別的程式讀不到。"
-               "改用這個 session 的暫存目錄或專案內的絕對路徑。")
+WINDOWS_TMP = ("On Windows, each shell and program interprets `/tmp` differently, so files written there cannot be read by other programs. "
+               "Use this session's temporary directory or an absolute path inside the project.")
 
 
 def segments(command):
@@ -295,8 +295,8 @@ def main():
         return 0
     if reason:
         # Without a place to remember that it was shown, a denial would repeat forever: add context instead.
-        detail = ({"permissionDecision": "deny", "permissionDecisionReason": "tstack guard：" + reason} if deny
-                  else {"additionalContext": "tstack guard：" + reason})
+        detail = ({"permissionDecision": "deny", "permissionDecisionReason": "tstack guard: " + reason} if deny
+                  else {"additionalContext": "tstack guard: " + reason})
         reply = {"hookSpecificOutput": dict(hookEventName="PreToolUse", **detail)}
         # Claude Code reads hook output as UTF-8; Windows consoles default to a legacy code page.
         sys.stdout.buffer.write(json.dumps(reply, ensure_ascii=False).encode("utf-8") + b"\n")

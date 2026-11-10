@@ -1,73 +1,73 @@
-# 派工流程細則
+# Dispatch flow details
 
-主檔 [SKILL.md](../SKILL.md) 的派工流程在各步指到這裡。只讀當下那一步的段落。
+Each step of the dispatch flow in [SKILL.md](../SKILL.md) points here. Read only the section for the current step.
 
-## 派工前
+## Before dispatching
 
-空 context 可讀性審查的輸入與重派依該節隔離規則，其餘檢查照常執行。
+For an empty-context readability review, its inputs and redispatch follow that section's isolation rules; all other checks apply as usual.
 
-- [ ] 主 agent 依照 `project-memory` skill 載入目前專案的記憶，按這次 subagent 的任務搜尋可能相關的經驗。已載入的內容可沿用，但任務範圍改變時重新篩選。把適用條件、踩坑重點、已驗證做法與來源帶進 prompt，不只給 key 或要求 subagent 自己找，也不整份貼上無關記憶。舊經驗與現況不符時依 project-memory 的失效查證規則處理。
+- [ ] The main agent loads the current project's memory following the `project-memory` skill and searches it for lessons that may apply to this subagent's task. Memory already loaded may be reused, but filter again when the task scope changes. Put the applicable conditions, key pitfalls, verified approaches and sources into the prompt; do not give only keys or ask the subagent to look them up itself, and do not paste whole unrelated memories. When an old lesson does not match the current state, handle it with project-memory's obsolescence verification rules.
 
-- [ ] 跑 `git status --short`。有未提交變更時逐檔確認是自己這輪的、還是別的 agent 的半成品。是半成品就先處理完再派。
-- [ ] 確認這組檔案目前沒有別的會寫檔的 agent 在跑。同一組檔案同時只能有一個會寫檔的 agent。
-- [ ] 確認要用的 CLI 目前跑不到三條，滿了就等其中一條結束。
-- [ ] 並行派工前，替每一條劃定可改檔案與輸出目錄，彼此不重疊，也不與主 agent 自己會清理或覆寫的目錄重疊。
-- [ ] 需要瀏覽器的並行派工各用自己的瀏覽器實例，不共用同一個。
-- [ ] 無人值守的排程或背景流程裡，先定出並行條數與每條派工的時間或工具呼叫上限，寫進 prompt。
-- [ ] 透過 script 查詢任務類型及層級，核對本任務可能用到的外部 CLI 安裝狀態。找不到指令時先依「CLI 未安裝」查證，再依下節選擇複用或新建，提交本次任務。
+- [ ] Run `git status --short`. When there are uncommitted changes, check file by file whether they are your own from this turn or another agent's partial work. If they are partial work, deal with it before dispatching.
+- [ ] Confirm that no other agent that writes files is currently running on this set of files. Only one agent that writes files may work on the same set of files at a time.
+- [ ] Confirm the CLI you will use has fewer than three runs; if it is full, wait for one to end.
+- [ ] Before parallel dispatch, give each run its own files that may be changed and its own output directory, not overlapping each other and not overlapping any directory the main agent itself will clean or overwrite.
+- [ ] Parallel dispatches that need a browser each use their own browser instance, not a shared one.
+- [ ] In an unattended scheduled or background flow, first set the number of parallel runs and each dispatch's time or tool-call limit, and write them into the prompt.
+- [ ] Query the task type and levels through the script, and check the installation status of the external CLIs this task may use. When a command is not found, first verify following "CLI not installed", then choose reuse or a new session following the next section, and submit this task.
 
-### Agent 與對話複用
+### Agent and session reuse
 
-- 主 agent MUST 先依決策表確定本次應使用的工具與模型，再尋找可複用的 agent 或 session。任務性質相同或能接續原有脈絡、使用相同模型，且符合隔離要求時，優先複用。依規則回退到相同模型時也適用，不得為了複用換模型、跳級或改變重試次數。
-- 模型以實際識別碼核對，不把同系列、同 CLI 或 Auto 設定視為相同模型的證據。無法確認模型、續接能力或沒有合適對象時，在當前層級新建對話。
-- 先確認需要與誰隔離。只需與主 agent 隔離時，可複用未繼承主對話的獨立 agent。不同次任務須互相隔離，或既有對話含本次不得接觸的資訊時，必須新建 context。審查任務另遵守「審查脈絡隔離」。
-- 首次派出時就判斷是否預期再用。預期會接續工作的 agent 或對話 MUST 採可續接模式，保留識別碼、工具、模型、任務範圍及隔離條件供下次派工前查閱，不設為一次性，不在單次回報後關閉或刪除對話。CLI 程序可正常結束，對話須可恢復，不必持續佔用程序或執行名額。
-- 同一個 agent 或 session 同時只執行一項任務。忙碌時先判斷能否等候，確實需要並行才另開。續接操作見 [CLI 說明入口](cli-cheatsheet.md#對話續接)。
+- The main agent MUST first determine the tool and model for this dispatch from the decision table, and only then look for an agent or session to reuse. Prefer reuse when the task is of the same nature or can continue the existing context, uses the same model, and meets the isolation requirements. This also applies when the rules fall back to the same model. You MUST NOT change model, skip a level or change the number of retries in order to reuse.
+- Check models by their actual identifiers; the same series, the same CLI or an Auto setting is not evidence of the same model. When you cannot confirm the model or the ability to resume, or there is no suitable candidate, start a new session at the current level.
+- First establish whom the work must be isolated from. When it only needs isolation from the main agent, you may reuse an independent agent that did not inherit the main conversation. When different tasks must be isolated from each other, or an existing session contains information this task MUST NOT see, you MUST start a new context. Review tasks also follow "Reviewer isolation".
+- Decide at the first dispatch whether you expect to use the agent again. An agent or session expected to continue work MUST be started in resumable mode; keep its ID, tool, model, task scope and isolation conditions for review before the next dispatch. Do not make it single-use, and do not close or delete the session after a single report. The CLI process may exit normally; the session must remain resumable, without holding a process or a run slot.
+- One agent or session runs only one task at a time. When it is busy, first judge whether you can wait; open another only when parallel work is really needed. For how to resume, see [CLI help entry points](cli-cheatsheet.md#resuming-a-session).
 
-## 派工 prompt 必備七項
+## The seven parts of a dispatch prompt
 
-新派工由 script 依主 agent 提供的結構化欄位補齊下列七項；必填資料不足就報錯，不派工。主 agent 核對生成的內容與原始驗收一致。空 context 可讀性審查不帶入 Project Memory，依該節限制提供任務資料。
+For new dispatch, the script fills in the seven parts below from the structured fields the main agent provides; when required data is missing it reports an error and does not dispatch. The main agent checks that the generated content matches the original acceptance criteria. An empty-context readability review does not bring in Project Memory and provides task data within that section's limits.
 
-| 項目 | 寫法 |
+| Part | How to write it |
 | --- | --- |
-| 執行者標記 | 第一行原文寫「你是被派工的執行者，不得再派工給任何 agent 或 CLI，自己完成」 |
-| 角色設定 | 一句話說明它是誰、標準多高，例如「你是這個 repo 的資深工程師，只交能過測試的程式」 |
-| 可改與不可改的檔案 | 明確列路徑。沒列到的檔案一律不可改 |
-| 任務與驗收 | 測試 agent：簽名、想要的結果、測試檔路徑，只寫測試。實作 agent：簽名、想要的結果、測試檔路徑，原文寫「不得修改測試檔，認為測試錯就停下回報」。附上派工前篩選的相關 Project Memory 經驗，沒有符合的就註明無 |
-| 要跑的驗證指令 | 寫出完整指令，例如 `go test ./...`、`npm test -- --run` |
-| 回報格式 | 改了哪些檔、每個結論的依據、不確定的地方、沒驗證的項目。覆蓋範圍：應處理幾項、實際處理幾項、未完成的原因、未取得的來源。不輸出權杖、密碼或設定值，只回報名稱與位置。另回報本輪反覆試錯或耗費大量時間、token 才找到的做法：觸發情境、失敗路徑、已確認原因、有效做法與驗證證據。發現舊記憶不適用時附原 key、條件差異與查證結果。沒有新增經驗就寫無，不湊數。經驗交由主 agent 核對並寫入 Project Memory，不自行寫入 |
-| 不要 commit | 原文寫「不要 commit，也不要 stash 或 reset」 |
+| Worker marker | The first line reads verbatim "You are a dispatched worker. Do not dispatch any agent or CLI. Do the work yourself." |
+| Role | One sentence on who it is and how high the bar is, for example "You are a senior engineer on this repo and deliver only code that passes the tests" |
+| Files that may and may not be changed | List the paths explicitly. Any file not listed MUST NOT be changed |
+| Task and acceptance criteria | Test agent: signatures, expected results, test file paths; write tests only. Implementation agent: signatures, expected results, test file paths, and verbatim "Do not modify the test files. If you think a test is wrong, stop and report." Attach the relevant Project Memory lessons filtered before dispatch; when none match, state none |
+| Verification command | Write the complete command, for example `go test ./...`, `npm test -- --run` |
+| Report format | Which files were changed, the basis for each conclusion, what is uncertain, what was not verified. Coverage: how many items should have been handled, how many were handled, why any were not finished, which sources were not obtained. Do not output tokens, passwords or setting values; report only names and locations. Also report approaches this turn found only after repeated trial and error or a large amount of time or tokens: triggering situation, failed path, confirmed cause, working approach and verification evidence. When an old memory is found not to apply, include the original key, the difference in conditions and the verification result. When there is no new lesson, write none; do not pad. Lessons are checked by the main agent and written into Project Memory; do not write them yourself |
+| Do not commit | Verbatim "Do not commit, stash or reset." |
 
-複用對話時，七項要求由既有有效內容與本次補充共同構成，只補本次任務、驗收、授權範圍、已變更資料與必要的新證據。新任務的可改範圍取代舊任務授權，不能累積。資料已變更或來源無法確認時，重讀受影響部分。
+When reusing a session, the seven parts consist of the existing content that is still valid plus this dispatch's additions; add only this task, its acceptance criteria, its authorization scope, data that has changed and necessary new evidence. A new task's files-that-may-be-changed replace the old task's authorization and do not accumulate. When data has changed or a source cannot be confirmed, reread the affected parts.
 
-唯讀探索任務的「任務與驗收」寫要回答的問題，仍附相關經驗並要求回報本輪教訓。可省略「不要 commit」，其餘六項照列。
+For a read-only exploration task, "Task and acceptance criteria" states the questions to answer, still attaches relevant lessons and asks for this turn's lessons in the report. "Do not commit" may be omitted; list the other six parts as usual.
 
-## 派工中
+## While a dispatch runs
 
-- [ ] 背景 agent 與背景指令結束時會通知主 agent。等通知，不排定時喚醒或輪詢。
-- [ ] 背景 agent 被中斷時先看磁碟：`git status --short` 加 `git diff --stat`，判斷做到哪裡。
-- [ ] 需要重派時，原 prompt 從記錄檔取回，不憑記憶重寫。Claude Code 的 subagent 在 `head -1 ~/.claude/projects/<專案>/<session>/subagents/agent-<id>.jsonl`，其他 CLI 見速查表的續接欄。
-- [ ] 重派前把前一位執行者已驗證的相關教訓補進原 prompt，保留證據與不確定處，再交給接手者。
-- [ ] 重派前決定半成品去留：保留並告知新 agent，或 `git checkout -- <檔案>` 清掉。
+- [ ] Background agents and background commands notify the main agent when they end. Wait for the notification; do not schedule wake-ups or poll.
+- [ ] When a background agent is interrupted, look at the disk first, with `git status --short` plus `git diff --stat`, to judge how far it got.
+- [ ] When redispatching, retrieve the original prompt from the log file; do not rewrite it from memory. For Claude Code subagents it is at `head -1 ~/.claude/projects/<project>/<session>/subagents/agent-<id>.jsonl`; for other CLIs see the resume column of the cheat sheet.
+- [ ] Before redispatching, add the previous worker's verified relevant lessons to the original prompt, keeping the evidence and uncertainties, then hand it to the next worker.
+- [ ] Before redispatching, decide what to do with partial work: keep it and tell the new agent, or clear it with `git checkout -- <file>`.
 
-## 工具失敗
+## Tool failures
 
-一般派工的授權包含依 script 規則重試與改派。主 agent MUST 自行處理工具失敗並接續，MUST NOT 因單一工具失敗、額度耗盡、模型不可用、未登入或內建工具不可用，就詢問使用者是否重試、改派或繼續。接手順序與複用條件依決策表及「Agent 與對話複用」執行。
+Authorization for ordinary dispatch includes retrying and redispatching under the script's rules. The main agent MUST handle tool failures itself and continue, and MUST NOT ask the user whether to retry, redispatch or continue because of a single tool failure, exhausted quota, unavailable model, missing login or unavailable built-in tool. Handover order and reuse conditions follow the decision table and "Agent and session reuse".
 
-script 記錄每次失敗的原始輸出與實際旗標。`native_required` 由主 agent 使用指定的內建工具派工，失敗時帶實際錯誤接續。`cli_failed` 與 `awaiting_review` 都是主 agent 的判斷點，不是使用者的確認點：主 agent 自行檢查程序、磁碟、半成品與驗證結果，再帶原派工識別碼及實際證據依 script 接續，遵守同級重試與不可跳級的限制。無法確認程序已停止或半成品可安全接續時，先排除阻礙，不盲目重派。
+The script records the raw output and actual flags of every failure. For `native_required`, the main agent dispatches with the designated built-in tool and, on failure, continues with the actual error. `cli_failed` and `awaiting_review` are both decision points for the main agent, not confirmation points for the user: the main agent itself checks the process, the disk, partial work and verification results, then continues through the script with the original dispatch ID and the actual evidence, observing the limits on same-level retries and on not skipping levels. When you cannot confirm that the process has stopped or that partial work can be safely continued, remove the blocker first; do not redispatch blindly.
 
-該類型的選項全部失敗，或接續確實需要使用者登入、授予權限、額外付費、擴大任務範圍或決定可能遺失成果的處置時，才停下來請使用者決定。單一工具需要這些操作，但後續仍有已授權且可安全接續的選項時，先依 script 改派，不要求使用者修復該工具。既有 API 變更的指定模型諮詢沿用該節的失敗處置。
+Stop and ask the user to decide only when every option for the type has failed, or when continuing really requires the user to log in, grant permissions, pay extra, widen the task scope or decide on handling that may lose work. When a single tool needs one of these but there is still an authorized option that can safely continue, first redispatch through the script; do not ask the user to fix that tool. The designated-model consultation for changes to an existing API keeps that section's failure handling.
 
-### CLI 未安裝
+### CLI not installed
 
-- 主 agent MUST 在因未安裝而跳過 CLI 前查證安裝狀態，不得只憑一次 `command not found`、`which` 無結果或 script 的啟動錯誤判定未安裝。先核對目前執行環境與使用者正常使用的 shell 的指令解析及 PATH，再依既有設定、套件管理器安裝紀錄與該工具的標準安裝位置確認。只查相關位置，不掃描整個磁碟。
-- 找到候選執行檔時，以明確路徑執行版本或 help 查詢，確認是否為該 CLI。已安裝但不在 PATH、權限不足、啟動器損壞或缺少執行環境，均記為對應的啟動問題，不記為未安裝。查證受阻時如實記為無法確認，再依已有錯誤證據處理，不宣稱未安裝。
-- 確認未安裝後，保留查證命令與結果，依決策表跳過該外部 CLI 並接續可用選項，不自行安裝、重裝或使用會自動下載工具的啟動方式。除非使用者另有明確安裝指示，不為完成派工安裝 CLI。確認未安裝後，接續時加上 `--not-installed`，並把查證指令與結果寫進 `--failure-reason`。script 會記下這份查證，之後的派工在 PATH 沒變、指令仍找不到且未滿 7 天時自動跳過該工具，並在 `attempts` 附上當時的證據；這三個條件任一不成立就照常啟動並重新查證。無法確認是否安裝時不加這個參數。宿主內建工具的可用性另行判斷，不因同名外部 CLI 未安裝而跳過。
+- Before skipping a CLI because it is not installed, the main agent MUST verify the installation status, and MUST NOT conclude it is not installed from a single `command not found`, an empty `which` result or a script launch error alone. First check command resolution and PATH in both the current runtime and the shell the user normally uses, then confirm from existing settings, package manager install records and the tool's standard install locations. Check only the relevant locations; do not scan the whole disk.
+- When you find a candidate executable, run a version or help query with its explicit path to confirm it is that CLI. Installed but not on PATH, insufficient permissions, a broken launcher or a missing runtime are each recorded as the matching launch problem, not as not installed. When verification is blocked, record it truthfully as unconfirmed and proceed on the error evidence you have; do not claim it is not installed.
+- Once confirmed not installed, keep the verification commands and results, skip that external CLI following the decision table and continue with the available options. Do not install or reinstall it yourself, or use a launch method that downloads the tool automatically. Unless the user gives an explicit instruction to install, do not install a CLI to complete a dispatch. After confirming it is not installed, add `--not-installed` when continuing, and put the verification commands and results in `--failure-reason`. The script records this verification; later dispatches skip that tool automatically while PATH has not changed, the command is still not found and fewer than 7 days have passed, and attach the evidence from that time in `attempts`. If any of these three conditions does not hold, it launches as usual and verifies again. Do not add this flag when you cannot confirm whether it is installed. Judge the availability of the host's built-in tool separately; do not skip it because an external CLI of the same name is not installed.
 
-| 症狀 | 回報寫法 |
+| Symptom | What to report |
 | --- | --- |
-| CLI 未安裝或啟動失敗 | 貼查證命令、結果與判定，區分未安裝、PATH 問題及其他啟動錯誤 |
-| 模型不存在或需升級 CLI | 貼錯誤原文與 `agy models`／`opencode models`／`codex debug models` 輸出 |
-| 權限被拒、未登入 | 貼錯誤原文，說明需要哪個權限或登入指令 |
-| 逾時 | 貼逾時設定與已完成部分 |
-| 額度耗盡（rate limit、quota、usage limit） | 貼錯誤原文 |
+| CLI not installed or failed to launch | Paste the verification commands, results and conclusion, distinguishing not installed, PATH problems and other launch errors |
+| Model does not exist or the CLI needs an upgrade | Paste the original error and the output of `agy models` / `opencode models` / `codex debug models` |
+| Permission denied, not logged in | Paste the original error and state which permission or login command is needed |
+| Timeout | Paste the timeout setting and the part already completed |
+| Quota exhausted (rate limit, quota, usage limit) | Paste the original error |

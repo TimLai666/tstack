@@ -125,23 +125,23 @@ class Acceptance(unittest.TestCase):
         self.assertEqual(result["model"], "gpt-6.1-luna")
         self.assertIn(self.request()["prompt"], result["prompt"])
         self.assertIn("verified fixture", result["prompt"])
-        self.assertIn("教訓", result["prompt"])
-        self.assertIn("證據", result["prompt"])
+        self.assertIn("lessons", result["prompt"])
+        self.assertIn("evidence", result["prompt"])
         self.assertIn("project-memory", result["memory_reminder"])
-        self.assertNotIn("尚未保存", result["memory_reminder"])
+        self.assertNotIn("not saved yet", result["memory_reminder"])
         self.assertFalse((self.project / "INJECTED").exists())
         self.assertEqual(len((self.root / "calls").read_text().splitlines()), 1)
 
     def test_task_local_level_error_before_execution(self):
         result = self.cli("dispatch", "--request", "-", "--level", "5", "--state-dir", str(self.state), request=self.request())
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("此任務類型只有 3 檔", result.stderr + result.stdout)
+        self.assertIn("this task type has only 3 levels", result.stderr + result.stdout)
         self.assertFalse((self.root / "calls").exists())
 
     def test_cannot_start_with_valid_but_skipped_level(self):
         result = self.cli("dispatch", "--request", "-", "--level", "2", "--state-dir", str(self.state), request=self.request())
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("第 1", result.stderr + result.stdout)
+        self.assertIn("level 1", result.stderr + result.stdout)
         self.assertFalse((self.root / "calls").exists())
 
     def test_success_is_review_not_auto_accepted(self):
@@ -169,7 +169,7 @@ class Acceptance(unittest.TestCase):
         disguised = self.cli("dispatch", "--dispatch-id", result["dispatch_id"], "--outcome", "dispatch-failed",
                              "--failure-reason", "quota", "--state-dir", str(self.state))
         self.assertNotEqual(disguised.returncode, 0)
-        self.assertIn("不能冒充未派出", disguised.stderr)
+        self.assertIn("must not be reported as not dispatched", disguised.stderr)
 
     def test_native_failure_resume_then_complete(self):
         result = self.hand_off(self.dispatch(), "--level", "2")

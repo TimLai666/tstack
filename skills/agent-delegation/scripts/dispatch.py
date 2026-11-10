@@ -27,13 +27,13 @@ else:
     import fcntl
 
 POLICY_PATH = Path(__file__).with_name("policy.json")
-REMINDER = "核對教訓與經驗，依 project-memory 流程搜尋去重、記錄並讀回確認。"
-MARKER = "你是被派工的執行者，不得再派工給任何 agent 或 CLI，自己完成"
+REMINDER = "Check lessons and experience through the project-memory workflow: search for duplicates, record, and read back to confirm."
+MARKER = "You are a dispatched worker. Do not dispatch any agent or CLI. Do the work yourself."
 HOST_ENV = {"codex": "CODEX_THREAD_ID", "claude": "CLAUDECODE",
             "agy": "ANTIGRAVITY_AGENT", "opencode": "OPENCODE"}
-NATIVE_TOOLS = {"codex": "Codex 內建 subagent", "claude": "Agent",
-                "copilot": "Copilot 內建 subagent（Auto）",
-                "opencode": "OpenCode 內建 subagent", "agy": "Antigravity 內建 subagent"}
+NATIVE_TOOLS = {"codex": "Codex built-in subagent", "claude": "Agent",
+                "copilot": "Copilot built-in subagent (Auto)",
+                "opencode": "OpenCode built-in subagent", "agy": "Antigravity built-in subagent"}
 
 
 class DispatchError(Exception):
@@ -50,13 +50,13 @@ NOT_INSTALLED_TTL = 7 * 86400
 
 def text_value(value, name):
     if not isinstance(value, str) or not value.strip() or "\0" in value:
-        raise DispatchError(name + " 必須是非空字串，且不能含 NUL")
+        raise DispatchError(name + " must be a non-empty string and must not contain NUL")
     return value
 
 
 def strings(value, name):
     if not isinstance(value, list):
-        raise DispatchError(name + " 必須是字串陣列")
+        raise DispatchError(name + " must be a string array")
     for item in value:
         text_value(item, name)
     return value
@@ -72,27 +72,27 @@ def overlap(a, b):
 
 def validate_host(host, policy):
     if not isinstance(host, str) or host not in policy["hosts"]:
-        raise DispatchError("host 必須是 " + ", ".join(policy["hosts"]))
+        raise DispatchError("host must be one of " + ", ".join(policy["hosts"]))
     detected = [name for name, key in HOST_ENV.items() if os.environ.get(key)]
     if len(detected) > 1:
-        raise DispatchError("有多個宿主識別，請先查明並清除繼承的識別：" + ", ".join(detected))
+        raise DispatchError("Multiple host identifiers found; find and clear the inherited identifiers first: " + ", ".join(detected))
     if detected and detected[0] != host:
-        raise DispatchError("host 與實際宿主識別衝突：" + detected[0])
+        raise DispatchError("host conflicts with the actual host identifier: " + detected[0])
 
 
 def scoped_path(raw, project, sandbox=None):
-    text_value(raw, "檔案路徑")
+    text_value(raw, "file path")
     p = Path(raw)
     if any(c in raw for c in "*?[]") or ".." in p.parts or ".git" in p.parts:
-        raise DispatchError("檔案路徑不能包含萬用字元、.. 或 .git：" + raw)
+        raise DispatchError("A file path must not contain wildcards, .. or .git: " + raw)
     if p.is_absolute() and sandbox is None:
-        raise DispatchError("allowed_files/test_files 必須是專案相對路徑：" + raw)
+        raise DispatchError("allowed_files/test_files must be project-relative paths: " + raw)
     resolved = (p if p.is_absolute() else project / p).resolve()
     root = sandbox or project
     if not within(resolved, root) or (sandbox is None and resolved == project):
-        raise DispatchError("檔案路徑超出允許目錄：" + raw)
+        raise DispatchError("A file path is outside the allowed directory: " + raw)
     if within(resolved, project) and ".git" in resolved.relative_to(project).parts:
-        raise DispatchError("檔案路徑不可透過 symlink 指向 .git：" + raw)
+        raise DispatchError("A file path must not point into .git through a symlink: " + raw)
     return str(resolved)
 
 
@@ -100,65 +100,65 @@ def validate_request(r, policy):
     required = ("host", "task_type", "project_dir", "role", "prompt",
                 "project_memory", "allowed_files", "verification")
     if not isinstance(r, dict):
-        raise DispatchError("request 必須是 JSON object")
+        raise DispatchError("request must be a JSON object")
     missing = [key for key in required if key not in r]
     if missing:
-        raise DispatchError("缺少必填欄位：" + ", ".join(missing))
+        raise DispatchError("Missing required fields: " + ", ".join(missing))
     validate_host(r["host"], policy)
     kind = text_value(r["task_type"], "task_type")
     if kind not in policy["tasks"]:
-        raise DispatchError("未知 task_type，使用 list-types 查詢：" + kind)
+        raise DispatchError("Unknown task_type; use list-types to look it up: " + kind)
     for key in ("project_dir", "role", "prompt"):
         text_value(r[key], key)
     project = Path(r["project_dir"]).expanduser().resolve(strict=True)
     if not project.is_dir():
-        raise DispatchError("project_dir 必須是目錄")
+        raise DispatchError("project_dir must be a directory")
     r["project_dir"] = str(project)
     for key in ("allowed_files", "verification"):
         strings(r[key], key)
     strings(r.get("test_files", []), "test_files")
     if not isinstance(r["project_memory"], list):
-        raise DispatchError("project_memory 必須是陣列，查過無相關經驗才填 []")
+        raise DispatchError("project_memory must be an array; fill [] only after confirming there are no relevant lessons")
     for lesson in r["project_memory"]:
         if not isinstance(lesson, dict):
-            raise DispatchError("project_memory 每項必須是 object")
+            raise DispatchError("Each project_memory item must be an object")
         for key in ("condition", "lesson", "source"):
             text_value(lesson.get(key), "project_memory." + key)
     models = r.get("models", {})
     if not isinstance(models, dict):
-        raise DispatchError("models 必須是各工具可用模型的 object")
+        raise DispatchError("models must be an object of model names available for each tool")
     if models:
         text_value(r.get("model_source"), "model_source")
     for tool, catalog in models.items():
         if tool not in policy["hosts"]:
-            raise DispatchError("models 含未知工具：" + str(tool))
+            raise DispatchError("models contains an unknown tool: " + str(tool))
         strings(catalog, "models." + tool)
     task = policy["tasks"][kind]
     if task["access"] == "read" and r["allowed_files"]:
-        raise DispatchError("唯讀任務的 allowed_files 必須是 []")
+        raise DispatchError("allowed_files must be [] for a read-only task")
     sandbox = None
     if task["access"] == "sandbox":
         raw = text_value(r.get("sandbox_dir"), "sandbox_dir")
         sandbox = Path(raw).expanduser()
         sandbox = (sandbox if sandbox.is_absolute() else project / sandbox).resolve(strict=True)
         if not sandbox.is_dir() or within(project, sandbox):
-            raise DispatchError("sandbox_dir 必須是專用沙盒，不可包含整個專案")
+            raise DispatchError("sandbox_dir must be a dedicated sandbox and must not contain the whole project")
         r["sandbox_dir"] = str(sandbox)
     elif r.get("sandbox_dir") is not None:
-        raise DispatchError("只有帶沙盒的任務類型（research、acceptance）接受 sandbox_dir")
+        raise DispatchError("Only sandboxed task types (research, acceptance) accept sandbox_dir")
     paths = [scoped_path(p, project, sandbox) for p in r["allowed_files"]]
     tests = [scoped_path(p, project) for p in r.get("test_files", [])]
     if task["access"] == "implementation" and any(overlap(a, b) for a in paths for b in tests):
-        raise DispatchError("allowed_files 與受保護的 test_files 重疊")
+        raise DispatchError("allowed_files overlaps the protected test_files")
     if "difficult_implementation" in r and not isinstance(r["difficult_implementation"], bool):
-        raise DispatchError("difficult_implementation 必須是 boolean")
+        raise DispatchError("difficult_implementation must be a boolean")
     if "opencode_failure_evidence" in r:
         text_value(r["opencode_failure_evidence"], "opencode_failure_evidence")
         if kind not in ("testing", "implementation") or r.get("difficult_implementation") is not True:
-            raise DispatchError("OpenCode 例外只適用有同任務失敗證據的困難寫程式格子")
+            raise DispatchError("The OpenCode exception applies only to a difficult implementation slot with evidence of a real failure of the same task")
     if "effort" in r:
         if r["effort"] not in ("medium", "high", "xhigh"):
-            raise DispatchError("effort 必須是 medium、high 或 xhigh")
+            raise DispatchError("effort must be medium, high or xhigh")
         if r["effort"] != "medium":
             text_value(r.get("effort_reason"), "effort_reason")
     return r, paths or ([str(sandbox)] if sandbox else [])
@@ -166,7 +166,7 @@ def validate_request(r, policy):
 
 def check_level(level, count):
     if level is not None and not 1 <= level <= count:
-        raise DispatchError(f"此任務類型只有 {count} 檔，level 必須介於 1–{count}，目前輸入為 {level}。")
+        raise DispatchError(f"Level out of range: this task type has only {count} levels; level must be between 1 and {count}, and the input was {level}.")
 
 
 def version(model):
@@ -193,41 +193,42 @@ def select_model(spec, catalog):
 
 def build_prompt(r, task, state):
     scope = r["allowed_files"]
-    lines = [MARKER, "角色設定：" + r["role"], "專案目錄：" + r["project_dir"]]
+    lines = [MARKER, "Role: " + r["role"], "Project directory: " + r["project_dir"]]
     if task["access"] == "sandbox":
-        lines += ["沙盒目錄：" + r["sandbox_dir"], "專案檔一律不可修改。僅可在指定沙盒內試探，回報所有檔案、程序與設定副作用。"]
+        lines += ["Sandbox directory: " + r["sandbox_dir"],
+                  "No project file may be modified. Write and run things only inside the sandbox directory, and report every file, process and setting you changed."]
     if not scope and task["access"] != "sandbox":
-        lines += ["可改與不可改的檔案：不得修改任何專案檔案。需要重現問題時，一次性的腳本只能放在專案外的暫存目錄，並在回報列出。"]
+        lines += ["Files you may and may not change: Do not modify any project file. A throwaway script that reproduces a problem may be kept only in a temporary directory outside the project and must be listed in the report."]
     else:
-        lines += ["可改與不可改的檔案：" + json.dumps(scope or [r["sandbox_dir"]], ensure_ascii=False),
-                  "沒列到的路徑一律不可修改。路徑相對於專案目錄，沙盒絕對路徑依原值使用。"]
+        lines += ["Files you may and may not change: " + json.dumps(scope or [r["sandbox_dir"]], ensure_ascii=False),
+                  "Paths not listed must not be modified. Paths are relative to the project directory; an absolute sandbox path is used as given."]
     if task["access"] == "tests":
-        lines.append("只寫測試，不寫實作。")
+        lines.append("Write tests only. Do not write the implementation.")
     elif task["access"] == "implementation":
-        lines += ["不得修改測試檔，認為測試錯就停下回報。", "受保護的測試檔：" + json.dumps(r.get("test_files", []), ensure_ascii=False)]
-    lines += ["任務與驗收：\n" + r["prompt"], "相關 Project Memory："]
+        lines += ["Do not modify the test files. If you think a test is wrong, stop and report.", "Protected test files: " + json.dumps(r.get("test_files", []), ensure_ascii=False)]
+    lines += ["Task and acceptance:\n" + r["prompt"], "Related Project Memory:"]
     for lesson in r["project_memory"]:
-        lines += ["適用情境：" + lesson["condition"], "已確認經驗：" + lesson["lesson"], "來源：" + lesson["source"]]
+        lines += ["Condition: " + lesson["condition"], "Confirmed lesson: " + lesson["lesson"], "Source: " + lesson["source"]]
     if not r["project_memory"]:
-        lines.append("無（主 agent 已搜尋並篩選）。")
-    lines += ["要跑的驗證指令：", *(r["verification"] or ["無可執行指令，依任務的驗收條件提供可核對證據。"]),
-              "回報格式：改了哪些檔案、每個結論的依據、不確定處、驗證結果及未驗證項目。",
-              "回報覆蓋範圍：應處理幾項、實際處理幾項、未完成的原因、未取得的來源或資料。",
-              "不得輸出權杖、密碼、金鑰或設定值，只回報名稱與所在位置。",
-              "回報過程中遇到的教訓與經驗：適用情境、失敗做法、已確認原因、有效做法與驗證證據。",
-              "推測與不確定處請明確標示。沒有新經驗就寫「無」，不湊數。舊記憶不適用時附原 key、條件差異及查證結果。",
-              "經驗由主 agent 核對並記錄進 Project Memory，不要自行寫入 project memory。",
-              "不要 commit，也不要 stash 或 reset"]
+        lines.append("None (the main agent already searched and filtered).")
+    lines += ["Verification commands to run:", *(r["verification"] or ["No runnable commands; provide checkable evidence that meets the task's acceptance criteria."]),
+              "Report format: which files changed, the basis for each conclusion, uncertainties, verification results and unverified items.",
+              "Report coverage: how many items should be handled, how many were actually handled, the reasons for anything unfinished, and any sources or data not obtained.",
+              "Do not output tokens, passwords, keys or configuration values; report only names and where they are.",
+              "Lessons and experience from this work: the situation it applies to, failed approaches, confirmed cause, effective approach and verification evidence.",
+              "Mark guesses and uncertainties clearly. If there are no new lessons, write \"none\"; do not pad the report. When an old lesson does not apply, include its original key, how the conditions differ, and the verification result.",
+              "The main agent verifies and records lessons in Project Memory; do not write to project memory yourself.",
+              "Do not commit, stash or reset."]
     if state.get("feedback"):
-        lines.append("主 agent 已核對的接續資訊：")
+        lines.append("Continuation information verified by the main agent:")
         for feedback in state["feedback"]:
-            lines += ["前次結果：" + feedback["outcome"], "原因及證據：" + feedback["reason"], feedback.get("feedback", "")]
+            lines += ["Previous outcome: " + feedback["outcome"], "Reason and evidence: " + feedback["reason"], feedback.get("feedback", "")]
     return "\n".join(lines)
 
 
 def private_file(path):
     if path.is_symlink():
-        raise DispatchError("狀態檔不可是 symlink：" + str(path))
+        raise DispatchError("A state file must not be a symlink: " + str(path))
     fd = os.open(path, os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
     if os.name == "nt":
         try:
@@ -237,7 +238,7 @@ def private_file(path):
             raise
     elif os.fstat(fd).st_mode & 0o077:
         os.close(fd)
-        raise DispatchError("既有狀態檔權限必須是 0600：" + str(path))
+        raise DispatchError("Existing state file permissions must be 0600: " + str(path))
     return os.fdopen(fd, "r+", encoding="utf-8")
 
 
@@ -254,7 +255,7 @@ def lock_file(path, blocking=True):
                     if exc.errno not in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):
                         raise
                     if not blocking:
-                        raise DispatchError("此派工正在執行，不可同時接續") from exc
+                        raise DispatchError("This dispatch is still running and cannot be resumed concurrently") from exc
                     time.sleep(.05)
             try:
                 yield
@@ -265,13 +266,13 @@ def lock_file(path, blocking=True):
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
         except BlockingIOError:
-            raise DispatchError("此派工正在執行，不可同時接續")
+            raise DispatchError("This dispatch is still running and cannot be resumed concurrently")
         yield
 
 
 def atomic_write(path, data):
     if path.is_symlink():
-        raise DispatchError("狀態檔不可是 symlink")
+        raise DispatchError("A state file must not be a symlink")
     fd, temporary = tempfile.mkstemp(prefix=".dispatch-", dir=path.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
@@ -296,18 +297,18 @@ def default_state_directory():
 def state_directory(raw, project):
     path = Path(raw).expanduser() if raw else default_state_directory()
     if path.is_symlink():
-        raise DispatchError("state-dir 不可是 symlink")
+        raise DispatchError("state-dir must not be a symlink")
     if os.name == "nt" and path.exists():
         windows.ensure_private(path)
     path = path.resolve()
     if within(path, Path(project)):
-        raise DispatchError("state-dir 必須位於專案外")
+        raise DispatchError("state-dir must be outside the project")
     if os.name == "nt":
         windows.ensure_private(path, directory=True)
         return path
     path.mkdir(parents=True, mode=0o700, exist_ok=True)
     if path.stat().st_mode & 0o077:
-        raise DispatchError("既有 state-dir 必須是專用私有目錄（0700），不會修改它的權限")
+        raise DispatchError("An existing state-dir must be a dedicated private directory (0700); its permissions will not be modified")
     return path
 
 
@@ -359,7 +360,7 @@ def claim(root, path, state, spec, write_paths, native, timeout):
     deadline = time.monotonic() + timeout
     while True:
         if stop_requested(root, state):
-            raise NotStarted("主 agent 已取消；尚未啟動執行者。")
+            raise NotStarted("The main agent cancelled this dispatch; no worker was started.")
         with lock_file(root / ".registry.lock"):
             leases = []
             for other_path in root.glob("*.json"):
@@ -382,7 +383,7 @@ def claim(root, path, state, spec, write_paths, native, timeout):
                 atomic_write(path, state)
                 return
         if time.monotonic() >= deadline:
-            raise NotStarted("等待同檔寫入或 CLI 三條併行上限逾時；未啟動新執行者。派工紀錄：" + state["dispatch_id"] + "，解除佔用後用 --outcome dispatch-failed 在同一層重來")
+            raise NotStarted("Timed out waiting for a same-file write or the limit of three concurrent CLI runs; no new worker was started. Dispatch record: " + state["dispatch_id"] + ", retry the same level with --outcome dispatch-failed after the slot frees")
         time.sleep(0.05)
 
 
@@ -480,7 +481,7 @@ def signal_group(pgid, signum):
     except PermissionError as exc:
         # A group can disappear between TERM and KILL. Never ignore a live or unknown group.
         if group_live(pgid) is not False:
-            raise DispatchError(f"無法停止程序群 {pgid}，尚未確認工作程序結束：{exc}")
+            raise DispatchError(f"Could not stop process group {pgid}; the worker is not confirmed stopped: {exc}")
 
 
 def stop_group(pgid, proc=None):
@@ -497,7 +498,7 @@ def stop_group(pgid, proc=None):
     deadline = time.monotonic() + 2
     while group_live(pgid) is not False:
         if time.monotonic() >= deadline:
-            raise DispatchError(f"尚未確認程序群 {pgid} 已停止，保留派工名額供主 agent 檢查")
+            raise DispatchError(f"Process group {pgid} is not confirmed stopped; keeping the dispatch slot for the main agent to check")
         time.sleep(0.05)
 
 
@@ -603,7 +604,7 @@ def opencode_stalled(stdout_path, stderr_path, stall):
             return None
         if time.time() - error_written < stall:
             return None
-        return last[:2000] + f"（之後 {stall:g} 秒沒有任何輸出）"
+        return last[:2000] + f" (no output for {stall:g} seconds after this)"
     except OSError:
         return None
 
@@ -646,16 +647,16 @@ def output_result(state, path):
             "prompt": state.get("prompt", ""), "attempts": state["attempts"],
             "memory_reminder": REMINDER, "reason": state.get("reason", ""),
             "native_tool": NATIVE_TOOLS[state["request"]["host"]] if native else None,
-            "instruction": ("尚未派出。請使用目前宿主的內建 subagent、指定模型與完整 prompt。工具不可用時帶實際錯誤接續下一檔。"
+            "instruction": ("Not dispatched yet. Use the current host's built-in subagent with the specified model and the full prompt. When the tool is unavailable, continue to the next level with the actual error."
                             if native else
-                            "此層尚未啟動執行者。解除佔用後用 --outcome dispatch-failed 在同一層重來。" if state["status"] == "not_started" else
-                            ("外部 CLI 失敗，檔案沒有變動。讀 attempts 最後一筆的 error、output、model_probe 與 fatal_error 判斷原因；"
-                             "launch_error 為 true 時先依 references/dispatch-flow.md「CLI 未安裝」查證。判定這一層無法執行後，用 dispatch --dispatch-id "
-                             + state["dispatch_id"] + " --outcome dispatch-failed --failure-reason '<錯誤原文與判斷>' 接下一層；"
-                             "查證確認未安裝時另加 --not-installed，之後的派工會自動跳過此工具。")
+                            "No worker was started for this level. Retry the same level with --outcome dispatch-failed after the slot frees." if state["status"] == "not_started" else
+                            ("The external CLI failed and no file changed. Read the error, output, model_probe and fatal_error of the last attempt to find the cause;"
+                             " when launch_error is true, first check \"CLI not installed\" in references/dispatch-flow.md. Once this level is judged unable to run, continue to the next level with dispatch --dispatch-id "
+                             + state["dispatch_id"] + " --outcome dispatch-failed --failure-reason '<original error and judgement>';"
+                             " when installation is confirmed absent, add --not-installed and later dispatches will skip this tool automatically.")
                             if state["status"] == "cli_failed" else
-                            "仍在執行。再用 status --wait 查詢；判定卡住時用 cancel。" if state["status"] in ACTIVE else
-                            "主 agent 親自核對範圍、diff 與驗證結果，再回報 outcome。")}
+                            "Still running. Query again with status --wait; when it is judged stuck, use cancel." if state["status"] in ACTIVE else
+                            "The main agent personally checks the scope, diff and verification results, then reports the outcome.")}
 
 
 def with_runtime(result, state):
@@ -711,12 +712,12 @@ def drive(root, path, state, task, write_paths, start, timeout, stall=180):
             attempt["model_probe"] = probe
             after_probe = snapshot(r, write_paths)
             if probe.get("cleanup_pending") or probe["timeout"] or probe["interrupted"] or before is None or after_probe != before:
-                state.update(status="awaiting_review", reason="模型探測未正常結束，或無法確認程序已停止及檔案保持一致。先檢查原始輸出、程序與磁碟。")
+                state.update(status="awaiting_review", reason="The model probe did not finish normally, or it cannot be confirmed that the process stopped and the files stayed consistent. Check the raw output, the process and the disk first.")
                 atomic_write(path, state)
                 return output_result(state, path)
             if probe["returncode"] != 0 or error_event(probe["output"]):
                 state.update(status="cli_failed", write_paths=[],
-                             reason="模型探測失敗，檔案沒有變動。原始輸出在 attempts 最後一筆的 model_probe。")
+                             reason="The model probe failed and no file changed. The raw output is in the model_probe of the last attempt.")
                 atomic_write(path, state)
                 return output_result(state, path)
             catalog = probe_catalog(spec["tool"], probe["output"])
@@ -725,11 +726,11 @@ def drive(root, path, state, task, write_paths, start, timeout, stall=180):
             model = "opus"  # No version floor for this route; Claude resolves its official alias.
         attempt["model"] = state["current_model"] = model
         if native:
-            state["reason"] = "" if model else "目前提供的宿主模型清單沒有合規模型，請查證可用性並回報實際失敗證據。"
+            state["reason"] = "" if model else "The supplied host model catalog has no compliant model; check availability and report the actual failure evidence."
             atomic_write(path, state)
             return output_result(state, path)
         if not model:
-            attempt["error"] = "實際模型清單沒有符合此層級種類及版本限制的模型"
+            attempt["error"] = "The actual model catalog has no model matching this level's family and version floor"
             attempt["catalog"] = catalog
             state["status"] = "new"  # moving on to the next level
             atomic_write(path, state)
@@ -744,15 +745,15 @@ def drive(root, path, state, task, write_paths, start, timeout, stall=180):
         attempt["files_changed"] = None if before is None or after is None else after != before
         if failed and not attempt.get("cleanup_pending") and not attempt["timeout"] and not attempt["interrupted"] and before is not None and after == before:
             state.update(status="cli_failed", write_paths=[],
-                         reason="外部 CLI 失敗，檔案沒有變動。原始輸出在 attempts 最後一筆。")
+                         reason="The external CLI failed and no file changed. The raw output is in the last attempt.")
             atomic_write(path, state)
             return output_result(state, path)
-        state.update(status="awaiting_review", reason=("無法確認工作程序已停止，保留名額與檔案範圍，請先檢查 cleanup_error。" if attempt.get("cleanup_pending") else
-                     "逾時或中斷，程序已停止。檢查半成品後再接續。" if attempt["timeout"] or attempt["interrupted"]
-                     else "先親自驗證成果；正常回報與部分改檔都不可自動接手。"))
+        state.update(status="awaiting_review", reason=("Cannot confirm the worker stopped; keeping the slot and file scope, check cleanup_error first." if attempt.get("cleanup_pending") else
+                     "Timed out or interrupted; the process has stopped. Check the partial work before continuing." if attempt["timeout"] or attempt["interrupted"]
+                     else "Verify the result yourself first; neither a normal report nor partially changed files are taken over automatically."))
         atomic_write(path, state)
         return output_result(state, path)
-    state.update(status="exhausted", reason="此任務類型的所有層級都已失敗，請由使用者決定。")
+    state.update(status="exhausted", reason="Every level of this task type has failed; the user must decide.")
     atomic_write(path, state)
     return output_result(state, path)
 
@@ -760,14 +761,14 @@ def drive(root, path, state, task, write_paths, start, timeout, stall=180):
 def dispatch(a, policy):
     if a.request is not None:
         if a.outcome or a.failure_reason or a.feedback or a.partial_work_reviewed or a.not_installed:
-            raise DispatchError("新任務不可帶接續結果參數")
+            raise DispatchError("A new task must not carry continuation outcome arguments")
         raw = sys.stdin.read() if a.request == "-" else Path(a.request).read_text(encoding="utf-8")
         r, paths = validate_request(json.loads(raw), policy)
         task = policy["tasks"][r["task_type"]]
         check_level(a.level, len(task["levels"]))
         start = 1 if a.level is None else a.level
         if start != 1 and not (start == 2 and r.get("difficult_implementation") is True and r.get("opencode_failure_evidence")):
-            raise DispatchError("新任務必須從第 1 檔開始；困難寫程式格子的 OpenCode 例外需附同任務實際失敗證據")
+            raise DispatchError("A new task must start at level 1; the OpenCode exception for a difficult implementation slot needs evidence of a real failure of the same task")
         root = state_directory(a.state_dir, r["project_dir"])
         did = str(uuid.uuid4())
         path = root / (did + ".json")
@@ -778,61 +779,61 @@ def dispatch(a, policy):
             atomic_write(path, state)
             return run(root, path, state, task, paths, start, a)
     if not a.outcome:
-        raise DispatchError("接續必須提供 --outcome")
+        raise DispatchError("A continuation must provide --outcome")
     root, path, did = existing_dispatch(a)
     with lock_file(root / (did + ".lock"), False):
         state = json.loads(path.read_text(encoding="utf-8"))
         r, paths = validate_request(state["request"], policy)
         if paths != state.get("scope_paths"):
-            raise DispatchError("授權路徑的實際位置已改變，請審查 symlink 與原任務範圍，不可沿用舊派工")
+            raise DispatchError("The actual location of an authorized path has changed; review the symlink and the original task scope, and do not continue the old dispatch")
         root = state_directory(str(root), r["project_dir"])
         path = root / (did + ".json")
         if state.get("policy_fingerprint") != hashlib.sha256(POLICY_PATH.read_bytes()).hexdigest():
-            raise DispatchError("分派規則已變更，請先審查原派工，不可用新順序接續舊層級")
+            raise DispatchError("The dispatch rules have changed; review the original dispatch first and do not continue old levels with the new order")
         task = policy["tasks"][r["task_type"]]
         count = len(task["levels"])
         check_level(a.level, count)
         status = state["status"]
         if status == "starting":
             if alive(state.get("owner_pid")):
-                raise DispatchError("背景程序正在接手執行此派工，不可同時接續")
-            state.update(status="not_started", reason="背景程序未接手就結束；尚未啟動執行者。")
+                raise DispatchError("A background process is taking over this dispatch; it cannot be resumed concurrently")
+            state.update(status="not_started", reason="The background process ended before taking over; no worker was started.")
             status = "not_started"
         if status not in ("native_required", "cli_failed", "awaiting_review", "running", "new", "not_started"):
-            raise DispatchError("此派工已結束，不可重複啟動：" + status)
+            raise DispatchError("This dispatch has already ended and cannot be started again: " + status)
         if alive(state.get("child_pid")):
-            raise DispatchError("前一個子程序仍在執行，請先檢查並停止")
+            raise DispatchError("The previous child process is still running; check and stop it first")
         if state.get("cleanup_pending"):
             if group_live(state.get("process_group")) is not False:
-                raise DispatchError("尚未確認前一個工作程序群已停止，不可釋放名額或接續")
+                raise DispatchError("The previous worker process group is not confirmed stopped; the slot cannot be released and the dispatch cannot be resumed")
             state.update(cleanup_pending=False, process_group=None, child_pid=None)
         if a.outcome == "completed":
             if a.level is not None and a.level != state.get("current_level"):
-                raise DispatchError("completed 不能改變層級")
-            state.update(status="completed", reason="主 agent 已回報驗收完成。", write_paths=[])
+                raise DispatchError("completed cannot change the level")
+            state.update(status="completed", reason="The main agent reported acceptance complete.", write_paths=[])
             atomic_write(path, state)
             return output_result(state, path)
         reason = text_value(a.failure_reason, "--failure-reason")
         current = state.get("current_level", 1)
         if a.not_installed and a.outcome != "dispatch-failed":
-            raise DispatchError("--not-installed 只能搭配 --outcome dispatch-failed")
+            raise DispatchError("--not-installed works only with --outcome dispatch-failed")
         if a.outcome == "dispatch-failed":
             if status not in ("native_required", "cli_failed", "not_started"):
-                raise DispatchError("外部執行成果必須先審查，不能冒充未派出")
+                raise DispatchError("External execution results must be reviewed first and must not be reported as not dispatched")
             if a.not_installed:
                 last = state["attempts"][-1] if state["attempts"] else {}
                 launch_failed = last.get("launch_error") or (last.get("model_probe") or {}).get("launch_error")
                 if status != "cli_failed" or last.get("native") or not launch_failed:
-                    raise DispatchError("--not-installed 只適用於指令無法啟動（launch_error）的 cli_failed")
+                    raise DispatchError("--not-installed applies only to a cli_failed whose command could not launch (launch_error)")
                 record_not_installed(root, last["tool"], reason)
             wanted = current if status == "not_started" else current + 1
         else:
             if not a.partial_work_reviewed:
-                raise DispatchError("先檢查磁碟與半成品，再提供 --partial-work-reviewed")
+                raise DispatchError("Check the disk and partial work first, then provide --partial-work-reviewed")
             failures = state["verification_failures"].get(str(current), 0) + 1
             wanted = current if failures < task["verification_retries"] else current + 1
         if a.level is not None and a.level != wanted:
-            raise DispatchError(f"依原派工的失敗紀錄，本次只能指定 level {wanted}，不得跳級或提早升級")
+            raise DispatchError(f"Based on the original dispatch's failure record, this run can only specify level {wanted}; levels cannot be skipped or escalated early")
         if a.outcome == "verification-failed":
             state["verification_failures"][str(current)] = failures
         state["feedback"].append({"outcome": a.outcome, "reason": reason, "feedback": a.feedback or ""})
@@ -845,12 +846,12 @@ def existing_dispatch(a):
     try:
         did = str(uuid.UUID(a.dispatch_id))
     except ValueError:
-        raise DispatchError("dispatch-id 必須是有效 UUID")
+        raise DispatchError("dispatch-id must be a valid UUID")
     # Resolve the requested store before opening any existing task. Do not create it on a bogus resume.
     root = Path(a.state_dir).expanduser() if a.state_dir else default_state_directory()
     path = root / (did + ".json")
     if not path.is_file() or path.is_symlink():
-        raise DispatchError("找不到原派工狀態")
+        raise DispatchError("The original dispatch state was not found")
     if os.name == "nt":
         windows.ensure_private(root)
         windows.ensure_private(path)
@@ -882,7 +883,7 @@ def run(root, path, state, task, paths, start, a):
             else:
                 proc = subprocess.Popen(argv, start_new_session=True, **options)
         except OSError as exc:
-            state.update(status="not_started", reason="背景程序無法啟動：" + str(exc))
+            state.update(status="not_started", reason="The background process could not be started: " + str(exc))
             atomic_write(path, state)
             raise DispatchError(state["reason"])
     state.update(status="starting", owner_pid=proc.pid, supervisor_started=False, reason="")
@@ -904,16 +905,16 @@ def handshake(spawned):
                 with lock_file(spawned["root"] / (state["dispatch_id"] + ".lock"), False):
                     current = json.loads(path.read_text(encoding="utf-8"))
                     if current.get("status") == "starting":
-                        current.update(status="not_started", reason="背景程序未接手就結束；尚未啟動執行者。")
+                        current.update(status="not_started", reason="The background process ended before taking over; no worker was started.")
                         atomic_write(path, current)
-            raise DispatchError("背景程序啟動失敗，未派出執行者。紀錄：" + str(spawned["log"]) + "\n" + log)
+            raise DispatchError("The background process failed to start; no worker was dispatched. Record: " + str(spawned["log"]) + "\n" + log)
         time.sleep(0.05)
     return {"status": "started", "dispatch_id": state["dispatch_id"], "state_path": str(path),
             "task_type": state["request"]["task_type"], "level": state["run"]["start"],
             "supervisor_pid": proc.pid, "supervisor_log": str(spawned["log"]),
             "timeout": state["run"]["timeout"], "memory_reminder": REMINDER,
-            "instruction": "背景執行中。用 status --dispatch-id " + state["dispatch_id"] +
-                           " --wait <秒數> 取得結果，秒數不超過自己指令工具的上限，等不到就再查；判定卡住時用 cancel。"}
+            "instruction": "Running in the background. Use status --dispatch-id " + state["dispatch_id"] +
+                           " --wait <seconds> to get the result; the seconds must not exceed your command tool's limit, query again if it does not finish, and use cancel when it is judged stuck."}
 
 
 def supervise(a, policy):
@@ -921,7 +922,7 @@ def supervise(a, policy):
     with lock_file(root / (did + ".lock")):
         state = json.loads(path.read_text(encoding="utf-8"))
         if state.get("status") != "starting" or state.get("owner_pid") != os.getpid():
-            raise DispatchError("此背景程序不是派工的指定接手者，未執行任何層級")
+            raise DispatchError("This background process is not the designated owner of the dispatch and ran no level")
         state.update(status="new", supervisor_started=True)
         atomic_write(path, state)
         task = policy["tasks"][state["request"]["task_type"]]
@@ -931,7 +932,7 @@ def supervise(a, policy):
         except BaseException as exc:
             if state.get("status") in ACTIVE:
                 state.update(status="awaiting_review", write_paths=state.get("write_paths", []) if state.get("cleanup_pending") else [],
-                             reason="背景程序發生錯誤：" + (str(exc) or type(exc).__name__) + "。先檢查原始輸出、程序與磁碟。")
+                             reason="The background process hit an error: " + (str(exc) or type(exc).__name__) + ". Check the raw output, the process and the disk first.")
                 atomic_write(path, state)
             raise
         finally:
@@ -946,9 +947,9 @@ def repair(root, path, state, r):
     if status == "starting":
         if alive(state.get("owner_pid")):
             return state
-        state.update(status="not_started", reason="背景程序未接手就結束；尚未啟動執行者。")
+        state.update(status="not_started", reason="The background process ended before taking over; no worker was started.")
     elif status == "new":
-        state.update(status="not_started", write_paths=[], reason="背景程序在啟動執行者前結束；可用 --outcome dispatch-failed 在同一層重來。")
+        state.update(status="not_started", write_paths=[], reason="The background process ended before starting a worker; retry the same level with --outcome dispatch-failed.")
     else:
         group = state.get("process_group") or state.get("child_pid")
         live = group_live(group) if group else False
@@ -956,13 +957,13 @@ def repair(root, path, state, r):
         attempt["supervisor_lost"] = True
         if live is not False:
             state.update(status="awaiting_review", cleanup_pending=True, process_group=group,
-                         reason="背景程序已結束，但工作程序仍在執行。先用 cancel 停止，再檢查半成品。")
+                         reason="The background process has ended but the worker is still running. Stop it with cancel first, then check the partial work.")
         else:
             after = snapshot(r, state.get("write_paths", []))
             before = attempt.get("snapshot_before")
             attempt["files_changed"] = None if before is None or after is None else after != before
             state.update(status="awaiting_review", write_paths=[], child_pid=None, process_group=None,
-                         cleanup_pending=False, reason="背景程序意外結束，工作程序已不在。先檢查原始輸出、程序與磁碟。")
+                         cleanup_pending=False, reason="The background process ended unexpectedly and the worker is gone. Check the raw output, the process and the disk first.")
     atomic_write(path, state)
     return state
 
@@ -994,14 +995,14 @@ def cancel(a):
     state = settle(root, path, did)
     if state["status"] in ACTIVE:
         if not (state.get("run") or {}).get("id"):
-            raise DispatchError("此派工沒有可取消的執行識別，請停止原本的前景程序")
+            raise DispatchError("This dispatch has no cancellable run identifier; stop the original foreground process")
         with private_file(stop_path(root, state)) as handle:
             handle.truncate()
             handle.write(state["run"]["id"])
         deadline = time.monotonic() + 60
         while state["status"] in ACTIVE:
             if time.monotonic() >= deadline:
-                raise DispatchError("已送出取消請求，但 60 秒內未確認停止；用 status 檢查程序")
+                raise DispatchError("A cancel request was sent but the stop was not confirmed within 60 seconds; check the process with status")
             time.sleep(0.2)
             state = settle(root, path, did)
     if state.get("cleanup_pending") and state.get("status") not in ACTIVE:
@@ -1011,107 +1012,107 @@ def cancel(a):
             if state.get("cleanup_pending") and group:
                 if os.name == "nt":
                     if windows.group_live(group) is not False:
-                        raise DispatchError("Windows 無法從外部停止此工作程序，請手動檢查")
+                        raise DispatchError("Windows cannot stop this worker from outside; check it manually")
                 else:
                     stop_group(group)
                 state.update(cleanup_pending=False, process_group=None, child_pid=None,
-                             reason=state.get("reason", "") + " 已由 cancel 停止殘留的工作程序。")
+                             reason=state.get("reason", "") + " The leftover worker was stopped by cancel.")
                 atomic_write(path, state)
     return output_result(state, path)
 
 
 def parser(policy):
-    p = argparse.ArgumentParser(description="依任務類型的層級派工。查詢不呼叫模型、不寫狀態。需要 Python 3.9+，支援 Windows 10+/macOS/Linux。",
-        epilog="操作：list-types 列任務；list-levels 列層級；dispatch 在背景發起或接續；status 查結果；cancel 停止執行中的派工。"
-               "supervise 僅供 dispatch 內部使用。各操作加 --help 查完整說明。")
+    p = argparse.ArgumentParser(description="Dispatch by the levels of each task type. Queries call no model and write no state. Requires Python 3.9+, on Windows 10+/macOS/Linux.",
+        epilog="Commands: list-types lists tasks; list-levels lists levels; dispatch starts or continues in the background; status reads results; cancel stops a running dispatch. "
+               "supervise is for internal use by dispatch only. Add --help to each command for the full description.")
     sub = p.add_subparsers(dest="command")
-    q = sub.add_parser("list-types", help="列出所有任務類型及各自層級數", description="純查詢。預設顯示人可讀表格。exit 0。")
+    q = sub.add_parser("list-types", help="list every task type and its level count", description="Query only. Shows a human-readable table by default. exit 0.")
     form = q.add_mutually_exclusive_group()
-    form.add_argument("--json", action="store_true", help="輸出 JSON tasks 陣列")
-    form.add_argument("--markdown", action="store_true", help="從 policy.json 產生 SKILL.md 決策表")
-    q = sub.add_parser("list-levels", help="列出指定任務類型的模型種類及執行方式",
-                       epilog="範例：dispatch.py list-levels --task-type classification --host codex --json")
-    q.add_argument("--task-type", required=True, choices=list(policy["tasks"]), help="任務類型 enum")
-    q.add_argument("--host", choices=policy["hosts"], help="選填，標記宿主內建 subagent 層級")
-    q.add_argument("--json", action="store_true", help="輸出結構化 levels，含 native、minimum、effort")
+    form.add_argument("--json", action="store_true", help="output the tasks array as JSON")
+    form.add_argument("--markdown", action="store_true", help="generate the SKILL.md decision table from policy.json")
+    q = sub.add_parser("list-levels", help="list the model families and execution mode for a task type",
+                       epilog="Example: dispatch.py list-levels --task-type classification --host codex --json")
+    q.add_argument("--task-type", required=True, choices=list(policy["tasks"]), help="task type enum")
+    q.add_argument("--host", choices=policy["hosts"], help="optional; marks the host's built-in subagent level")
+    q.add_argument("--json", action="store_true", help="output structured levels with native, minimum and effort")
     example = {"host": "codex", "task_type": "classification", "project_dir": "/path/to/project",
-               "role": "依原文與證據分類的研究員", "prompt": "分類 issue A，逐項說明依據。",
-               "project_memory": [{"condition": "適用條件", "lesson": "已確認經驗", "source": "證據位置"}],
-               "allowed_files": [], "verification": ["核對每個標籤與 issue 原文"],
+               "role": "Researcher who classifies from the source text and evidence", "prompt": "Classify issue A and explain the basis for each item.",
+               "project_memory": [{"condition": "When it applies", "lesson": "Confirmed lesson", "source": "Where the evidence is"}],
+               "allowed_files": [], "verification": ["check every label against the issue text"],
                "models": {"codex": ["gpt-6-luna"], "claude": ["claude-haiku-5-5"]},
-               "model_source": "主 agent 本輪實際查證的模型清單"}
-    q = sub.add_parser("dispatch", help="依規則執行外部 CLI，或交回內建 subagent 呼叫提示",
+               "model_source": "model catalog the main agent actually verified this turn"}
+    q = sub.add_parser("dispatch", help="run an external CLI by the rules, or return a built-in subagent handoff prompt",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="""新派工必填 request JSON：host、task_type、project_dir、role、prompt、project_memory、allowed_files、verification。
-project_memory 必填陣列，每項含 condition/lesson/source，查過無經驗才填 []。
-allowed_files 為精確專案相對路徑，不接受萬用字元、.. 或 .git。唯讀任務必須 []。
-implementation 可另列 test_files 作為不可改的測試路徑；testing 只寫測試。
-research 與 acceptance 必填 sandbox_dir，可用專案外的專用暫存目錄；allowed_files 非空時必須指向沙盒內。
-models 為已查證可用模型的工具名→名稱陣列，提供時必填 model_source。Claude 版本下限不能用別名推測。
-可選 effort 為 medium（預設）、high、xhigh，調高須附 effort_reason。
-免費模型、Copilot Auto、Gemini 與 agy Claude 不套 effort 覆寫，寫程式最後一檔 Opus 固定 low。
-外部 OpenCode/agy 由 models 指令、Codex 由 debug models 查證，結果取代 request 的同工具清單。輪到宿主時不執行自己的 CLI，僅回傳內建交接提示。
-困難寫程式格子可用 difficult_implementation:true、opencode_failure_evidence（同任務實際失敗證據）從第 2 檔開始。
+        description="""A new dispatch requires a request JSON with host, task_type, project_dir, role, prompt, project_memory, allowed_files and verification.
+project_memory is a required array; each item has condition/lesson/source, and you fill [] only after confirming there are no relevant lessons.
+allowed_files are exact project-relative paths; wildcards, .. and .git are not accepted. A read-only task must use [].
+implementation may also list test_files as test paths that must not be changed; testing writes tests only.
+research and acceptance require sandbox_dir, which may be a dedicated temporary directory outside the project; when allowed_files is non-empty it must point inside the sandbox.
+models maps each tool name to the names of models verified as available; when provided, model_source is required. Claude version floors cannot be guessed from aliases.
+The optional effort is medium (default), high or xhigh; raising it requires effort_reason.
+Free models, Copilot Auto, Gemini and agy Claude do not get the effort override; the last programming level Opus is fixed at low.
+External OpenCode/agy are verified with the models command and Codex with debug models; the result replaces the same-tool list in the request. When it is the host's turn, do not run its own CLI; return only the built-in handoff prompt.
+A difficult implementation slot may start at level 2 with difficult_implementation:true and opencode_failure_evidence (evidence of a real failure of the same task).
 
-會啟動外部 CLI 的發起與接續預設在背景執行：立即輸出 status=started、dispatch_id、supervisor_pid 與 supervisor_log，
-之後用 status --wait 取得結果，判定卡住時用 cancel。--outcome completed 與起始層級是宿主內建 subagent 時直接輸出結果。
---foreground 改為在本程序等到結束，供測試與除錯。
-其餘結果輸出單一 JSON：status、dispatch_id、level、tool、model、prompt、attempts、state_path、memory_reminder。
-native_required：尚未派出，由主 agent 用 native_tool 指示的內建工具與完整 prompt 呼叫，完成後用 --outcome 回報。
-此交接會先等外部派工讓出該工具名額與同檔寫入，交出後不佔名額也不鎖檔，主 agent 自行把內建 subagent 計入上限與同檔檢查。
-not_started：等待同檔寫入或併行名額逾時、已取消或背景程序未接手，此層沒有執行者啟動；用 --outcome dispatch-failed 在同一層重來。
-awaiting_review：由主 agent 看 diff、親自驗證；script 不自動採用、不執行 verification 指令、不寫記憶。
-attempts 裡 skipped 為 not_installed 的項目：此工具先前經主 agent 以 --not-installed 確認未安裝，本次未啟動，evidence 是當時的查證內容。
-紀錄存在狀態目錄的 not-installed.cache，PATH 改變、指令重新找得到或超過 7 天就失效；刪除該檔可立即清除。
-cli_failed：外部 CLI 或模型探測失敗（非 0 結束、JSON 錯誤事件、指令無法啟動、opencode 停滯），且快照確認檔案沒變。
-script 不解讀錯誤內容、不自動接手；主 agent 讀 attempts 的原始輸出判斷後，用 --outcome dispatch-failed 接下一層。
-快照涵蓋所有專案檔案（含忽略檔）與沙盒，掃描逾時就先審查。實際模型清單沒有合規模型時才自動換下一層。
-每次 CLI 結束會停止其程序群，確認工作程序結束後才快照及接手；需持續執行的服務由主 agent 管理。
-部分改檔、逾時與中斷均先審查，非 Git 專案無法確認一致時也先審查。
-exhausted：所有層級失敗；completed：主 agent 已回報驗收完成。兩者不可再啟動。
-state/log 在 macOS/Linux 預設為 $XDG_STATE_HOME/agent-delegation 或 ~/.local/state/agent-delegation，0700/0600。
-Windows 預設為 %LOCALAPPDATA%/agent-delegation，以私有 DACL 保護，只授權目前使用者、SYSTEM 與系統管理員。
-Windows 使用原生檔案鎖與 Job Object 清理程序樹；支援 exe 與標準 npm cmd shim，未知 batch 包裝先回報審查。
-同一 dispatch 不允許並行接續；此目錄追蹤外部 CLI 的同檔寫入排隊，各工具最多三條。
-未納管程序仍由主 agent 檢查。中斷留下 running 時須檢查程序與半成品後回報，不自動重跑。
-exit 0：已產生上述狀態（不代表成果合格）；exit 2：參數、狀態或檔案錯誤，未繼續派工。
-""", epilog="request 範例（請替換為實際專案、任務與本輪模型清單）：\n" + json.dumps(example, ensure_ascii=False, indent=2) +
-        "\n\n範例：\n  dispatch.py dispatch --request task.json\n  dispatch.py status --dispatch-id <UUID> --wait 100\n  dispatch.py dispatch --dispatch-id <UUID> --level 3 --outcome dispatch-failed --failure-reason '內建工具原始錯誤'\n  dispatch.py dispatch --dispatch-id <UUID> --outcome verification-failed --failure-reason '驗證指令及失敗輸出' --partial-work-reviewed\n  dispatch.py dispatch --dispatch-id <UUID> --outcome completed")
+A start or continuation that launches an external CLI runs in the background by default: it immediately outputs status=started, dispatch_id, supervisor_pid and supervisor_log,
+then status --wait gets the result, and cancel is used when it is judged stuck. --outcome completed and a starting level that is the host's built-in subagent output the result directly.
+--foreground waits in this process until the end, for tests and debugging.
+Other results output a single JSON object: status, dispatch_id, level, tool, model, prompt, attempts, state_path, memory_reminder.
+native_required: not dispatched yet; the main agent calls the built-in tool named by native_tool with the full prompt, then reports with --outcome.
+This handoff first waits for external dispatches to free that tool's slot and same-file writes; after the handoff it holds no slot and no file lock, and the main agent counts the built-in subagent toward the limit and same-file checks.
+not_started: waiting for a same-file write or a concurrency slot timed out, the dispatch was cancelled, or the background process did not take over, so no worker was started for this level; retry the same level with --outcome dispatch-failed.
+awaiting_review: the main agent reads the diff and verifies personally; the script does not adopt results automatically, run verification commands or write memory.
+An attempts item with skipped set to not_installed: the tool was previously confirmed absent by the main agent with --not-installed, was not started this time, and evidence is the verification content from then.
+The record lives in not-installed.cache in the state directory; it expires when PATH changes, the command becomes findable again, or 7 days pass; deleting that file clears it immediately.
+cli_failed: an external CLI or model probe failed (non-zero exit, JSON error event, command could not launch, opencode stall), and the snapshot confirms no file changed.
+The script does not interpret the error content and does not take over automatically; after reading the raw output of attempts, the main agent continues to the next level with --outcome dispatch-failed.
+The snapshot covers every project file (including ignored files) and the sandbox; when the scan times out, review first. It moves to the next level automatically only when the actual model catalog has no compliant model.
+Each CLI run stops its process group at the end, and only after the worker is confirmed stopped does it snapshot and hand off; services that must keep running are managed by the main agent.
+Partial file changes, timeouts and interruptions are all reviewed first, and a non-Git project that cannot be confirmed consistent is reviewed first too.
+exhausted: every level failed; completed: the main agent reported acceptance complete. Neither can be started again.
+state/log default to $XDG_STATE_HOME/agent-delegation or ~/.local/state/agent-delegation on macOS/Linux, with 0700/0600.
+On Windows they default to %LOCALAPPDATA%/agent-delegation, protected by a private DACL that grants only the current user, SYSTEM and administrators.
+Windows uses native file locks and a Job Object to clean up the process tree; exe and standard npm cmd shims are supported, and an unknown batch wrapper is reported for review first.
+The same dispatch cannot be resumed concurrently; this directory tracks same-file write queues for external CLIs, at most three per tool.
+Unmanaged processes are still checked by the main agent. When an interruption leaves running, check the process and partial work, then report; do not rerun automatically.
+exit 0: the above state was produced (not proof the result is good); exit 2: argument, state or file error, and dispatch did not continue.
+""", epilog="request example (replace with the actual project, task and this turn's model catalog):\n" + json.dumps(example, ensure_ascii=False, indent=2) +
+        "\n\nExamples:\n  dispatch.py dispatch --request task.json\n  dispatch.py status --dispatch-id <UUID> --wait 100\n  dispatch.py dispatch --dispatch-id <UUID> --level 3 --outcome dispatch-failed --failure-reason 'raw built-in tool error'\n  dispatch.py dispatch --dispatch-id <UUID> --outcome verification-failed --failure-reason 'verification command and failure output' --partial-work-reviewed\n  dispatch.py dispatch --dispatch-id <UUID> --outcome completed")
     group = q.add_mutually_exclusive_group(required=True)
-    group.add_argument("--request", metavar="FILE|-", help="新任務 JSON 檔案，- 從 stdin 讀取")
-    group.add_argument("--dispatch-id", metavar="UUID", help="接續原派工，重用原 request 與全部失敗證據")
-    q.add_argument("--level", type=int, help="要執行的任務內層級，從 1 起；新任務預設 1，接續依失敗次數計算，超出支援範圍報錯")
+    group.add_argument("--request", metavar="FILE|-", help="new task JSON file; - reads from stdin")
+    group.add_argument("--dispatch-id", metavar="UUID", help="continue the original dispatch, reusing its request and all failure evidence")
+    q.add_argument("--level", type=int, help="the task level to run, starting at 1; a new task defaults to 1, a continuation is computed from the failure count, and a value outside the supported range is an error")
     q.add_argument("--outcome", choices=["dispatch-failed", "verification-failed", "completed"],
-                   help="接續必填。dispatch-failed 用於 native_required、cli_failed（接下一層）與 not_started（同一層重來）；"
-                        "驗證失敗需先檢查半成品；completed 表示主 agent 驗收完成")
-    q.add_argument("--failure-reason", help="失敗結果必填，提供實際錯誤或驗證輸出")
+                   help="required for a continuation. dispatch-failed is used for native_required, cli_failed (next level) and not_started (retry the same level); "
+                        "verification failure requires checking the partial work first; completed means the main agent accepted the result")
+    q.add_argument("--failure-reason", help="required for a failed outcome; provide the actual error or verification output")
     q.add_argument("--not-installed", action="store_true",
-                   help="選填，只搭配 dispatch-failed。主 agent 已依 references/dispatch-flow.md「CLI 未安裝」查證此工具確實沒安裝時加上，"
-                        "--failure-reason 寫查證指令與結果。PATH 不變且指令仍找不到時，7 天內的新派工自動跳過此工具並在 attempts 附上這份證據")
-    q.add_argument("--feedback", help="選填，已核對的教訓、保留的半成品與修正要求，會累積帶進接手 prompt")
-    q.add_argument("--partial-work-reviewed", action="store_true", help="verification-failed 必填，主 agent 已檢查程序、磁碟及半成品")
-    q.add_argument("--state-dir", help="選填，專案外的專用私有狀態目錄，也作為此群派工的併行協調範圍")
+                   help="optional, only with dispatch-failed. Add it when the main agent has verified in references/dispatch-flow.md under \"CLI not installed\" that this tool really is absent; "
+                        "--failure-reason records the verification commands and results. While PATH is unchanged and the command is still missing, new dispatches within 7 days skip this tool and attach this evidence in attempts")
+    q.add_argument("--feedback", help="optional; verified lessons, kept partial work and correction requests, accumulated into the next worker's prompt")
+    q.add_argument("--partial-work-reviewed", action="store_true", help="required for verification-failed; the main agent has checked the process, the disk and the partial work")
+    q.add_argument("--state-dir", help="optional; a dedicated private state directory outside the project, also the concurrency coordination scope for this dispatch group")
     q.add_argument("--timeout", type=float, default=1800,
-                   help="每次執行外部 CLI 的上限秒數，等待名額也用同一值，預設 1800；模型探測最多 30 秒。不要為了配合呼叫端指令工具的時間上限而縮短")
+                   help="the seconds allowed for each external CLI run, also used while waiting for a slot, default 1800; the model probe takes at most 30 seconds. Do not shorten it to fit the time limit of the calling command tool")
     q.add_argument("--stall-timeout", type=float, default=180,
-                   help="opencode 記下主任務錯誤後，持續多少秒完全沒有新輸出就停止並標為 cli_failed，預設 180")
-    q.add_argument("--foreground", action="store_true", help="在本程序等到結果才輸出，供測試與除錯；一般派工用背景")
-    q = sub.add_parser("status", help="查詢派工狀態，可等待結果",
-        description="輸出與 dispatch 相同結構的 JSON。仍在執行時另含 phase（starting/queued/preparing/probing/executing）"
-                    "與 runtime（elapsed、child_pid、stdout/stderr 的位元組數及距最後輸出秒數）。"
-                    "背景程序意外結束時，工作程序仍在就標為 awaiting_review 並保留 cleanup_pending，"
-                    "工作程序已不在就依檔案快照標為 awaiting_review；啟動執行者前結束標為 not_started。exit 0：已輸出狀態；exit 2：派工不存在或參數錯誤。",
-        epilog="範例：dispatch.py status --dispatch-id <UUID> --wait 100")
-    q.add_argument("--dispatch-id", required=True, metavar="UUID", help="dispatch 輸出的派工識別碼")
-    q.add_argument("--state-dir", help="選填，與 dispatch 相同的狀態目錄")
-    q.add_argument("--wait", type=float, default=0, help="仍在執行時最多等待的秒數，預設 0；不要超過自己指令工具的時間上限")
-    q = sub.add_parser("cancel", help="停止執行中的派工",
-        description="送出取消請求，等背景程序停止整個工作程序群並快照後輸出結果（通常為 awaiting_review，排隊中為 not_started）。"
-                    "背景程序已不在而工作程序殘留時，直接停止殘留程序群。已結束的派工只輸出現況。exit 2：60 秒內未確認停止或無法停止。",
-        epilog="範例：dispatch.py cancel --dispatch-id <UUID>")
-    q.add_argument("--dispatch-id", required=True, metavar="UUID", help="dispatch 輸出的派工識別碼")
-    q.add_argument("--state-dir", help="選填，與 dispatch 相同的狀態目錄")
-    q = sub.add_parser("supervise", help="內部使用：由 dispatch 啟動的背景程序", description="僅供 dispatch 啟動的背景程序使用，不要直接呼叫。")
+                   help="after opencode logs a main-task error, how many seconds of no new output pass before it is stopped and marked cli_failed, default 180")
+    q.add_argument("--foreground", action="store_true", help="wait in this process and output the result, for tests and debugging; ordinary dispatches use the background")
+    q = sub.add_parser("status", help="query a dispatch's status, optionally waiting for the result",
+        description="Outputs JSON with the same structure as dispatch. While still running it also has phase (starting/queued/preparing/probing/executing) "
+                    "and runtime (elapsed, child_pid, the stdout/stderr byte counts and seconds since the last output). "
+                    "When the background process ends unexpectedly but the worker is still there, it is marked awaiting_review and cleanup_pending is kept; "
+                    "when the worker is gone it is marked awaiting_review from the file snapshot; ending before a worker starts is marked not_started. exit 0: the status was output; exit 2: the dispatch does not exist or an argument is wrong.",
+        epilog="Example: dispatch.py status --dispatch-id <UUID> --wait 100")
+    q.add_argument("--dispatch-id", required=True, metavar="UUID", help="the dispatch identifier printed by dispatch")
+    q.add_argument("--state-dir", help="optional; the same state directory as dispatch")
+    q.add_argument("--wait", type=float, default=0, help="the maximum seconds to wait while still running, default 0; do not exceed your command tool's time limit")
+    q = sub.add_parser("cancel", help="stop a running dispatch",
+        description="Send a cancel request, wait for the background process to stop the whole worker process group and snapshot, then output the result (usually awaiting_review, or not_started while queued). "
+                    "When the background process is gone but a worker remains, stop the leftover process group directly. A finished dispatch only outputs its current state. exit 2: the stop was not confirmed within 60 seconds or could not be done.",
+        epilog="Example: dispatch.py cancel --dispatch-id <UUID>")
+    q.add_argument("--dispatch-id", required=True, metavar="UUID", help="the dispatch identifier printed by dispatch")
+    q.add_argument("--state-dir", help="optional; the same state directory as dispatch")
+    q = sub.add_parser("supervise", help="internal use: the background process started by dispatch", description="Only for the background process started by dispatch; do not call it directly.")
     q.add_argument("--dispatch-id", required=True)
     q.add_argument("--state-dir", required=True)
     return p
@@ -1130,7 +1131,7 @@ def main(argv=None):
         if a.json:
             print(json.dumps({"tasks": rows}, ensure_ascii=False))
         else:
-            print("| 任務類型 | 適用需求 | 層級數 | 接手順序 |\n| --- | --- | --- | --- |")
+            print("| Task type | Fits these requests | Levels | Handoff order |\n| --- | --- | --- | --- |")
             for row in rows:
                 order = " → ".join(f"{i}. {item['tool']} / {item['family']}" for i, item in enumerate(row["order"], 1))
                 print(f"| `{row['task_type']}` | {row['label']} | {row['levels']} | {order} |")
@@ -1143,7 +1144,7 @@ def main(argv=None):
             print(json.dumps({"task_type": a.task_type, "levels": rows}, ensure_ascii=False))
         else:
             for row in rows:
-                print(f"{row['level']}. {row['tool']} / {row['family']} | {row['execution']} | effort={row.get('effort')} | minimum={row.get('minimum', '無')}")
+                print(f"{row['level']}. {row['tool']} / {row['family']} | {row['execution']} | effort={row.get('effort')} | minimum={row.get('minimum', 'none')}")
         return 0
     try:
         if a.command == "supervise":
@@ -1151,22 +1152,22 @@ def main(argv=None):
             return 0
         if a.command == "status":
             if not math.isfinite(a.wait) or a.wait < 0:
-                raise DispatchError("--wait 必須是有限的非負數")
+                raise DispatchError("--wait must be a finite non-negative number")
             result = status(a)
         elif a.command == "cancel":
             result = cancel(a)
         else:
             if not math.isfinite(a.timeout) or a.timeout <= 0:
-                raise DispatchError("--timeout 必須是有限正數")
+                raise DispatchError("--timeout must be a finite positive number")
             if not math.isfinite(a.stall_timeout) or a.stall_timeout <= 0:
-                raise DispatchError("--stall-timeout 必須是有限正數")
+                raise DispatchError("--stall-timeout must be a finite positive number")
             result = dispatch(a, policy)
             if "spawned" in result:
                 result = handshake(result)
         print(json.dumps(result, ensure_ascii=False))
         return 0
     except (DispatchError, OSError, ValueError, KeyError) as exc:
-        print("錯誤：" + str(exc), file=sys.stderr)
+        print("Error: " + str(exc), file=sys.stderr)
         return 2
 
 

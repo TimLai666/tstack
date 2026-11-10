@@ -6,9 +6,7 @@ Use the script path set in the main skill (`_MEM`) for these commands.
 
 Merge two entries when they turn out to have the same root cause, not when the
 output feels long. The merged insight has to carry the specifics that made each
-one worth keeping — the number, the file, the thing that actually broke.
-Collapsing two concrete lessons into one general statement throws away the only
-thing this store holds that `AGENTS.md` does not.
+one worth keeping: the number, the file, the thing that actually broke.
 
 A merge is an ordinary `add` that names what it now covers:
 
@@ -22,9 +20,9 @@ python3 "$_MEM" add \
 ```
 
 The absorbed keys stop taking a line of their own and print after the merged
-entry instead, so nothing drops out of the output and `search` still finds them
-under their old keys. No line ever leaves the file. This is not a delete: re-add
-an absorbed key with a fresh timestamp and it stands on its own again.
+entry instead, and `search` still finds them under their old keys. No line ever
+leaves the file. To restore an absorbed key, re-add it with a fresh timestamp;
+it stands on its own again.
 
 ---
 
@@ -51,8 +49,7 @@ the next run of this version picks those lines up the same way.
 
 The wider stores use the same format: global preferences in `~/.tstack/global/learnings.jsonl`, machine facts in `~/.tstack/machine/learnings.jsonl`, and facts about a remote host in `~/.tstack/hosts/<name>/learnings.jsonl`. All of them live on the machine the agent runs on and are not tied to a project. Their `branch` field is empty.
 
-The format is deliberately boring: append-only, one line per learning, no index
-and no lock. Any agent, in any language, can read it.
+The format is append-only, one line per learning, with no index and no lock.
 
 ---
 
@@ -64,9 +61,7 @@ Turn the memory into markdown for a `CLAUDE.md`, `AGENTS.md` or handover doc:
 python3 "$_MEM" load --all
 ```
 
-`--all` matters here: the default view collapses most entries to their key, which
-is right for loading context and wrong for a handover document.
+Use `--all` for an export; the default view collapses most entries to their key.
 
 The output is already markdown. Copy it, or append it to the target file if the
-user asks. Never append automatically — that file is version-controlled and
-shared with other people.
+user asks. Never append automatically.

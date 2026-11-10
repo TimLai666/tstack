@@ -200,7 +200,7 @@ print('completed')"""
         sandbox.mkdir()
         result = self.dispatch(task_type="acceptance", allowed_files=[], sandbox_dir=str(sandbox))
         self.assertIn(str(sandbox), result["prompt"])
-        self.assertIn("專案檔一律不可修改", result["prompt"])
+        self.assertIn("No project file may be modified", result["prompt"])
         levels = self.cli("list-levels", "--task-type", "acceptance", "--host", "codex", "--json")
         review = self.cli("list-levels", "--task-type", "review", "--host", "codex", "--json")
         self.assertEqual(levels.stdout, review.stdout.replace('"review"', '"acceptance"'))

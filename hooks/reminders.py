@@ -20,21 +20,21 @@ MEMORY_SCRIPT = Path(__file__).resolve().parent.parent / "skills" / "project-mem
 # Claude Code replaces hook context over 10,000 characters with a short preview.
 CONTEXT_BUDGET = 9000
 
-INTRO = "這個環境裝了 tstack plugin。"
-MEMORY_LOADED = ("以下是 project-memory 已替你載入的本專案記憶、使用者的全域偏好與這台機器的事實，這次對話不用再執行 load，"
-                 "要查某一筆的全文時用 search：\n\n")
-MEMORY_EMPTY = "本專案在 project-memory 還沒有記憶，也還沒有全域偏好與這台機器的事實。"
-MEMORY_KEYS = ("記憶太長，hook 放不下全文，以下有一部分只列出 key。"
-               "開始工作前先依 project-memory skill 執行 load 讀完整內容：\n\n")
-MEMORY_UNREAD = "開始工作前，先依 project-memory skill 載入本專案的記憶。"
-SKILLS = ("\n\n規劃、寫程式、改程式、審查或 commit 前，先載入 software-engineering-guidelines skill。"
-          "要開 subagent、外派其他 CLI、變更既有 API，或交付規格、文章、報告前，先載入 agent-delegation skill。")
+INTRO = "The tstack plugin is installed in this environment."
+MEMORY_LOADED = ("Below are this project's memory, the user's global preferences and this machine's facts, already loaded by project-memory; "
+                 "no need to run load again in this conversation. To read the full text of an entry, use search:\n\n")
+MEMORY_EMPTY = "This project has no memory yet in project-memory, and there are no global preferences or facts about this machine yet."
+MEMORY_KEYS = ("The memory is too long for the hook to include in full, so some entries below show only their keys. "
+               "Before starting work, run load as the project-memory skill describes to read all of it:\n\n")
+MEMORY_UNREAD = "Before starting work, load this project's memory as the project-memory skill describes."
+SKILLS = ("\n\nBefore planning, writing or changing code, reviewing or committing, load the software-engineering-guidelines skill. "
+          "Before opening a subagent, dispatching another CLI, changing an existing API, or delivering specifications, articles or reports, load the agent-delegation skill.")
 DENY_AGENT = (
-    "這次對話還沒載入 agent-delegation skill。先載入它，依它決定這項工作由哪個工具和模型執行，"
-    "再重新派工。這個提醒每個 session 只擋一次。")
-AFTER_AGENT = "subagent 已回報。依 project-memory skill 核對它回報的試錯經驗與證據，符合記錄標準的經驗查證後寫入。"
-AFTER_COMMIT = "已完成 commit。依 project-memory skill 檢查這段工作有沒有反覆試錯或花大量時間才找到的做法，符合記錄標準就寫入。"
-BEFORE_COMPACT = "摘要時保留本 session 還沒寫入 project-memory 的試錯經驗，包括觸發情境、失敗做法、有效做法與驗證證據。"
+    "This conversation has not loaded the agent-delegation skill yet. Load it first, let it decide which tool and model does this work, "
+    "then dispatch again. This notice blocks only once per session.")
+AFTER_AGENT = "The subagent reported back. Check the trial-and-error lessons and evidence it reported against the project-memory skill, and after verifying the ones that meet the recording standard, write them in."
+AFTER_COMMIT = "The commit is done. Use the project-memory skill to check whether this work involved repeated trial and error or a solution that took a lot of time to find, and record it if it meets the standard."
+BEFORE_COMPACT = "When summarizing, keep the trial-and-error lessons from this session that are not yet written to project-memory, including the trigger, the failed approach, the effective approach and the verification evidence."
 
 
 def context(event, text):

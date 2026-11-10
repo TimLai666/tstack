@@ -10,12 +10,12 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 ## Overview
 
-A written rule depends on someone reading it at the right moment. When a mistake has already happened twice, the rule has been tried. Change the project so the next agent or person cannot make the mistake, or is stopped the moment they do.
+When a mistake has happened twice, change the project so the next agent or person cannot make the mistake, or is stopped the moment they do.
 
 ## Step 1 — Name the mistake class
 
@@ -36,7 +36,7 @@ Go down this list and stop at the first level that can carry the rule.
 
 Say for each class which level was chosen and why the level above it does not work.
 
-A check that changes CI, shared lint configuration or hooks affects everyone working in the project. Propose it with what it will reject, and get the user's go-ahead before adding it.
+Before adding a check that changes CI, shared lint configuration or hooks, propose it with what it will reject and get the user's go-ahead.
 
 ## Step 3 — Prove the check
 
@@ -46,7 +46,7 @@ An exception to a check goes on the offending line, with the reason.
 
 ## Step 4 — Record what enforces what
 
-Record through **project-memory** one entry per class: the rule in one sentence and what enforces it. When an existing entry describes a rule that nothing enforced and the mistake happened again, add the entry again under the same key with what now enforces it. Once the mistake can no longer happen, add it again under the same key saying so and naming the check; the store is append-only, so nothing is deleted.
+Record through **project-memory** one entry per class: the rule in one sentence and what enforces it. When an existing entry describes a rule that nothing enforced and the mistake happened again, add the entry again under the same key with what now enforces it. Once the mistake can no longer happen, add it again under the same key saying so and naming the check. The store is append-only; nothing is deleted.
 
 ## Report
 
