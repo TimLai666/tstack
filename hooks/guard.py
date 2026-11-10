@@ -295,8 +295,8 @@ def main():
         return 0
     if reason:
         # Without a place to remember that it was shown, a denial would repeat forever: add context instead.
-        detail = ({"permissionDecision": "deny", "permissionDecisionReason": "tstack guard：" + reason} if deny
-                  else {"additionalContext": "tstack guard：" + reason})
+        detail = ({"permissionDecision": "deny", "permissionDecisionReason": "tstack guard: " + reason} if deny
+                  else {"additionalContext": "tstack guard: " + reason})
         reply = {"hookSpecificOutput": dict(hookEventName="PreToolUse", **detail)}
         # Claude Code reads hook output as UTF-8; Windows consoles default to a legacy code page.
         sys.stdout.buffer.write(json.dumps(reply, ensure_ascii=False).encode("utf-8") + b"\n")

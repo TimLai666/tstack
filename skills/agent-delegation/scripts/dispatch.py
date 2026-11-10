@@ -155,7 +155,7 @@ def validate_request(r, policy):
     if "opencode_failure_evidence" in r:
         text_value(r["opencode_failure_evidence"], "opencode_failure_evidence")
         if kind not in ("testing", "implementation") or r.get("difficult_implementation") is not True:
-            raise DispatchError("The OpenCode exception applies only to a difficult implementation level with evidence of a real failure of the same task")
+            raise DispatchError("The OpenCode exception applies only to a difficult implementation slot with evidence of a real failure of the same task")
     if "effort" in r:
         if r["effort"] not in ("medium", "high", "xhigh"):
             raise DispatchError("effort must be medium, high or xhigh")
@@ -166,7 +166,7 @@ def validate_request(r, policy):
 
 def check_level(level, count):
     if level is not None and not 1 <= level <= count:
-        raise DispatchError(f"Too many levels: this task type has only {count} levels; level must be between 1 and {count}, and the input was {level}.")
+        raise DispatchError(f"Level out of range: this task type has only {count} levels; level must be between 1 and {count}, and the input was {level}.")
 
 
 def version(model):
@@ -196,7 +196,7 @@ def build_prompt(r, task, state):
     lines = [MARKER, "Role: " + r["role"], "Project directory: " + r["project_dir"]]
     if task["access"] == "sandbox":
         lines += ["Sandbox directory: " + r["sandbox_dir"],
-                  "No project file may be modified. Work only inside the sandbox directory, and report every file, process and setting you changed."]
+                  "No project file may be modified. Write and run things only inside the sandbox directory, and report every file, process and setting you changed."]
     if not scope and task["access"] != "sandbox":
         lines += ["Files you may and may not change: Do not modify any project file. A throwaway script that reproduces a problem may be kept only in a temporary directory outside the project and must be listed in the report."]
     else:
@@ -768,7 +768,7 @@ def dispatch(a, policy):
         check_level(a.level, len(task["levels"]))
         start = 1 if a.level is None else a.level
         if start != 1 and not (start == 2 and r.get("difficult_implementation") is True and r.get("opencode_failure_evidence")):
-            raise DispatchError("A new task must start at level 1; the OpenCode exception for a difficult implementation level needs evidence of a real failure of the same task")
+            raise DispatchError("A new task must start at level 1; the OpenCode exception for a difficult implementation slot needs evidence of a real failure of the same task")
         root = state_directory(a.state_dir, r["project_dir"])
         did = str(uuid.uuid4())
         path = root / (did + ".json")
@@ -1052,7 +1052,7 @@ models maps each tool name to the names of models verified as available; when pr
 The optional effort is medium (default), high or xhigh; raising it requires effort_reason.
 Free models, Copilot Auto, Gemini and agy Claude do not get the effort override; the last programming level Opus is fixed at low.
 External OpenCode/agy are verified with the models command and Codex with debug models; the result replaces the same-tool list in the request. When it is the host's turn, do not run its own CLI; return only the built-in handoff prompt.
-A difficult programming level may start at level 2 with difficult_implementation:true and opencode_failure_evidence (evidence of a real failure of the same task).
+A difficult implementation slot may start at level 2 with difficult_implementation:true and opencode_failure_evidence (evidence of a real failure of the same task).
 
 A start or continuation that launches an external CLI runs in the background by default: it immediately outputs status=started, dispatch_id, supervisor_pid and supervisor_log,
 then status --wait gets the result, and cancel is used when it is judged stuck. --outcome completed and a starting level that is the host's built-in subagent output the result directly.
@@ -1066,7 +1066,7 @@ An attempts item with skipped set to not_installed: the tool was previously conf
 The record lives in not-installed.cache in the state directory; it expires when PATH changes, the command becomes findable again, or 7 days pass; deleting that file clears it immediately.
 cli_failed: an external CLI or model probe failed (non-zero exit, JSON error event, command could not launch, opencode stall), and the snapshot confirms no file changed.
 The script does not interpret the error content and does not take over automatically; after reading the raw output of attempts, the main agent continues to the next level with --outcome dispatch-failed.
-The snapshot covers every project file (including ignored files) and the sandbox; when the scan times out, review first. It moves to the next level only when the actual model catalog has no compliant model.
+The snapshot covers every project file (including ignored files) and the sandbox; when the scan times out, review first. It moves to the next level automatically only when the actual model catalog has no compliant model.
 Each CLI run stops its process group at the end, and only after the worker is confirmed stopped does it snapshot and hand off; services that must keep running are managed by the main agent.
 Partial file changes, timeouts and interruptions are all reviewed first, and a non-Git project that cannot be confirmed consistent is reviewed first too.
 exhausted: every level failed; completed: the main agent reported acceptance complete. Neither can be started again.

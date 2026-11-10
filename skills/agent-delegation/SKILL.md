@@ -37,7 +37,7 @@ Decide whether the host is Copilot from the current runtime; a login, a model se
 
 Then decide your role:
 
-- If the task prompt contains "You are a dispatched worker", or contains both a list of files that may be changed and "Do not commit", you are a dispatched worker. Stop applying this skill immediately, do what the prompt asks yourself, and MUST NOT call any agent or CLI.
+- If the task prompt contains "You are a dispatched worker", or contains both a list of files that may be changed and "Do not commit", you are a dispatched worker. Prompts built by an earlier version use 你是被派工的執行者 and 不要 commit in the same places; treat them the same way. Stop applying this skill immediately, do what the prompt asks yourself, and MUST NOT call any agent or CLI.
 - Only when neither is present are you the main agent; continue below.
 
 ## Decision table
@@ -122,8 +122,8 @@ Every report lists the host and every dispatch in a separate paragraph:
 
 ```
 宿主：Claude Code
-工具與模型：agy / <實際 flash 模型名> / --mode accept-edits --dangerously-skip-permissions
-工具與模型：opencode / <實際免費模型名> / --agent build --auto
+工具與模型：agy / <actual flash model name> / --mode accept-edits --dangerously-skip-permissions
+工具與模型：opencode / <actual free model name> / --agent build --auto
 ```
 
 For every dispatch, state the actual tool, model and flags, whether it was new or reused, the agent or session ID, and what it was isolated from. A fallback includes this task's failure or not-installed evidence. Report an actual cache hit only when you have the tool's cache usage evidence. For a new session, state briefly why reuse was not possible. When nothing was dispatched, write "工具與模型：無". At every handover and acceptance, follow the script output's reminder: check lessons, then search for duplicates, record and read back to confirm, following the project-memory flow.
