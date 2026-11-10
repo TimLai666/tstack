@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "1.6.2"
+  version: "1.7.0"
 ---
 
 ## Preamble
