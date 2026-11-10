@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "2.5.0"
+  version: "2.5.1"
 ---
 
 ## Overview
@@ -163,13 +163,13 @@ Merge only when the user or the project's recorded rule authorizes it. A request
 
 Green is judged for the exact head commit of the PR or MR, and all of these hold:
 
-- **Every check has finished and none failed**, whether the platform marks it required or not. A check that was skipped by its own conditions or reported neutral does not count against it. A pipeline in which nothing ran is not green.
+- **Every check has finished and none failed**, whether the platform marks it required or not. A check that was skipped by its own conditions or reported neutral does not count against it. A pipeline in which nothing ran is not green. On GitLab, when the head commit has more than one pipeline, each of them must be green, counting the latest run of one that was run again.
 - **Automated review feedback is dealt with.** When a review agent or bot comments on PRs or MRs in this repository, wait for its review of this head commit and resolve every point it raises: fix it, or reply with the reason it does not apply. A fix is a new commit, so green is judged again from the start.
 - **A review agent that cannot review is not waited for.** When it reports that it could not run, for example because its quota or usage limit is exhausted, go on without it and say so in the report. When it is simply silent after every check has finished, this is not green: do not merge, report that its review has not arrived, and ask how to proceed.
 
 ### Merging
 
-1. Read the head commit SHA from the platform, not from the local branch.
+1. Read the head commit SHA from the platform, not from the local branch, and set `_SHIP_SHA` to that value for the commands below.
 2. Read every check for that SHA and the review comments on the PR or MR.
 3. Act on what they show:
 
@@ -183,7 +183,7 @@ Green is judged for the exact head commit of the PR or MR, and all of these hold
 | Platform | Head SHA | Checks and review comments | Merge now | Let the platform merge |
 |---|---|---|---|---|
 | GitHub | `gh pr view <number> --json headRefOid` | `gh pr checks <number>`, `gh pr view <number> --json reviews,comments`, and `gh api repos/{owner}/{repo}/pulls/<number>/comments` for inline comments | `gh pr merge <number> --match-head-commit "$_SHIP_SHA"` | `gh pr merge <number> --auto --match-head-commit "$_SHIP_SHA"` |
-| GitLab | `glab mr view <number> --output json` (`sha`) | `glab api "projects/:id/pipelines?sha=$_SHIP_SHA"`, that pipeline's jobs with `glab api "projects/:id/pipelines/<pipeline id>/jobs"`, and `glab mr view <number> --comments` | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge=false --yes` | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge --yes` |
+| GitLab | `glab mr view <number> --output json` (`sha`) | `glab api "projects/:id/pipelines?sha=$_SHIP_SHA"`, each pipeline's jobs with `glab api "projects/:id/pipelines/<pipeline id>/jobs"`, and `glab mr view <number> --comments` | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge=false --yes` | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge --yes` |
 
 Always pin the SHA, so a commit pushed in between cannot ride along, and always state the auto-merge choice. `glab mr merge` without it turns auto-merge on by default.
 
@@ -194,7 +194,7 @@ Letting the platform merge keeps a merge-when-green request alive even if this c
 | Platform | The platform waits for | Use it only when |
 |---|---|---|
 | GitHub | The branch's required checks, nothing else | Every check that runs on the PR is a required check, and no automated review is expected |
-| GitLab | The pipeline of the head commit, which still counts as succeeded when a job marked as allowed to fail has failed | No job in the pipeline is allowed to fail, and no automated review is expected |
+| GitLab | The pipeline of the head commit, which still counts as succeeded when a job marked as allowed to fail has failed | No job in the pipeline is allowed to fail, the commit has a single pipeline, and no automated review is expected |
 
 Otherwise wait yourself: watch the checks in the background with the Step 9 watch command, and when it returns start again from item 1. The watch is only a signal that something finished. What decides is the state read for the pinned SHA at that moment.
 
