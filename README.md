@@ -1,6 +1,6 @@
 # tstack
 
-一套給 coding agent 用的開發工作流，以 Claude Code plugin 的形式發佈。內容是 10 個 skill 加兩組 hook，涵蓋從釐清需求、設計、實作、除錯、測試、審查、資安掃描到交付的整段流程，以及派工給其他 agent 與跨 agent 共用的專案記憶。
+一套給 coding agent 用的開發工作流，以 Claude Code plugin 的形式發佈。內容是 11 個 skill 加兩組 hook，涵蓋從釐清需求、設計、實作、除錯、測試、審查、資安掃描到交付的整段流程，以及派工給其他 agent 與跨 agent 共用的專案記憶。
 
 ## 安裝
 
@@ -36,6 +36,7 @@ tstack 是一個整體，只支援整組安裝。各個 skill 會直接引用彼
 | `diff-review` | 審查的單一入口。主對話自己寫的程式一律派給獨立的 reviewer 審，不自己審。開 PR、MR 或合併前審查程式 diff：需求範圍、邏輯與實作錯誤、相容性、可維護性、測試。資安相關的改動交給 `security-scan`，畫面的改動交給 `ui-review`，再把三邊的發現合併 |
 | `security-scan` | 找安全漏洞並修補，可掃整個專案，也可只檢查一個 diff。每次掃描都抓當下最新的 CWE Top 25、OWASP 等清單，另附 17 類漏洞總表，以及各語言對應的現成掃描工具表（有裝才用，不自行安裝） |
 | `ui-review` | 審查做出來的畫面：實際看渲染結果與互動，對照設計基準打分，找出套版感的問題 |
+| `acceptance-review` | 驗收審查：拿使用者原本的需求逐項對照實際做出來的成果，確認每一項都做到、原本的問題真的解決。宣稱做完之前由獨立的 reviewer 做，不看實作者的說明 |
 | `ship-it` | commit 之後的交付：push、開 PR 或 MR、合併。支援 GitHub 與 GitLab。合併前必須全綠：該 commit 的每個檢查都通過（不分必要與否），自動審查留下的意見也都處理完 |
 | `agent-delegation` | 派工給 subagent 或其他 CLI（OpenCode、Antigravity、Copilot、Codex、Claude）的規範與派工腳本 |
 | `project-memory` | 跨 agent 共用的記憶：專案裡花了很多力氣才找到的做法、這台機器的事實、遠端主機的事實 |

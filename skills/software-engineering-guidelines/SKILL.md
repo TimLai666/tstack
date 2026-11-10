@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "Software engineering guidelines for any software change. It is the core of the tstack stack: it names which tstack skill to use at each point of the work and owns the rules they share. This skill MUST be loaded before requirement clarification, architecture/design, implementation, refactoring, code review, testing, shipping, or creating Git commits (including standalone commit requests), and MUST NOT be skipped because the change is a one-liner. Covers simplicity, complete delivery based on a coherent implementation design, testing-first for high-impact changes with TDD (Test-Driven Development), and verifiable success criteria. Triggers on: 任何軟體規劃, 需求釐清, 架構設計, 寫 code, 改 code, 做功能, 修 bug, refactor, 開發, coding, development, 實作, 實現, 寫程式, 改程式, 加功能, 修問題, code review, 測試, 重構, init, 初始化專案, 建立 CLAUDE.md, 建立 AGENTS.md"
 metadata:
-  version: "2.5.1"
+  version: "2.6.0"
 ---
 
 ## The Stack
@@ -17,6 +17,7 @@ This skill is the core of tstack. tstack is installed as a whole: every other ts
 | Code changed and not yet verified; before pushing; before calling something fixed or done | **test-and-fix** |
 | A diff is about to be committed as substantial work, opened as a PR or MR, or merged; the user hands over a diff | **diff-review**, which hands security-relevant changes to **security-scan** and changed screens to **ui-review** |
 | A review of built screens is requested on its own | **ui-review** |
+| Substantial work is about to be reported as done or handed back; the user asks whether the result meets the request | **acceptance-review** |
 | A security scan or hardening of the project is requested | **security-scan** |
 | Pushing, opening or updating a PR or MR, merging | **ship-it** |
 | Dispatching a subagent or another CLI; changing an existing API's name, signature, usage or behavior; delivering a specification, article or report | **agent-delegation** |
@@ -188,7 +189,7 @@ The agent that produced a piece of work does not review it. When this conversati
 
 ### Findings and Severity
 
-**diff-review**, **security-scan** and **ui-review** report with this format and scale, so their results merge into one list.
+**diff-review**, **security-scan**, **ui-review** and **acceptance-review** report with this format and scale, so their results merge into one list.
 
 A finding is confirmed only when code or observed behavior shows a concrete failure scenario. A concern backed by evidence but missing a decisive fact is reported as needing investigation, with the missing fact and how to verify it. Speculation and style preferences are not findings.
 
@@ -255,10 +256,11 @@ Fill the skeleton using Principles 2–4 and Principle 5's whole-goal priorities
 
 1. Verify with **test-and-fix** and report the results (Principle 4).
 2. Have the diff reviewed through **diff-review** when the change is substantial or about to become a PR, MR or merge. The review follows [Independent Review](#independent-review): reviewers in separate contexts cover the code, and security-relevant changes and changed screens where they apply.
-3. Review the Pre-Ship Checklist.
-4. Commit under [Staging and Commits](#staging-and-commits). Push, open a PR or MR, or merge through **ship-it**.
-5. Record qualifying lessons through **project-memory**.
-6. Before ending the turn, compare the result with the full authorized outcome. Continue any required work that can still be completed, then give the [Turn-End Report](#turn-end-report).
+3. Before reporting substantial work as done, have the result checked against the original request through **acceptance-review**.
+4. Review the Pre-Ship Checklist.
+5. Commit under [Staging and Commits](#staging-and-commits). Push, open a PR or MR, or merge through **ship-it**.
+6. Record qualifying lessons through **project-memory**.
+7. Before ending the turn, compare the result with the full authorized outcome. Continue any required work that can still be completed, then give the [Turn-End Report](#turn-end-report).
 
 ---
 
