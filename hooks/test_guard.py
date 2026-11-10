@@ -116,7 +116,7 @@ class Hook(unittest.TestCase):
             out = self.run_hook({"hook_event_name": "PreToolUse", "tool_name": tool, "tool_input": {"command": "git add -A"}})
             data = json.loads(out)["hookSpecificOutput"]
             self.assertEqual((data["hookEventName"], data["permissionDecision"]), ("PreToolUse", "deny"))
-            self.assertIn("git add -- <路徑>", data["permissionDecisionReason"])
+            self.assertIn("git add -- <path>", data["permissionDecisionReason"])
 
     def test_allowed_command_malformed_event_and_switch_off_print_nothing(self):
         ok = {"tool_name": "Bash", "tool_input": {"command": "git add -- a.py"}}
@@ -187,7 +187,7 @@ class HostFacts(Hook):
         data = json.loads(self.bash("ssh deploy@devbox 'docker ps'"))["hookSpecificOutput"]
         self.assertEqual(data["permissionDecision"], "deny")
         self.assertIn("devbox 上 docker 要加 sudo", data["permissionDecisionReason"])
-        self.assertIn("重新執行", data["permissionDecisionReason"])
+        self.assertIn("run the same command again", data["permissionDecisionReason"])
 
     def test_the_same_host_is_not_denied_twice_in_a_session_but_is_in_another(self):
         self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
@@ -206,7 +206,7 @@ class HostFacts(Hook):
     def test_a_dangerous_command_is_reported_before_host_facts(self):
         self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
         out = json.loads(self.bash("git add -A && ssh devbox"))["hookSpecificOutput"]
-        self.assertIn("git add -- <路徑>", out["permissionDecisionReason"])
+        self.assertIn("git add -- <path>", out["permissionDecisionReason"])
 
     def test_without_a_place_to_remember_it_adds_context_instead_of_denying(self):
         self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
@@ -221,7 +221,7 @@ class HostFacts(Hook):
         self.assertLess(len(reason), 9000)
         self.assertIn("host-fact-number-00", reason)
         self.assertIn("load --host devbox", reason)
-        self.assertIn("重新執行", reason)
+        self.assertIn("run the same command again", reason)
 
     def test_a_host_already_shown_is_not_read_again(self):
         self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")
@@ -245,7 +245,7 @@ class HostFacts(Hook):
 
     def test_wrapped_dangerous_commands_are_still_caught(self):
         out = json.loads(self.bash("sudo -u root git add -A"))["hookSpecificOutput"]
-        self.assertIn("git add -- <路徑>", out["permissionDecisionReason"])
+        self.assertIn("git add -- <path>", out["permissionDecisionReason"])
 
     def test_switch_off_and_unreadable_facts_never_block(self):
         self.fact("devbox", "docker-needs-sudo", "devbox 上 docker 要加 sudo")

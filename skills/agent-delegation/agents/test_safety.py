@@ -129,7 +129,7 @@ class Safety(unittest.TestCase):
         result = self.dispatch(task_type="implementation", allowed_files=["src.py"], test_files=["test_src.py"])
         self.assertEqual(result["status"], "cli_failed")
         self.assertIn("test_src.py", result["prompt"])
-        self.assertIn("不得修改測試檔", result["prompt"])
+        self.assertIn("Do not modify the test files", result["prompt"])
 
     def test_state_is_outside_project_and_private(self):
         self.dispatch()
