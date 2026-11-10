@@ -1,6 +1,6 @@
 ---
 name: ship-it
-description: "Deliver committed work on GitHub or GitLab: stage and push, open or update a pull request or merge request, and merge. This skill MUST be used when pushing after a commit, opening or updating a PR or MR, merging one, or when the user invokes ship-it (push、推上去、推到 dev、開 PR、開 MR、準備 PR、合併、merge、整理分支交付). It SHOULD be used when the user asks to prepare a completed feature for review. A push runs the light path; a PR, MR or merge runs the full path. It MUST NOT merge before the pipeline for the exact head commit has succeeded, and MUST NOT be skipped because the change is small. Commit message format belongs to software-engineering-guidelines; releases and deployments are covered only when the user asks to verify them."
+description: "Deliver committed work on GitHub or GitLab: stage and push, open or update a pull request or merge request, and merge. This skill MUST be used when pushing after a commit, opening or updating a PR or MR, merging one, or when the user invokes ship-it (push、推上去、推到 dev、開 PR、開 MR、準備 PR、合併、merge、整理分支交付). It SHOULD be used when the user asks to prepare a completed feature for review. A push runs the light path; a PR, MR or merge runs the full path. It MUST NOT merge before every check on the exact head commit has passed and automated review feedback is resolved, and MUST NOT be skipped because the change is small. Commit message format belongs to software-engineering-guidelines; releases and deployments are covered only when the user asks to verify them."
 allowed-tools:
   - Bash
   - Read
@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "2.4.0"
+  version: "2.5.0"
 ---
 
 ## Overview
@@ -155,35 +155,57 @@ If the CLI is unavailable or unauthenticated, use an available authorized
 alternative or provide the completed title and body for manual submission.
 Report which operations actually succeeded.
 
-## Step 8 — Merge only on a successful pipeline
+## Step 8 — Merge only when everything is green
 
 Merge only when the user or the project's recorded rule authorizes it. A request such as「全綠之後合併」is that authorization, and it is not finished until the PR or MR is confirmed merged.
 
-1. Read the head commit SHA of the PR or MR from the platform, not from the local branch.
-2. Read the pipeline for that exact SHA.
-3. Act on its state:
+### What green means
 
-| Pipeline for the head SHA | Do |
+Green is judged for the exact head commit of the PR or MR, and all of these hold:
+
+- **Every check has finished and none failed**, whether the platform marks it required or not. A check that was skipped by its own conditions or reported neutral does not count against it. A pipeline in which nothing ran is not green.
+- **Automated review feedback is dealt with.** When a review agent or bot comments on PRs or MRs in this repository, wait for its review of this head commit and resolve every point it raises: fix it, or reply with the reason it does not apply. A fix is a new commit, so green is judged again from the start.
+- **A review agent that cannot review is not waited for.** When it reports that it could not run, for example because its quota or usage limit is exhausted, go on without it and say so in the report. When it is simply silent after every check has finished, this is not green: do not merge, report that its review has not arrived, and ask how to proceed.
+
+### Merging
+
+1. Read the head commit SHA from the platform, not from the local branch.
+2. Read every check for that SHA and the review comments on the PR or MR.
+3. Act on what they show:
+
+| State for the head SHA | Do |
 |---|---|
-| Succeeded | Merge now, pinned to the SHA |
-| Running or pending, and the merge is wanted once it is green | Hand the wait to the platform: set auto-merge pinned to the SHA, so the merge happens even if this conversation ends. Say that it has not merged yet |
-| Failed, cancelled or skipped | Do not merge. Handle the failure within scope or report it |
-| Absent | Do not merge and do not set auto-merge: with no pipeline the platform merges at once. Wait for the pipeline to appear, then start again from item 1 |
+| Green | Merge now, pinned to the SHA |
+| Checks still running, or an automated review still expected | Wait as described below. Say that it has not merged yet |
+| A check failed or was cancelled, a review point is unresolved, or a pipeline exists in which nothing ran | Do not merge. Handle it within scope or report it |
+| No pipeline exists yet | Do not merge and do not set auto-merge: with no pipeline the platform merges at once. Wait for the pipeline to appear, then start again from item 1 |
 
-| Platform | Head SHA | Merge now | Merge when green |
-|---|---|---|---|
-| GitHub | `gh pr view <number> --json headRefOid` | `gh pr merge <number> --match-head-commit "$_SHIP_SHA"` | `gh pr merge <number> --auto --match-head-commit "$_SHIP_SHA"` |
-| GitLab | `glab mr view <number> --output json` (`sha`) | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge=false --yes` | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge --yes` |
+| Platform | Head SHA | Checks and review comments | Merge now | Let the platform merge |
+|---|---|---|---|---|
+| GitHub | `gh pr view <number> --json headRefOid` | `gh pr checks <number>`, `gh pr view <number> --json reviews,comments`, and `gh api repos/{owner}/{repo}/pulls/<number>/comments` for inline comments | `gh pr merge <number> --match-head-commit "$_SHIP_SHA"` | `gh pr merge <number> --auto --match-head-commit "$_SHIP_SHA"` |
+| GitLab | `glab mr view <number> --output json` (`sha`) | `glab api "projects/:id/pipelines?sha=$_SHIP_SHA"`, that pipeline's jobs with `glab api "projects/:id/pipelines/<pipeline id>/jobs"`, and `glab mr view <number> --comments` | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge=false --yes` | `glab mr merge <number> --sha "$_SHIP_SHA" --auto-merge --yes` |
 
-- Always pin the SHA, so a commit pushed in between cannot ride along, and always state the auto-merge choice. `glab mr merge` without it turns auto-merge on by default.
-- GitHub's auto-merge waits only for the branch's required checks. When the branch has none, it merges at once: do not use it there. Wait for the pipeline yourself and merge when it has succeeded.
-- After setting auto-merge, or while waiting yourself, watch the pipeline in the background with the Step 9 watch command so that its end brings the conversation back. Then confirm the PR or MR state. Merged ends the task. A failed pipeline means nothing was merged: handle it within scope, and repeat this step once it is fixed.
-- Until the merge is confirmed, name the pending merge in the core's [Turn-End Report](../software-engineering-guidelines/SKILL.md#turn-end-report).
+Always pin the SHA, so a commit pushed in between cannot ride along, and always state the auto-merge choice. `glab mr merge` without it turns auto-merge on by default.
+
+### Waiting
+
+Letting the platform merge keeps a merge-when-green request alive even if this conversation ends, but the platform only waits for what it knows about. Use it only when its condition is the same as green:
+
+| Platform | The platform waits for | Use it only when |
+|---|---|---|
+| GitHub | The branch's required checks, nothing else | Every check that runs on the PR is a required check, and no automated review is expected |
+| GitLab | The pipeline of the head commit, which still counts as succeeded when a job marked as allowed to fail has failed | No job in the pipeline is allowed to fail, and no automated review is expected |
+
+Otherwise wait yourself: watch the checks in the background with the Step 9 watch command, and when it returns start again from item 1. The watch is only a signal that something finished. What decides is the state read for the pinned SHA at that moment.
+
+After letting the platform merge, watch the same way and then confirm the PR or MR state. Merged ends the task. A failed check means nothing was merged: handle it within scope and repeat this step.
+
+Until the merge is confirmed, name the pending merge in the core's [Turn-End Report](../software-engineering-guidelines/SKILL.md#turn-end-report).
 
 ## Step 9 — Check CI and deployment, record lessons
 
 Read the checks for the resulting PR, MR or merge commit and report passed,
-failed, pending or unavailable. When waiting for required CI is part of the
+failed, pending or unavailable. When waiting for CI is part of the
 requested delivery, watch it to a result and handle failures within scope:
 
 | Platform | Read | Watch |
