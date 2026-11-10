@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 ## Overview
@@ -140,6 +140,9 @@ Run **diff-inspector** on the outgoing diff unless an existing review covers
 that same diff. Review later changes and their effects. Resolve confirmed
 findings according to severity and project rules, and distinguish unresolved
 questions from confirmed defects.
+
+When the diff changes rendered screens, run **ui-review** on those screens
+unless an existing review covers their current state.
 
 ## Step 7 — Open or update the PR or MR
 

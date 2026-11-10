@@ -1,6 +1,6 @@
 # tstack
 
-一套給 coding agent 用的開發工作流，以 Claude Code plugin 的形式發佈。內容是 9 個 skill 加兩組 hook，涵蓋從釐清需求、設計、實作、除錯、測試、審查、資安掃描到交付的整段流程，以及派工給其他 agent 與跨 agent 共用的專案記憶。
+一套給 coding agent 用的開發工作流，以 Claude Code plugin 的形式發佈。內容是 10 個 skill 加兩組 hook，涵蓋從釐清需求、設計、實作、除錯、測試、審查、資安掃描到交付的整段流程，以及派工給其他 agent 與跨 agent 共用的專案記憶。
 
 ## 安裝
 
@@ -28,11 +28,12 @@ npx skills add TimLai666/tstack
 | Skill | 適合什麼需求 |
 |---|---|
 | `software-engineering-guidelines` | 任何軟體改動的基本準則：先想清楚再寫、保持簡單、完整交付、測試策略、commit 訊息格式 |
-| `eng-architect` | 架構決策、模組邊界、把計畫拆成可驗收的票、UI 審查 |
+| `eng-architect` | 架構決策、模組邊界、把計畫拆成可驗收的票 |
 | `investigate` | 原因不明的錯誤、CI 紅燈、反覆出現的問題。附一份「看到什麼症狀先查什麼」的排查清單 |
 | `test-and-fix` | 跑測試、找出失敗、修掉、驗證。規定什麼才算驗證過 |
 | `diff-inspector` | 開 PR 或合併前審查程式 diff：需求範圍、邏輯與實作錯誤、相容性、可維護性、測試。碰到資安相關的改動會交給 `security-scan` |
 | `security-scan` | 找安全漏洞並修補，可掃整個專案，也可只檢查一個 diff。每次掃描都抓當下最新的 CWE Top 25、OWASP 等清單，另附 17 類漏洞總表 |
+| `ui-review` | 審查做出來的畫面：實際看渲染結果與互動，對照設計基準打分，找出套版感的問題 |
 | `ship-it` | commit 之後的交付：push、開 PR 或 MR、合併。支援 GitHub 與 GitLab，合併前必須確認該 commit 的 CI 成功 |
 | `agent-delegation` | 派工給 subagent 或其他 CLI（OpenCode、Antigravity、Copilot、Codex、Claude）的規範與派工腳本 |
 | `project-memory` | 跨 agent 共用的專案記憶，記下花了很多力氣才找到的做法 |

@@ -1,6 +1,6 @@
 ---
 name: eng-architect
-description: "This skill MUST be used for architecture decisions, module boundaries, turning plans or specs into tickets, or explicit UI/design reviews. SHOULD be used when implementation requires unresolved architectural choices or the user is unsure how to divide the work. MUST NOT expand an already specified implementation into a new planning exercise. Triggers on: 技術方案, 架構設計, 怎麼切模組, 拆任務, 切票, 排開發順序, 技術規劃, design review, UI review, AI slop scan."
+description: "This skill MUST be used for architecture decisions, module boundaries, or turning plans or specs into tickets. SHOULD be used when implementation requires unresolved architectural choices or the user is unsure how to divide the work. MUST NOT expand an already specified implementation into a new planning exercise. MUST NOT be used to review built screens, which belongs to ui-review. Triggers on: 技術方案, 架構設計, 怎麼切模組, 拆任務, 切票, 排開發順序, 技術規劃."
 allowed-tools:
   - Bash
   - Read
@@ -12,22 +12,16 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "1.13.0"
+  version: "2.0.0"
 ---
 
 ## Overview
 
-Design architecture and verifiable tickets, or review an existing UI. Preserve the requested scope and existing project decisions.
+Design architecture and verifiable tickets. Preserve the requested scope and existing project decisions. Reviewing built screens belongs to **ui-review**.
 
-## Command routing
+## Workflow
 
-Infer the mode from the requested outcome:
-
-- Architecture, module boundaries, technical plans, or tickets: read [Engineering workflow](references/engineering-workflow.md) in full before the per-feature analysis, including its examples.
-- UI critique, design review, or AI slop scan: read [Design review workflow](references/design-review-workflow.md) in full before reviewing, including its examples.
-- If both are requested, use both workflows for their respective outputs. Ask which mode only when the intended outcome remains materially ambiguous.
-
-Read the other references at the workflow step that needs them.
+Read [Engineering workflow](references/engineering-workflow.md) in full before the per-feature analysis, including its examples. Read the other references at the workflow step that needs them.
 
 ## Shared decision rules
 
@@ -42,11 +36,11 @@ Apply these checks before proposing an approach or writing tickets:
 
 Collect unresolved decisions that require user tradeoffs and present related choices together with a recommendation and consequences. Ask before changing agreed scope, architecture, workflows, or other consequential choices that are not authorized. Continue independent analysis while awaiting answers. Reuse settled decisions without asking again.
 
-A request for review or discussion produces the corresponding analysis. An authorized implementation or ticket-writing request permits routine work within its agreed boundaries.
+A request for discussion produces the corresponding analysis. An authorized implementation or ticket-writing request permits routine work within its agreed boundaries.
 
 ## Project records
 
-Use existing documents and task systems that serve the purposes below. When no arrangement exists and full development handoff is needed, create `ENG.md`, `delivery-status.md`, ticket files, `AGENTS.md`, and the `CLAUDE.md` pointer. For a bounded architecture decision or UI review, select the records needed for the requested outcome.
+Use existing documents and task systems that serve the purposes below. When no arrangement exists and full development handoff is needed, create `ENG.md`, `delivery-status.md`, ticket files, `AGENTS.md`, and the `CLAUDE.md` pointer. For a bounded architecture decision, select the records needed for the requested outcome.
 
 | File or location | Purpose | When to create or update | When to read |
 |---|---|---|---|
@@ -55,16 +49,13 @@ Use existing documents and task systems that serve the purposes below. When no a
 | `docs/tickets/` or the existing ticket system | Each ticket's deliverable, acceptance criteria, and blocking dependencies | When asked to break down work or prepare development handoff | Read the assigned ticket and its dependencies before implementation |
 | `AGENTS.md` | Project working rules and the locations and reading triggers of supporting records | When establishing coordination or changing working rules | Before starting project work |
 | `CLAUDE.md` | Entry point directing agents to `AGENTS.md` | When establishing the default coordination setup; keep actual rules in `AGENTS.md` | As an entry point to the project rules |
-| `DESIGN.md` | Visual baseline for UI review | This skill reads it; it does not create or overwrite it | Before reviewing the UI against the design baseline |
-| `DESIGN-REVIEW.md` | UI scores, unresolved findings, and component review results | When a persistent review is needed and no existing arrangement covers it; update on subsequent reviews | Before re-reviewing the UI |
 
 
 Read existing content before updating it, preserve unrelated sections, and register actual artifact paths with when they must be read. Keep shared technical decisions in the architecture record and per-ticket acceptance criteria on the owning ticket.
 
 ## Completion check
 
-- The result answers the requested architecture, ticketing, or UI-review need.
+- The result answers the requested architecture or ticketing need.
 - Engineering analysis covers feature flows, failures, interaction boundaries, testing, and applicable migration risks; ticketing work assigns every analyzed acceptance item an owner and records real blockers.
-- UI-review findings use actual rendered screens and relevant interactions; authorized fixes are rechecked in the rendered result. Missing visual evidence is reported.
 - Unresolved assumptions and decisions are explicit. Project-required validation and delivery rules are followed.
 - Updated records retain unrelated content, link to the actual sources, and identify the next verifiable action when handing off.
