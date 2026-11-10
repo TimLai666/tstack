@@ -167,6 +167,62 @@ class MachineScope(unittest.TestCase):
         self.assertIn("1 live key(s)", self.run_memory("stats", "--machine").stdout)
 
 
+class GlobalPreferences(unittest.TestCase):
+    """What the user wants in every project lives in its own store, not in their instruction files."""
+
+    setUp = MachineScope.setUp
+    run_memory = MachineScope.run_memory
+    add = MachineScope.add
+
+    def test_global_preference_is_stored_apart_and_shown_in_every_project(self):
+        saved = self.add("fix-small-visual-flaws", "看到明顯的小瑕疵就順手修，不用先問", "--global", kind="preference")
+        self.assertEqual(saved.returncode, 0, saved.stderr)
+        self.assertTrue((self.home / ".tstack" / "global" / "learnings.jsonl").is_file())
+        self.assertFalse((self.home / ".tstack" / "projects").exists())
+        self.assertFalse((self.home / ".tstack" / "machine").exists())
+        for project in (self.first, self.second):
+            shown = self.run_memory("load", cwd=project).stdout
+            self.assertIn("# Global memory — 1 preference(s)", shown)
+            self.assertIn("看到明顯的小瑕疵就順手修", shown)
+
+    def test_load_orders_project_then_global_then_machine(self):
+        self.add("uses-pnpm-workspace", "安裝一律用 corepack pnpm", kind="pitfall")
+        self.add("temp-folder-blocks-exe", "暫存資料夾不能執行 exe", "--machine")
+        self.add("fix-small-visual-flaws", "看到明顯的小瑕疵就順手修", "--global", kind="preference")
+        shown = self.run_memory("load").stdout
+        order = [shown.index(mark) for mark in ("uses-pnpm-workspace", "# Global memory", "# Machine memory", "---\nBefore")]
+        self.assertEqual(order, sorted(order))
+        self.assertIn("--global", shown)  # the recording reminder says how to save one
+        only = self.run_memory("load", "--global").stdout
+        self.assertIn("fix-small-visual-flaws", only)
+        self.assertNotIn("temp-folder-blocks-exe", only)
+        self.assertNotIn("uses-pnpm-workspace", only)
+
+    def test_global_cannot_be_combined_and_shares_the_length_limit(self):
+        self.assertEqual(self.add("some-preference-rule", "x", "--global", "--machine").returncode, 2)
+        self.assertEqual(self.add("some-preference-rule", "x", "--global", "--host", "devbox").returncode, 2)
+        self.assertEqual(self.add("too-long-preference", "很長" * 200, "--global").returncode, 2)
+
+    def test_search_stats_and_path_cover_the_global_store(self):
+        self.add("fix-small-visual-flaws", "看到明顯的小瑕疵就順手修", "--global", kind="preference")
+        self.assertIn("順手修", self.run_memory("search", "visual-flaws", cwd=self.second).stdout)
+        self.assertIn("1 live key(s)", self.run_memory("stats", "--global").stdout)
+        self.assertIn(os.path.join(".tstack", "global", "learnings.jsonl"), self.run_memory("path", "--global").stdout)
+
+    def test_fit_reduces_global_and_machine_stores_to_keys_together(self):
+        for i in range(12):
+            self.add("long-project-rule-%02d" % i, "很長的專案經驗" * 120, kind="pitfall")
+        for i in range(10):
+            self.add("global-preference-%02d" % i, "個人偏好" * 70, "--global", kind="preference")
+            self.add("machine-fact-number-%02d" % i, "機器事實" * 70, "--machine")
+        shown = self.run_memory("load", "--fit", "2600").stdout
+        self.assertLessEqual(len(shown), 2600)
+        self.assertIn("# Global memory — 10 preference(s), keys only:", shown)
+        self.assertIn("# Machine memory — 10 fact(s), keys only:", shown)
+        self.assertIn("global-preference-09", shown)
+        self.assertIn("machine-fact-number-09", shown)
+
+
 class RemoteHosts(MachineScope):
     """Facts about a machine reached over SSH are kept on this machine, one store per host."""
 

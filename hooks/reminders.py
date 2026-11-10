@@ -21,9 +21,9 @@ MEMORY_SCRIPT = Path(__file__).resolve().parent.parent / "skills" / "project-mem
 CONTEXT_BUDGET = 9000
 
 INTRO = "這個環境裝了 tstack plugin。"
-MEMORY_LOADED = ("以下是 project-memory 已替你載入的本專案記憶與這台機器的事實，這次對話不用再執行 load，"
+MEMORY_LOADED = ("以下是 project-memory 已替你載入的本專案記憶、使用者的全域偏好與這台機器的事實，這次對話不用再執行 load，"
                  "要查某一筆的全文時用 search：\n\n")
-MEMORY_EMPTY = "本專案在 project-memory 還沒有記憶，這台機器也還沒有記錄任何事實。"
+MEMORY_EMPTY = "本專案在 project-memory 還沒有記憶，也還沒有全域偏好與這台機器的事實。"
 MEMORY_KEYS = ("記憶太長，hook 放不下全文，以下有一部分只列出 key。"
                "開始工作前先依 project-memory skill 執行 load 讀完整內容：\n\n")
 MEMORY_UNREAD = "開始工作前，先依 project-memory skill 載入本專案的記憶。"
@@ -59,7 +59,7 @@ def session_start(cwd):
         loaded = run_memory(cwd, "load", "--fit", str(room))
         if loaded is None:
             raise OSError("memory script failed")
-        if loaded.startswith("NO_LEARNINGS") and "# Machine memory" not in loaded and "# Remote hosts" not in loaded:
+        if loaded.startswith("NO_LEARNINGS") and "\n# " not in loaded:  # no global, machine or host section either
             memory = MEMORY_EMPTY
         elif any(line.startswith("# ") and "keys only:" in line for line in loaded.split("\n")):
             memory = MEMORY_KEYS + loaded

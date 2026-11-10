@@ -1,6 +1,6 @@
 ---
 name: project-memory
-description: "Shared cross-agent memory in three stores: project lessons from costly trial-and-error, facts about this machine that hold in every project, and facts about remote hosts reached from it. This skill MUST be invoked before starting work in an existing project, to load what was already learned there, and MUST be invoked again as that work wraps up, to record what this session learned before it ends. MUST also be invoked on the triggers below to record something new, and SHOULD be invoked whenever the user states something worth remembering about how this project behaves. Facts about a machine or its tools (機器環境、這台沒裝、路徑、遠端主機) MUST go in the machine or host store, not under one project. MUST NOT be used for task lists or open bugs, which belong in the issue tracker or AGENTS.md. Triggers on: 記一下, 之前踩過什麼雷, 學到什麼, 有什麼教訓, remember this, lesson learned, project learnings, 記錄一下, 之前遇過的, 把這個記起來"
+description: "Shared cross-agent memory in four stores: project lessons from costly trial-and-error, the user's preferences that hold in every project, facts about this machine, and facts about remote hosts reached from it. This skill MUST be invoked before starting work in an existing project, to load what was already learned there, and MUST be invoked again as that work wraps up, to record what this session learned before it ends. MUST also be invoked on the triggers below to record something new, and SHOULD be invoked whenever the user states something worth remembering about how this project behaves. A preference for every project (全域偏好、以後都這樣) MUST go in the global store, not the user's instruction files. Facts about a machine (機器環境、這台沒裝、遠端主機) MUST go in the machine or host store. MUST NOT be used for task lists or open bugs, which belong in the issue tracker or AGENTS.md. Triggers on: 記一下, 之前踩過什麼雷, 學到什麼, 有什麼教訓, remember this, lesson learned, project learnings, 記錄一下, 之前遇過的, 把這個記起來"
 allowed-tools:
   - Bash
   - Read
@@ -8,7 +8,7 @@ allowed-tools:
   - Edit
   - AskUserQuestion
 metadata:
-  version: "1.15.0"
+  version: "1.16.0"
 ---
 
 ## Purpose and workflow
@@ -42,7 +42,7 @@ python3 "$_MEM" --help
 | `stats` | Counts by type and average confidence |
 | `path` | Print the store path for this project |
 
-Add `--machine` or `--host NAME` to any of them to work on a machine store instead; see [Machine and host facts](#machine-and-host-facts).
+Add `--global`, `--machine` or `--host NAME` to any of them to work on one of the wider stores instead; see [Global, machine and host stores](#global-machine-and-host-stores).
 
 ---
 
@@ -126,9 +126,7 @@ preservation rules and how to restore an absorbed key.
 
 - Confidence 7 or above only.
 - Project-specific lessons only. General programming knowledge does not belong here.
-  A fact about a machine or its tools goes in [Machine and host facts](#machine-and-host-facts).
-  The user's general preferences hold on every machine: propose them for the user-level
-  instruction file instead of saving them here.
+  What holds beyond this project goes in one of the [Global, machine and host stores](#global-machine-and-host-stores).
 - A pitfall met for the second time in this project MUST be recorded, even when
   each occurrence was cheap.
 - A rule the user was promised will be remembered is written in that same turn.
@@ -149,19 +147,22 @@ preservation rules and how to restore an absorbed key.
 
 ---
 
-## Machine and host facts
+## Global, machine and host stores
 
-Some facts are about a machine, not a project, and hold in every project worked on there: a tool that is or is not installed and where, a path that cannot run programs, which package manager or shell works, where a credential is configured, how a local service is reached.
+Some things worth remembering are not about one project.
 
-| The fact is about | Record with | Stored on this machine at |
+| It is about | Record with | Stored on this machine at |
 |---|---|---|
+| How the user wants work done in every project: a standing preference, a way of working they corrected or confirmed | `add --global` | `~/.tstack/global/` |
 | The machine the agent runs on | `add --machine` | `~/.tstack/machine/` |
 | A machine reached from here, for example over SSH | `add --host NAME` | `~/.tstack/hosts/NAME/` |
 
+- A machine fact holds in every project worked on there: a tool that is or is not installed and where, a path that cannot run programs, which package manager or shell works, where a credential is configured, how a local service is reached.
+- A global preference is recorded here and nowhere else. Do not add it to the user's own instruction files such as `~/.claude/CLAUDE.md` or a home-level `AGENTS.md`; those are the user's to edit. A preference that applies to this project only stays in the project store.
 - `NAME` is the name used to reach the host, such as its SSH alias. Use the same name every time.
 - Host facts are recorded from this machine and stay on it. Nothing is written on the remote host.
-- Each fact is at most 300 characters: the condition, then what to do. Leave the story of how it was found out.
-- `load` prints the machine facts in full and the names of the hosts that have facts. Before working on a remote host, run `load --host NAME`. In Claude Code the tstack guard hook shows that host's facts on the first `ssh`, `mosh`, `sftp`, `scp` or `rsync` command that names it; run the load yourself when the host is reached another way, such as through a jump host or a name held in a variable.
+- Each entry in these stores is at most 300 characters: the condition, then what to do. Leave the story of how it was found out.
+- `load` prints the global preferences and the machine facts in full, and the names of the hosts that have facts. Before working on a remote host, run `load --host NAME`. In Claude Code the tstack guard hook shows that host's facts on the first `ssh`, `mosh`, `sftp`, `scp` or `rsync` command that names it; run the load yourself when the host is reached another way, such as through a jump host or a name held in a variable.
 - A fact that something is absent, not installed or impossible says how that was checked. Before relying on one whose recorded date is old, or after the environment changed, check again; when it no longer holds, re-add the same key with the current state.
 - Record the location of a credential, never its value.
 - The second-occurrence rule above applies here too.
@@ -214,7 +215,7 @@ Same rules apply: confidence 7 or above, project-specific, actually encountered.
 
 ## Storage and export
 
-The project store is `~/.tstack/projects/<slug>/learnings.jsonl`; machine and host facts sit beside it under `~/.tstack/machine/` and `~/.tstack/hosts/<name>/`. Every run of the
+The project store is `~/.tstack/projects/<slug>/learnings.jsonl`; the wider stores sit beside it under `~/.tstack/global/`, `~/.tstack/machine/` and `~/.tstack/hosts/<name>/`. Every run of the
 script first moves a store left in `~/.mystack` to the new location and reports
 what it moved on stderr, so never copy or delete either folder by hand.
 To locate it or understand its format, read

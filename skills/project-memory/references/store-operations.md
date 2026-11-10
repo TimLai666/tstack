@@ -49,7 +49,7 @@ folder before doing anything else and moves its whole content to `~/.tstack`:
 An agent still running an older copy of this skill keeps writing to `~/.mystack`;
 the next run of this version picks those lines up the same way.
 
-Machine facts use the same format in `~/.tstack/machine/learnings.jsonl`, and facts about a remote host in `~/.tstack/hosts/<name>/learnings.jsonl`. Both live on the machine the agent runs on and are not tied to a project. Their `branch` field is empty.
+The wider stores use the same format: global preferences in `~/.tstack/global/learnings.jsonl`, machine facts in `~/.tstack/machine/learnings.jsonl`, and facts about a remote host in `~/.tstack/hosts/<name>/learnings.jsonl`. All of them live on the machine the agent runs on and are not tied to a project. Their `branch` field is empty.
 
 The format is deliberately boring: append-only, one line per learning, no index
 and no lock. Any agent, in any language, can read it.

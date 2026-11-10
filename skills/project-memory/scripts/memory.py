@@ -3,26 +3,28 @@
 
 One learning per JSON line in ~/.tstack/projects/<slug>/learnings.jsonl.
 A store left in ~/.mystack by earlier versions is moved over on every run.
-Facts about this machine that hold in every project go in
-~/.tstack/machine/learnings.jsonl; pass --machine to work on that store.
+What the user wants in every project goes in ~/.tstack/global/learnings.jsonl;
+pass --global to work on that store. Facts about this machine that hold in every
+project go in ~/.tstack/machine/learnings.jsonl; pass --machine.
 Facts about a machine reached from here, for example over SSH, go in
 ~/.tstack/hosts/<name>/learnings.jsonl on this machine; pass --host NAME.
 The store is agent-neutral on purpose: Claude, Codex, Cursor and others read and
 write the same file, so a lesson learned in one agent is visible in the next.
 
 Usage:
-  memory.py load [--all] [--json] [--fit N] [--machine | --host NAME]
-  memory.py add --type T --key K --insight S --confidence N [--machine | --host NAME]
+  memory.py load [--all] [--json] [--fit N] [--global | --machine | --host NAME]
+  memory.py add --type T --key K --insight S --confidence N [--global | --machine | --host NAME]
                 [--files a,b] [--source X] [--absorbs k1,k2]
-  memory.py search QUERY [--json] [--machine | --host NAME]
-  memory.py stats [--machine | --host NAME]
-  memory.py path [--machine | --host NAME]
+  memory.py search QUERY [--json] [--global | --machine | --host NAME]
+  memory.py stats [--global | --machine | --host NAME]
+  memory.py path [--global | --machine | --host NAME]
 
-load prints the project's memory, then the machine facts, then the names of the
-remote hosts that have facts. --machine or --host NAME limits load, search, stats
+load prints the project's memory, then the global preferences, then the machine
+facts, then the names of the remote hosts that have facts. --global, --machine
+or --host NAME limits load, search, stats
 and path to that store, and makes add write there. NAME is the name used to reach
 the host, such as its SSH alias. --json and --all cover the project store unless
-one of the two is given. load --fit N (at least 200) keeps the output within N
+one of the three is given. load --fit N (at least 200) keeps the output within N
 characters: the project memory is reduced to its keys first, then the machine
 facts, then the project key list is shortened. The heading of every reduced
 section says "keys only:".
@@ -49,6 +51,10 @@ LEGACY_BASE = os.path.join(HOME, ".mystack")
 ROOT = os.path.join(BASE, "projects")
 STORE_FILE = "learnings.jsonl"
 MACHINE_PATH = os.path.join(BASE, "machine", STORE_FILE)
+GLOBAL_PATH = os.path.join(BASE, "global", STORE_FILE)
+# Stores that are not tied to one project, in the order load prints them: path, title, noun, flag.
+WIDE = {"global": (GLOBAL_PATH, "Global memory", "preference(s)", "--global"),
+        "machine": (MACHINE_PATH, "Machine memory", "fact(s)", "--machine")}
 HOSTS_ROOT = os.path.join(BASE, "hosts")
 # Machine facts are shown in full in every session, so each one stays short.
 MACHINE_INSIGHT_LIMIT = 300
@@ -155,21 +161,27 @@ def host_name(raw):
 
 
 def store_path(cwd=None, machine=False, host=None):
+    """machine is False for the project store, or the name of a wide store (True means "machine")."""
     if host:
         return os.path.join(HOSTS_ROOT, host, STORE_FILE)
-    return MACHINE_PATH if machine else os.path.join(ROOT, slug(cwd), STORE_FILE)
+    if machine:
+        return WIDE["machine" if machine is True else machine][0]
+    return os.path.join(ROOT, slug(cwd), STORE_FILE)
 
 
 def scope(args):
-    """(machine, host) for this command, or None after reporting a bad combination or name."""
+    """(wide store name or False, host) for this command, or None after reporting a bad combination or name."""
+    wide = [name for name, attr in (("global", "everywhere"), ("machine", "machine")) if getattr(args, attr, False)]
     raw = getattr(args, "host", None)
+    if len(wide) + (raw is not None) > 1:
+        print("ERROR: --global, --machine and --host cannot be combined", file=sys.stderr)
+        return None
     if raw is None:
-        return args.machine, None
+        return (wide[0] if wide else False), None
     host = host_name(raw)
-    if args.machine or not host:
-        print("ERROR: %s" % ("--machine and --host cannot be combined" if args.machine else
-                             "--host %r is not usable; give the name used to reach the host, "
-                             "made of letters, digits, dots, hyphens and underscores" % raw), file=sys.stderr)
+    if not host:
+        print("ERROR: --host %r is not usable; give the name used to reach the host, "
+              "made of letters, digits, dots, hyphens and underscores" % raw, file=sys.stderr)
         return None
     return False, host
 
@@ -193,9 +205,10 @@ def live_entries(path):
     return [e for e in entries if e["key"] not in hidden], corrupt
 
 
-def render_machine(entries, corrupt, host=None):
-    """Every fact about a machine in full, with the day it was recorded so its age can be judged."""
-    out = ["# %s — %d fact(s)" % ("Host memory: %s" % host if host else "Machine memory", len(entries))]
+def render_machine(entries, corrupt, host=None, wide="machine"):
+    """Every entry of a wide or host store in full, with the day it was recorded so its age can be judged."""
+    title, noun = ("Host memory: %s" % host, "fact(s)") if host else WIDE[wide][1:3]
+    out = ["# %s — %d %s" % (title, len(entries), noun)]
     for e in entries:
         absorbs = e.get("absorbs") or []
         merged = "  (absorbs %s)" % ", ".join(absorbs) if absorbs else ""
@@ -321,6 +334,8 @@ def add_reminder():
         "  python3 %s add --type <pitfall|pattern|preference|architecture|tool> "
         "--key <describes-the-lesson> --insight '<conditions, failed routes, verified method and evidence>' "
         "--confidence <7-10> --source '<agent-or-skill-name>'\n"
+        "What the user wants done in every project, not only this one, goes in the global store:\n"
+        "add --global. Do not write it into the user's own instruction files.\n"
         "A fact about this machine or its tools that holds in every project (what is or is not\n"
         "installed, a path that cannot run programs, where a credential is configured) goes in the\n"
         "machine store instead: add --machine, at most %d characters, as condition then what to do.\n"
@@ -342,7 +357,8 @@ def cmd_load(args):
         if args.json:
             print(json.dumps(entries, ensure_ascii=False, indent=2))
         else:
-            print(render_machine(entries, corrupt, host) if entries else "NO_LEARNINGS (%s)" % path)
+            print(render_machine(entries, corrupt, host, only_machine or "machine") if entries
+                  else "NO_LEARNINGS (%s)" % path)
         return 0
     path = store_path()
     # Absorbed keys are dropped here rather than inside render(), so `search`
@@ -359,25 +375,27 @@ def cmd_load(args):
     if args.all:
         print(project)
         return 0
-    machine, machine_corrupt = live_entries(MACHINE_PATH)
-    facts = render_machine(machine, machine_corrupt) if machine else ""
+    wide = []  # (store name, live entries, full text) for each wide store that has entries
+    for name in WIDE:
+        found, damaged = live_entries(WIDE[name][0])
+        if found:
+            wide.append((name, found, render_machine(found, damaged, wide=name)))
     hosts = hosts_with_facts()
     remote = ("# Remote hosts with recorded facts: %s\nBefore working on one of them, run `load --host <name>`."
               % ", ".join("%s (%d)" % pair for pair in hosts)) if hosts else ""
-
     reminder = add_reminder()
 
-    def joined(head, facts_part):
-        return "\n\n".join(p for p in (head, facts_part, remote) if p) + "\n" + reminder
+    def joined(head, wide_part):
+        return "\n\n".join(p for p in (head, wide_part, remote) if p) + "\n" + reminder
 
-    text = joined(project, facts)
+    text = joined(project, "\n\n".join(full for _, _, full in wide))
     if args.fit:
-        text = fitted(text, args.fit - 1, joined, project, entries, machine, facts)  # print adds the final newline
+        text = fitted(text, args.fit - 1, joined, project, entries, wide)  # print adds the final newline
     print(text)
     return 0
 
 
-def fitted(text, limit, joined, project, entries, machine, facts):
+def fitted(text, limit, joined, project, entries, wide):
     """The load output within limit characters, giving up what the reader can fetch again first."""
     if len(text) <= limit:
         return text
@@ -387,18 +405,21 @@ def fitted(text, limit, joined, project, entries, machine, facts):
         lines = ["- %s (%s)" % (e["key"], e.get("type", "other")) for e in entries]
     else:
         header, lines = project, []  # the NO_LEARNINGS line stays as it is
-    fact_keys = ("# Machine memory — %d fact(s), keys only: run `load --machine` for the text\n%s"
-                 % (len(machine), ", ".join(e["key"] for e in machine))) if machine else ""
-    for facts_part in ((facts, fact_keys) if machine else ("",)):
-        text = joined("\n".join([header] + lines), facts_part)
+    full = "\n\n".join(text_of for _, _, text_of in wide)
+    keys = "\n\n".join(
+        "# %s — %d %s, keys only: run `load %s` for the text\n%s"
+        % (WIDE[name][1], len(found), WIDE[name][2], WIDE[name][3], ", ".join(e["key"] for e in found))
+        for name, found, _ in wide)
+    for wide_part in ((full, keys) if wide else ("",)):
+        text = joined("\n".join([header] + lines), wide_part)
         if len(text) <= limit:
             return text
-    # Still too long: shorten only the project key list, so machine facts and hosts stay listed.
+    # Still too long: shorten only the project key list, so the wide stores and hosts stay listed.
     kept = list(lines)
     while kept:
         kept.pop()
         more = "- … and %d more; run `load` to list them" % (len(lines) - len(kept))
-        text = joined("\n".join([header] + kept + [more]), fact_keys)
+        text = joined("\n".join([header] + kept + [more]), keys)
         if len(text) <= limit:
             return text
     return "# Memory, keys only: too long for this limit, run `load` for everything"[:limit]
@@ -441,8 +462,8 @@ def cmd_add(args):
         return 2
     machine, host = chosen
     if (machine or host) and len(args.insight.strip()) > MACHINE_INSIGHT_LIMIT:
-        print("ERROR: a machine fact is at most %d characters (this one has %d); write the condition "
-              "and what to do, and leave the story out" % (MACHINE_INSIGHT_LIMIT, len(args.insight.strip())),
+        print("ERROR: an entry in the global, machine or host store is at most %d characters (this one has %d); "
+              "write the condition and what to do, and leave the story out" % (MACHINE_INSIGHT_LIMIT, len(args.insight.strip())),
               file=sys.stderr)
         return 2
     path = store_path(machine=machine, host=host)
@@ -489,18 +510,22 @@ def cmd_search(args):
 
     path = store_path()
     project, corrupt = ([], []) if only_machine or host else hits_in(path)
-    facts_path = store_path(machine=True, host=host)
-    facts, facts_corrupt = hits_in(facts_path)
+    if host:
+        others = [(host, "machine", store_path(host=host))]
+    else:
+        others = [(None, name, WIDE[name][0]) for name in WIDE if only_machine in (False, name)]
+    found = [(h, name, where) + hits_in(where) for h, name, where in others]
     if args.json:
-        print(json.dumps(project + facts, ensure_ascii=False, indent=2))
+        print(json.dumps(project + [e for item in found for e in item[3]], ensure_ascii=False, indent=2))
         return 0
-    if not project and not facts:
-        print("NO_MATCHES for %r in %s" % (args.query, facts_path if only_machine or host else path))
+    if not project and not any(item[3] for item in found):
+        print("NO_MATCHES for %r in %s" % (args.query, others[0][2] if only_machine or host else path))
         return 0
+    blocks = []
     if project:
-        print(render(project, corrupt, path, "# Matches for %r — %d" % (args.query, len(project)), expand_all=True))
-    if facts:
-        print(("\n" if project else "") + render_machine(facts, facts_corrupt, host))
+        blocks.append(render(project, corrupt, path, "# Matches for %r — %d" % (args.query, len(project)), expand_all=True))
+    blocks += [render_machine(hits, damaged, h, name) for h, name, _, hits, damaged in found if hits]
+    print("\n\n".join(blocks))
     return 0
 
 
@@ -562,6 +587,7 @@ def main():
     lo.add_argument("--fit", type=fit_limit, metavar="N",
                     help="keep the output within N characters (at least %d) by reducing memory to keys; "
                          "for callers with a size limit" % MIN_FIT)
+    lo.add_argument("--global", dest="everywhere", action="store_true", help="only the global preferences")
     lo.add_argument("--machine", action="store_true", help="only the machine facts")
     lo.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     lo.set_defaults(func=cmd_load)
@@ -576,6 +602,7 @@ def main():
     ad.add_argument("--branch", default="")
     ad.add_argument("--absorbs", default="",
                     help="comma-separated keys this entry now covers; they stop printing on their own line")
+    ad.add_argument("--global", dest="everywhere", action="store_true", help="record what the user wants in every project; at most %d characters" % MACHINE_INSIGHT_LIMIT + "")
     ad.add_argument("--machine", action="store_true",
                     help="record a fact about this machine that holds in every project; at most %d characters"
                          % MACHINE_INSIGHT_LIMIT)
@@ -585,16 +612,19 @@ def main():
     se = sub.add_parser("search", help="filter learnings by substring")
     se.add_argument("query")
     se.add_argument("--json", action="store_true")
+    se.add_argument("--global", dest="everywhere", action="store_true", help="search only the global preferences")
     se.add_argument("--machine", action="store_true", help="search only the machine facts")
     se.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     se.set_defaults(func=cmd_search)
 
     st = sub.add_parser("stats", help="counts and average confidence")
+    st.add_argument("--global", dest="everywhere", action="store_true", help="count the global preferences")
     st.add_argument("--machine", action="store_true", help="count the machine facts")
     st.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     st.set_defaults(func=cmd_stats)
 
     pa = sub.add_parser("path", help="print the store path for this project")
+    pa.add_argument("--global", dest="everywhere", action="store_true", help="print the global store path")
     pa.add_argument("--machine", action="store_true", help="print the machine store path")
     pa.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     pa.set_defaults(func=cmd_path)

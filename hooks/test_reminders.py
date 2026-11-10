@@ -74,6 +74,16 @@ class Reminders(unittest.TestCase):
             handle.write(json.dumps({"ts": "2026-01-01T00:00:00Z", "type": "tool", "key": key, "insight": insight,
                                      "confidence": 9, "source": "test"}, ensure_ascii=False) + "\n")
 
+    def test_session_start_carries_global_preferences(self):
+        path = self.home / ".tstack" / "global" / "learnings.jsonl"
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({"ts": "2026-01-01T00:00:00Z", "type": "preference", "key": "fix-small-visual-flaws",
+                                    "insight": "看到明顯的小瑕疵就順手修", "confidence": 9, "source": "test"},
+                                   ensure_ascii=False) + "\n", encoding="utf-8")
+        text = self.session_start()
+        self.assertIn("看到明顯的小瑕疵就順手修", text)
+        self.assertNotIn("還沒有記憶", text)
+
     def test_session_start_carries_machine_facts_even_without_project_memory(self):
         self.machine_fact("temp-folder-blocks-exe", "暫存資料夾不能執行 exe")
         text = self.session_start()
