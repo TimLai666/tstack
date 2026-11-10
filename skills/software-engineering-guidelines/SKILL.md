@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "Software engineering guidelines for any software change. It is the core of the tstack stack: it names which tstack skill to use at each point of the work and owns the rules they share. This skill MUST be loaded before requirement clarification, architecture/design, implementation, refactoring, code review, testing, shipping, or creating Git commits (including standalone commit requests), and MUST NOT be skipped because the change is a one-liner. Covers simplicity, complete delivery based on a coherent implementation design, testing-first for high-impact changes with TDD (Test-Driven Development), and verifiable success criteria. Triggers on: 任何軟體規劃, 需求釐清, 架構設計, 寫 code, 改 code, 做功能, 修 bug, refactor, 開發, coding, development, 實作, 實現, 寫程式, 改程式, 加功能, 修問題, code review, 測試, 重構, init, 初始化專案, 建立 CLAUDE.md, 建立 AGENTS.md"
 metadata:
-  version: "2.6.0"
+  version: "2.6.1"
 ---
 
 ## The Stack
@@ -15,7 +15,7 @@ This skill is the core of tstack. tstack is installed as a whole: every other ts
 | Architecture, module boundaries or the split into tickets is undecided | **eng-architect** |
 | A failure whose cause is unknown, a red CI pipeline, the same error a second time, or an expected result that never appeared | **investigate** |
 | Code changed and not yet verified; before pushing; before calling something fixed or done | **test-and-fix** |
-| A diff is about to be committed as substantial work, opened as a PR or MR, or merged; the user hands over a diff | **diff-review**, which hands security-relevant changes to **security-scan** and changed screens to **ui-review** |
+| Substantial or high-risk code is about to be committed or handed back, opened as a PR or MR, or merged; the user hands over a diff | **diff-review**, which hands security-relevant changes to **security-scan** and changed screens to **ui-review** |
 | A review of built screens is requested on its own | **ui-review** |
 | Substantial work is about to be reported as done or handed back; the user asks whether the result meets the request | **acceptance-review** |
 | A security scan or hardening of the project is requested | **security-scan** |
@@ -212,7 +212,7 @@ Each review skill adds the criteria for assigning these levels in its own domain
 ### Staging and Commits
 
 - Stage with explicit paths. `git add -A`, `git add .`, `git add --all`, `git commit -a` and `git commit -am` are not used, including in a fresh repository. The one exception is `git add --renormalize .` when a `.gitattributes` is introduced, which rewrites only files that are already tracked. Leave out build output, caches, operating-system metadata files and binaries the task did not ask for. List what is left out of the commit and why; do not silently stash, discard or include unrelated changes.
-- Follow the user's or the project's commit arrangement. Without one, a fix and its regression test go in separate commits. When a test is written and when it is committed are separate decisions.
+- Follow the user's or the project's commit arrangement. Without one, commit the fix on its own first, then its regression test in a separate commit. When a test is written and when it is committed are separate decisions.
 - Before writing a commit message, read [references/commit-messages.md](references/commit-messages.md).
 
 ### Secrets
@@ -255,7 +255,7 @@ Fill the skeleton using Principles 2–4 and Principle 5's whole-goal priorities
 ### C. After Completion
 
 1. Verify with **test-and-fix** and report the results (Principle 4).
-2. Have the diff reviewed through **diff-review** when the change is substantial or about to become a PR, MR or merge. The review follows [Independent Review](#independent-review): reviewers in separate contexts cover the code, and security-relevant changes and changed screens where they apply.
+2. Have the diff reviewed through **diff-review** when the change is substantial or high-risk, or about to become a PR, MR or merge. The review follows [Independent Review](#independent-review): reviewers in separate contexts cover the code, and security-relevant changes and changed screens where they apply.
 3. Before reporting substantial work as done, have the result checked against the original request through **acceptance-review**.
 4. Review the Pre-Ship Checklist.
 5. Commit under [Staging and Commits](#staging-and-commits). Push, open a PR or MR, or merge through **ship-it**.

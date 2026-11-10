@@ -213,6 +213,7 @@ Follow the core's [Agent Context Files](../../software-engineering-guidelines/SK
 `AGENTS.md` must contain:
 - required artifacts — name each one and say when to read it, not just that it exists
 - handoff expectations
+- decision and validation expectations
 - planning discipline
 - update rules
 - project-specific constraints

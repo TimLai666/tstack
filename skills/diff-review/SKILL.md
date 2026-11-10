@@ -1,6 +1,6 @@
 ---
 name: diff-review
-description: "Review a code diff before it is committed as substantial work, opened as a pull request or merge request, or merged. This skill MUST be used when the user provides a code diff, pastes code changes, or asks for a code, PR or MR review, and when code is about to be submitted as a PR or MR or merged. It MUST NOT be skipped solely because the diff is small. When this conversation wrote any part of the diff, the review MUST be dispatched to an independent reviewer through agent-delegation, not done by the main conversation. It MUST NOT be used for changes limited to documentation, prose, images or formatting. It checks requirement scope, correctness, compatibility, maintainability and test coverage, and is the single entry for review: it MUST hand security-relevant changes to security-scan and changed screens to ui-review, and merges their findings. Triggers on: 幫我 review, 幫我看程式 diff, 看一下程式改了什麼, review 程式碼, PR review, MR review, diff review, code review, 看看程式有沒有問題"
+description: "Review a code diff before substantial or high-risk code is committed or handed back, opened as a pull request or merge request, or merged. This skill MUST be used when the user provides a code diff, pastes code changes, or asks for a code, PR or MR review, and when code is about to be submitted as a PR or MR or merged. It MUST NOT be skipped solely because the diff is small. When this conversation wrote any part of the diff, the review MUST be dispatched to an independent reviewer through agent-delegation, not done by the main conversation. It MUST NOT be used for changes limited to documentation, prose, images or formatting. It checks requirement scope, correctness, compatibility, maintainability and test coverage, and is the single entry for review: it MUST hand security-relevant changes to security-scan and changed screens to ui-review, and merges their findings. Triggers on: 幫我 review, 幫我看程式 diff, 看一下程式改了什麼, review 程式碼, PR review, MR review, diff review, code review, 看看程式有沒有問題"
 allowed-tools:
   - Bash
   - Read
@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "3.1.1"
+  version: "3.1.2"
 ---
 
 ## Who reviews
