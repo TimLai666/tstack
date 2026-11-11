@@ -10,7 +10,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 ## Overview
@@ -33,7 +33,7 @@ A review request produces findings and recommendations. Fix only when the user a
 
 Confirm the project root and locate the design sources for the screens under review, using project instructions and actual content. Read the applicable design baseline and the existing review record, including score history and unresolved findings. Follow relevant sections and references rather than limiting discovery by file count or assuming fixed headings.
 
-A `DESIGN.md` found here is **input, not output**: read it and score against its tokens; never overwrite it. This skill writes `DESIGN-REVIEW.md` instead (Step 4).
+A `DESIGN.md` found here is **input, not output**: read it and score against its tokens; never overwrite it. This skill writes its own review record instead (Step 4).
 
 Inspect the actual rendered screens and exercise the relevant interactions at the viewport sizes and states under review. Source code and design documents support this inspection; they do not substitute for viewing the rendered result. Record which screens, states, and interactions were checked. If rendering or interaction is unavailable, state the missing evidence and leave affected judgments unverified.
 
@@ -86,11 +86,11 @@ Report each finding in the format and scale of the core's [Findings and Severity
 
 Present findings and recommended fixes with evidence from the inspected screens and interactions. Ask about unresolved tradeoffs or changes to an agreed direction, and group related choices with a recommendation. Execute fixes only within the user's authorized scope. After an authorized UI fix, inspect the rendered result again and repeat the affected interactions before marking the finding resolved.
 
-## Step 4 — Update DESIGN-REVIEW.md
+## Step 4 — Update the review record
 
-Use the existing project review record. When a persistent review is requested and no arrangement exists, write `DESIGN-REVIEW.md` to the project root; otherwise deliver the review directly. The filename below refers to the chosen review record. **Never write `DESIGN.md`**; that filename belongs to `design-studio`.
+Use the existing project review record, which may be a `DESIGN-REVIEW.md` at the project root. When a persistent review is requested and no record exists, place it as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets, at `docs/dev/ui-review.md`; otherwise deliver the review directly. **Never write `DESIGN.md`**; that filename belongs to `design-studio`.
 
-`DESIGN-REVIEW.md` is a **state file**: one per project, updated in place, no date or branch in the filename. Prior scores stay in the score history table; git holds the rest.
+The review record is a **state file**: one per project, updated in place, no date or branch in the filename. Prior scores stay in the score history table; git holds the rest.
 
 Update, do not replace:
 

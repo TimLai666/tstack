@@ -64,7 +64,7 @@ Use the project's established ticket system and prior user decisions. Ask only w
 
 ### Plain markdown (default)
 
-One file per ticket under `docs/tickets/`, numbered from `01` in dependency order:
+One file per ticket under `docs/dev/tickets/`, numbered from `01` in dependency order:
 
 ```md
 # 07 — A customer can choose a service and a time slot

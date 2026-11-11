@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "The core of tstack and the guidelines for any software change. It names which tstack skill to use at each point of the work, gives the step list for each kind of task, and owns the rules the other skills share. This skill MUST be loaded before planning, designing, writing or changing code, reviewing, testing, shipping, or creating a Git commit (including a standalone commit request), and MUST NOT be skipped because the change is a one-liner. Triggers on: 寫 code, 改 code, 做功能, 修 bug, refactor, 重構, 開發, 實作, 寫程式, 架構設計, 需求釐清, code review, 測試, commit, init, 初始化專案, 建立 AGENTS.md, 建立 CLAUDE.md"
 metadata:
-  version: "3.2.0"
+  version: "3.3.0"
 ---
 
 ## The Stack
@@ -156,6 +156,14 @@ Each review skill adds the criteria for assigning these levels in its own domain
 - Stage with explicit paths. `git add -A`, `git add .`, `git add --all`, `git commit -a` and `git commit -am` are not used, including in a fresh repository. The one exception is `git add --renormalize .` when a `.gitattributes` is introduced, which rewrites only files that are already tracked. Leave out build output, caches, operating-system metadata files and binaries the task did not ask for. List what is left out of the commit and why; do not silently stash, discard or include unrelated changes.
 - Follow the user's or the project's commit arrangement. Without one, commit the fix on its own first, then its regression test in a separate commit. When a test is written and when it is committed are separate decisions.
 - Before writing a commit message, read [references/commit-messages.md](references/commit-messages.md).
+
+### Engineering Documents
+
+Tickets, review records, scan reports and task records that a skill writes into a project are engineering documents: they serve the people and agents developing the project, not its users. This applies to **eng-architect**, **security-scan**, **ui-review** and this skill's own task records.
+
+- Use the location the project already has for that kind of document, whatever its name.
+- When the project has none, write under `docs/dev/`, at the path the skill names. The rest of `docs/` is for documentation written for the project's users; do not write engineering documents there.
+- When `docs/` is published, ask the user where engineering documents go before writing the first one. Signs of this are a documentation-site configuration in the project, or a deployment that takes `docs/` as its source.
 
 ### Secrets
 

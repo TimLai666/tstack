@@ -13,7 +13,7 @@ allowed-tools:
   - WebFetch
   - WebSearch
 metadata:
-  version: "1.6.1"
+  version: "1.7.0"
 ---
 
 # Security Scan
@@ -136,7 +136,7 @@ The report contains, in order:
 5. **Hardening recommendations**: protections worth adding that do not constitute vulnerabilities, and scan tools recommended for installation.
 6. **List checklist**: the conclusion for every item of every list, and whether each catalog section applies.
 
-The report goes in the conversation by default. When the user wants to keep it, write it to the project's existing documentation location; when there is none, write it to `docs/security-scan/report.md`, and update it in place on later scans.
+The report goes in the conversation by default. When the user wants to keep it, place it as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets, at `docs/dev/security-scan.md` when the project has no location for it, and update it in place on later scans. A kept report lists vulnerabilities that may not be fixed yet: when the repository is public or its visibility is unknown, say so and get the user's confirmation before writing the file.
 
 ## Quality Rules
 

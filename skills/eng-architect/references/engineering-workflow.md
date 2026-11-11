@@ -195,7 +195,7 @@ Present the ticket set as a numbered list with title, blockers, and delivered be
 
 Tickets land where the Preamble established:
 
-- **Plain markdown** — one file per ticket under `docs/tickets/`, numbered in dependency order. Use that directory as the backlog when handing off implementation.
+- **Plain markdown** — one file per ticket under `docs/dev/tickets/`, placed as the core's [Engineering Documents](../../software-engineering-guidelines/SKILL.md#engineering-documents) sets and numbered in dependency order. Use that directory as the backlog when handing off implementation.
 - **OpenSpec** — one ticket is one change, never one task. Map each change to one milestone id in `delivery-status.md`; that milestone order carries the blocking edges between changes. Use the `openspec` skill for CLI commands, delta syntax, validation and archive flow if it is installed; if it is not, use the project's documented tooling when available. Otherwise report the missing capability and ask before switching an established ticket workflow; continue preparing the ticket content.
 
 Keep dependency ordering in the chosen ticket system or its designated status record, not in `ENG.md`.
@@ -226,7 +226,7 @@ Register actual artifact paths and when to read them. Default full-handoff examp
   Read it before changing architecture, picking a test seam, or writing a migration.
 - `delivery-status.md` — where the project currently stands.
   Read it first on arrival.
-- `docs/tickets/` (or `openspec/changes/`) — the tickets and their blocking edges.
+- `docs/dev/tickets/` (or `openspec/changes/`) — the tickets and their blocking edges.
   Pick up anything whose blockers are all done.
 ```
 
