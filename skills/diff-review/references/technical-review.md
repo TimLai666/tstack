@@ -10,6 +10,7 @@ Review the full diff. For each applicable area, verify:
 - **Race conditions and state:** Concurrent operations, check-then-act flows, shared state, and asynchronous work remain atomic and consistent.
 - **Error handling:** Failures are surfaced and handled, including partial failures, timeouts, cleanup, and recovery.
 - **Performance and resources:** Check unbounded work, resource leaks, N+1 queries, missing indexes, avoidable quadratic work, expensive loops, heavy dependencies, and fetch waterfalls.
+- **Project conventions:** The change follows the conventions the project states, in `AGENTS.md`, contributing guides, and linter or formatter configuration, and the patterns the surrounding code already uses for naming, structure, error handling and tests. Report a deviation with the location of the convention and the line that departs from it. A preference the project does not state or practice is not a convention.
 - **Maintainability:** Check unnecessary complexity, duplicated logic, unclear responsibilities, leaky abstractions, and difficulty understanding, testing, or extending the change.
 - **Data migration:** Check irreversible migrations, locking schema changes, missing foreign-key indexes, unsafe backfills, and removal of schemas before dependent code.
 - **Completeness and compatibility:** For each changed shared contract, such as a state, field, path, identifier, schema, or configuration:

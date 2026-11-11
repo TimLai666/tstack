@@ -72,7 +72,7 @@ Identify the relevant code diff from the user's input, current worktree, pull re
 
 ## Review sequence
 
-1. **Check scope:** Compare the diff with the stated request and report meaningful scope drift or missing requirements.
+1. **Check scope:** Compare the diff with the stated request and report changes the request does not call for. Whether every requirement is met is judged by **acceptance-review**, not here.
 2. **Review code:** Review the full diff with [references/technical-review.md](references/technical-review.md), which also covers the documentation and guidance the diff affects.
 3. **Hand over:** Run each review that [Security handoff](#security-handoff) and [UI handoff](#ui-handoff) call for yourself, following that skill. A dispatched reviewer runs the ones its task names.
 
@@ -149,7 +149,7 @@ Use this structure:
 
 ```text
 ## Diff Review
-Scope: [CLEAN / DRIFT / MISSING]
+Scope: [CLEAN / DRIFT]
 Reviewed: [diff source and scope]
 Adversarial review: [RUN — Trigger: reason]
 Security handoff: [RUN — touches: ... / NOT NEEDED — reason]
@@ -162,7 +162,7 @@ UI handoff: [RUN — screens: ... / NOT NEEDED — reason]
 - [NEEDS INVESTIGATION] location - observed evidence, possible failure, missing fact, verification step
 
 ### Scope differences
-- [include only when scope drift or missing requirements exist]
+- [include only when the diff holds changes the request does not call for]
 ```
 
 Include the `Adversarial review` line only when that review ran. Always include the `Security handoff` and `UI handoff` lines. If there are no confirmed findings, state `No confirmed findings.` Report any investigation concerns separately. Do not include empty sections.
