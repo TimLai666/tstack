@@ -13,7 +13,7 @@ allowed-tools:
   - WebFetch
   - WebSearch
 metadata:
-  version: "1.6.0"
+  version: "1.6.1"
 ---
 
 # Security Scan
@@ -121,7 +121,7 @@ Follow steps 1 to 7, with these differences:
 - **Lists (step 2)**: reuse lists already fetched in this conversation. When none has been fetched, fetch the CWE Top 25, the OWASP Top 10, and the lists for the technologies the diff touches.
 - **Scan (step 4)**: when dependencies or lockfiles change, audit added packages and packages whose version went up or down. Check every string the diff adds for secrets. Check only the catalog sections the diff touches; the other sections need not be listed.
 - **Fix (step 6)**: do not fix by default; return the findings to the caller. Fix only when the user or the caller asks.
-- **Angle**: a security review handed over by diff-review is the security part of the adversarial review. When the task states that it is to be done from the attacker's point of view, actually work out an attack path for every entry point the diff adds or changes, then judge whether it works.
+- **Angle**: when the task states that it is to be done from the attacker's point of view, actually work out an attack path for every entry point the diff adds or changes, then judge whether it works.
 - **Report**: deliver only items 1 to 4 of the Output Contract, plus the files and catalog sections actually checked. When handed over by diff-review, return the findings and needs-investigation items unchanged, for it to merge.
 - When the diff touches no input, authentication, authorization, files, outbound requests, secrets, cryptography, dependencies or deployment configuration, report "This diff has no security-relevant changes" with the basis for that judgment, and do not run the full workflow.
 
