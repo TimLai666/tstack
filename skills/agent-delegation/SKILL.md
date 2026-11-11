@@ -1,8 +1,8 @@
 ---
 name: agent-delegation
-description: "Rules and script for handing work to a subagent or another CLI (OpenCode, Antigravity, Copilot, Codex, Claude). This skill MUST be loaded before dispatching any subagent or CLI, even for a small task, before changing an existing API's name, signature, usage or behavior, and before delivering a specification, article or report. New delegation MUST go through scripts/dispatch.py and its task-local levels, and MUST NOT skip tools based on earlier turns. A main agent MUST NOT dispatch through its own CLI. A dispatched worker MUST NOT apply this skill or delegate further. Triggers on: subagent、派工、分工、antigravity、agy、opencode、copilot、codex、誰來寫、用哪個模型、介面變更"
+description: "Rules and script for handing work to a subagent or another CLI (OpenCode, Antigravity, Copilot, Codex, Claude). This skill MUST be loaded before dispatching any subagent or CLI, even for a small task, and before changing an existing API's name, signature, usage or behavior. New delegation MUST go through scripts/dispatch.py and its task-local levels, and MUST NOT skip tools based on earlier turns. A main agent MUST NOT dispatch through its own CLI. A dispatched worker MUST NOT apply this skill or delegate further. Triggers on: subagent、派工、分工、antigravity、agy、opencode、copilot、codex、誰來寫、用哪個模型、介面變更"
 metadata:
-  version: "4.0.0"
+  version: "5.0.0"
 ---
 
 # Agent Delegation Rules
@@ -15,7 +15,7 @@ The main agent is the strong model. It writes the skeleton and the expected resu
 
 For ordinary new dispatch, use [scripts/dispatch.py](scripts/dispatch.py): first run it with no arguments for the overview, or with `--help`, then read the `--help` of the relevant subcommands. Use `list-types` to choose the task type, and `list-levels` to check that type's levels and how handover to the host works. Split a mixed task first; when classification overlaps with chores or exploration, choose classification.
 
-The main agent provides the host, task type, project directory, role, task and acceptance criteria, files that may be changed, the verification command, and the filtered Project Memory. The memory field is required; fill in an empty array only after checking that no lesson applies. For an empty-context readability review, fill in an empty array as that section's isolation rules require. Provide the models actually available and the source used to verify them; do not infer a minimum version from an alias. Implementation tasks also list the test files that MUST NOT be modified. Deep research completes broad exploration first and may experiment only in the designated sandbox. Acceptance review also provides a sandbox directory, and the result may write only inside the sandbox.
+The main agent provides the host, task type, project directory, role, task and acceptance criteria, files that may be changed, the verification command, and the filtered Project Memory. The memory field is required; fill in an empty array only after checking that no lesson applies. Provide the models actually available and the source used to verify them; do not infer a minimum version from an alias. Implementation tasks also list the test files that MUST NOT be modified. Deep research completes broad exploration first and may experiment only in the designated sandbox. Acceptance review also provides a sandbox directory, and the result may write only inside the sandbox.
 
 ## 0. Identify yourself first
 
@@ -99,11 +99,9 @@ The details of each step are in [references/dispatch-flow.md](references/dispatc
 5. **Failure**: when the script returns `cli_failed`, a command is not found, a quota is exhausted or a run times out, read "Tool failures" and "CLI not installed" and continue to the next level yourself; do not ask the user whether to retry.
 6. **Report**: use the format below.
 
-Before delivering a specification, article or report, you MUST dispatch a subagent that did not take part in writing it to check it, following "Empty-context readability review" in [references/review-isolation.md](references/review-isolation.md).
-
 ### Acceptance review of returned work
 
-The main agent does this itself and does not dispatch another agent to review in its place. Before delivering a specification, article or report, also check, following "Empty-context readability review", that the result can be understood on its own.
+The main agent does this itself and does not dispatch another agent to review in its place.
 
 - [ ] Read the complete diff with `git diff`, not just the subagent's summary.
 - [ ] Check every number, passing-test count and file count in the report against the actual output or files.

@@ -1,20 +1,9 @@
-# Reviewer isolation and readability review
+# Reviewer isolation
 
-Follow this file before dispatching any review, and before delivering a specification, article or report.
+Follow this file before dispatching any review.
 
 ## Reviewer isolation
 
 Whose work MUST go to an independent reviewer follows the core [Independent Review](../../software-engineering-guidelines/SKILL.md#independent-review). This section sets how to isolate. The reviewer MUST be isolated from the context of the author of the work under review, including the main conversation when the main agent implemented it itself. You MUST NOT rename the author's agent or session, change its role or tell it to ignore earlier messages and then use it to review, and MUST NOT bring that context in through session inheritance or by reposting the implementation discussion. Roles required to be independent of each other MUST NOT share a context, even when they run at different times. This rule applies to both built-in tools and external CLIs.
 
-An ordinary review provides the requirements, acceptance criteria, code, diff and checkable verification evidence. An existing reviewer may be reused only when it has not been given the implementation context of the work under review and this review does not need to be isolated from the previous review. An empty-context readability review also follows the next section's limits on inputs and re-review.
-
-### Empty-context readability review
-
-When a specification, article or report is finished and about to be delivered, you MUST dispatch a subagent that did not take part in writing it to check whether the target readers can understand it without this conversation. This also applies to work the main agent wrote itself; code implementation and ordinary conversational answers do not get an extra review because of this rule.
-
-- Dispatch with the `review` type. Beyond the role isolation above, it MUST also be isolated from the context of this work's revisions and of previous reviews. A reviewer that has only handled other work that does not affect this reading may be kept under the reuse conditions. When starting a new one, turn off session inheritance; when isolation is not possible, hand over following the tool failure flow.
-- The prompt states only the target readers, the reading purpose, the work and the material the readers can actually obtain, and keeps the dispatch's role, read-only scope, acceptance and reporting requirements. You MUST NOT provide the main conversation, the writing plan, the reasons for revisions, the intended reading or answers from previous reviews; fill `project_memory` with `[]`, and the main agent checks relevant lessons itself instead of giving them to the reviewer.
-- Provide the complete text of the specification, article or report and its accompanying material, including the cited documents and attachments the readers can actually obtain; do not require knowledge beyond what the target readers are set to have.
-- The reviewer first states in its own words the main point of the work; for a specification, also the required behavior and acceptance criteria; for a report, also the main conclusions and their basis. It then lists, item by item, the places it cannot understand, possible misreadings, missing information and the smallest fix, with the paragraph, page number or file line number. It MUST NOT modify any file and does not fill in missing information by guessing; when it finds no problem, it says so.
-- The main agent checks the feedback against the work and fixes the parts that really depend on hidden context. Prefer improving structure or naming, or deleting unrelated content; add explanation only when needed. A readability review does not replace fact-checking, tests or correctness review.
-- After fixing, dispatch again with the updated work and re-review in a new empty context; do not keep the previous reviewer or bring in the previous report. Tool failures continue under the normal flow, but the handover prompt keeps only the launch or execution failure evidence, with no reading of the work or review feedback. At delivery, state truthfully what passed, what still has gaps and what was blocked by tools.
+An ordinary review provides the requirements, acceptance criteria, code, diff and checkable verification evidence. An existing reviewer may be reused only when it has not been given the implementation context of the work under review and this review does not need to be isolated from the previous review.

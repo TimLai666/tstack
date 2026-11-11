@@ -22,7 +22,7 @@ tstack is installed as a whole. At each point of the work in this table, load th
 | A security scan or hardening of the project is requested | **security-scan** |
 | Pushing, opening or updating a PR or MR, merging | **ship-it** |
 | The same kind of mistake happened a second time; the user asks to turn a rule into a check | **prevent-recurrence** |
-| Dispatching a subagent or another CLI; changing an existing API's name, signature, usage or behavior; delivering a specification, article or report | **agent-delegation** |
+| Dispatching a subagent or another CLI; changing an existing API's name, signature, usage or behavior | **agent-delegation** |
 
 ## Playbooks
 

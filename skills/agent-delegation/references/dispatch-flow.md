@@ -4,8 +4,6 @@ Each step of the dispatch flow in [SKILL.md](../SKILL.md) points here. Read only
 
 ## Before dispatching
 
-For an empty-context readability review, its inputs and redispatch follow that section's isolation rules; all other checks apply as usual.
-
 - [ ] The main agent loads the current project's memory following the `project-memory` skill and searches it for lessons that may apply to this subagent's task. Memory already loaded may be reused, but filter again when the task scope changes. Put the applicable conditions, key pitfalls, verified approaches and sources into the prompt; do not give only keys or ask the subagent to look them up itself, and do not paste whole unrelated memories. When an old lesson does not match the current state, handle it with project-memory's obsolescence verification rules.
 
 - [ ] Run `git status --short`. When there are uncommitted changes, check file by file whether they are your own from this turn or another agent's partial work. If they are partial work, deal with it before dispatching.

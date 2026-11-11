@@ -28,7 +28,7 @@ MEMORY_KEYS = ("The memory is too long for the hook to include in full, so some 
                "Before starting work, run load as the project-memory skill describes to read all of it:\n\n")
 MEMORY_UNREAD = "Before starting work, load this project's memory as the project-memory skill describes."
 SKILLS = ("\n\nBefore planning, writing or changing code, reviewing or committing, load the software-engineering-guidelines skill. "
-          "Before opening a subagent, dispatching another CLI, changing an existing API, or delivering specifications, articles or reports, load the agent-delegation skill.")
+          "Before opening a subagent, dispatching another CLI, or changing an existing API, load the agent-delegation skill.")
 DENY_AGENT = (
     "This conversation has not loaded the agent-delegation skill yet. Load it first, let it decide which tool and model does this work, "
     "then dispatch again. This notice blocks only once per session.")
