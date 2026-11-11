@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "3.1.0"
+  version: "3.2.0"
 ---
 
 ## Overview
@@ -40,12 +40,13 @@ the command for it is in that file. On another platform, use its authorized CLI
 or API and apply the same gates.
 
 Use the project's existing delivery document. With no other arrangement, look
-for `delivery-status.md`; support `delivery-plan.md` in older projects. Read the
+for `engineering/status.md`; older projects have `delivery-status.md` or
+`delivery-plan.md` at the root. Read the
 current phase, expected output and acceptance requirements, not just the first
 few lines. If the diff conflicts with the agreed scope, resolve that decision
 with the user before shipping. Do not create a status file just for this check.
 
-If `delivery-plan.md` exists, follow the [legacy status migration rules](../eng-architect/references/legacy-status-migration.md) to check the saved decision, ask when unresolved, and record the user's choice before changing the status arrangement.
+If the status record is still at one of the older locations, follow the [legacy layout migration rules](../eng-architect/references/legacy-layout-migration.md) to check the saved decision, ask when unresolved, and record the user's choice before changing the status arrangement.
 
 Small authorized changes may go on the current branch when the project allows
 it. Larger or riskier work on the base branch gets a suitable branch first,

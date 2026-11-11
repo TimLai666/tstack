@@ -1,6 +1,6 @@
 # Delivery Status Guidelines
 
-Use the project's established status record as the handoff entry point; `delivery-status.md` is the default when none exists and full handoff is needed. Preserve the existing format while covering the relevant state and source links below.
+Use the project's established status record as the handoff entry point; `engineering/status.md` is the default when none exists and full handoff is needed. Preserve the existing format while covering the relevant state and source links below.
 
 ## Required Sections
 
@@ -59,7 +59,7 @@ Use headings close to this shape:
 - Record deltas only; do not duplicate unchanged history.
 
 ### `Source Links`
-- Link the actual architecture decision document (`ENG.md` in the default setup), which holds architecture, testing decisions, and standing assumptions.
+- Link the actual architecture decision document (`engineering/architecture.md` in the default setup), which holds architecture, testing decisions, and standing assumptions.
 - Then link the plan document, and the ticket directory or change directory.
 - Add the other primary sources needed to reconstruct context quickly: thread, document, issue, or PR.
 - Prefer stable links and concise labels over raw dump content.
@@ -70,7 +70,7 @@ Use headings close to this shape:
 
 ## Update Cadence
 
-Update `delivery-status.md` when:
+Update `engineering/status.md` when:
 - the phase changes
 - a milestone status changes
 - the next verifiable output changes

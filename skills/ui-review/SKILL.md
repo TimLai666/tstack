@@ -10,7 +10,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 ## Overview
@@ -88,7 +88,7 @@ Present findings and recommended fixes with evidence from the inspected screens 
 
 ## Step 4 — Update the review record
 
-Use the existing project review record, which may be a `DESIGN-REVIEW.md` at the project root. When a persistent review is requested and no record exists, place it as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets, at `docs/dev/ui-review.md`; otherwise deliver the review directly. **Never write `DESIGN.md`**; that filename belongs to `design-studio`.
+Use the existing project review record. A `DESIGN-REVIEW.md` at the project root is the older location of this record. When a persistent review is requested and no record exists, place it as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets, at `engineering/reviews/ui.md`; otherwise deliver the review directly. **Never write `DESIGN.md`**; that filename belongs to `design-studio`.
 
 The review record is a **state file**: one per project, updated in place, no date or branch in the filename. Prior scores stay in the score history table; git holds the rest.
 
@@ -103,7 +103,7 @@ Update, do not replace:
 
 ```markdown
 # Design Review: [project]
-_Last reviewed: [date] - ui-review - [branch]_
+_Last reviewed: [date] - [branch]_
 
 ## Score history
 | Date | Hier | White | Type | Color | Consist | Copy | Empty | Error | Motion | Mobile |

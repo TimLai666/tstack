@@ -5,7 +5,7 @@ Use this loop for development handoffs. Update the project's existing records wh
 ## Update Loop
 
 After each milestone, blocker, or handoff:
-1. Update `delivery-status.md`
+1. Update `engineering/status.md`
 2. Confirm the next ticket
 3. Update `AGENTS.md` if operating rules changed
 4. Leave `CLAUDE.md` alone when it only points to `AGENTS.md`; otherwise follow the core's [Agent Context Files](../../software-engineering-guidelines/references/changing-code.md#agent-context-files)
@@ -24,7 +24,7 @@ Every handoff should include:
 ## Blocker Handling
 
 When blocked:
-- record the blocker in `delivery-status.md`
+- record the blocker in `engineering/status.md`
 - state what dependency is missing
 - state what can still proceed
 - state whether the next ticket should change

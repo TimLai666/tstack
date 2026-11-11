@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "3.1.0"
+  version: "4.0.0"
 ---
 
 ## Overview
@@ -49,14 +49,16 @@ A request for discussion produces the corresponding analysis. An authorized impl
 
 ## Project records
 
-Use existing documents and task systems that serve the purposes below. When no arrangement exists and full development handoff is needed, create the specification, `ENG.md`, `delivery-status.md`, ticket files, `AGENTS.md`, and the `CLAUDE.md` pointer. For a bounded architecture decision, select the records needed for the requested outcome.
+A project that keeps these records in an older layout is migrated first: read [Legacy layout migration](references/legacy-layout-migration.md) and use `scripts/migrate_layout.py`.
+
+Use existing documents and task systems that serve the purposes below. When no arrangement exists and full development handoff is needed, create the specification, `engineering/architecture.md`, `engineering/status.md`, ticket files, `AGENTS.md`, and the `CLAUDE.md` pointer. For a bounded architecture decision, select the records needed for the requested outcome.
 
 | File or location | Purpose | When to create or update | When to read |
 |---|---|---|---|
-| `ENG.md` | Shared architecture, testing strategy, assumptions, and migration order across tickets | When shared technical decisions need to persist | Before changing the relevant architecture, testing strategy, or migrations |
-| The existing specification, `openspec/specs/`, or `docs/dev/specs/<feature>.md` as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets | What is to be built: scope items, exclusions, flows, constraints and decisions | Before cutting tickets; first of all when a requirement changes | Before working on a ticket of that feature, and when checking the result against the request |
-| `delivery-status.md` | Current progress, blockers, next verifiable output, and next ticket | When ongoing tracking or handoff is needed; update as relevant state changes | On arrival to pick up work |
-| The existing ticket system, or `docs/dev/tickets/` as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets | Each ticket's deliverable, acceptance criteria, and blocking dependencies | When asked to break down work or prepare development handoff | Read the assigned ticket and its dependencies before implementation |
+| `engineering/architecture.md` | Shared architecture, testing strategy, assumptions, and migration order across tickets | When shared technical decisions need to persist | Before changing the relevant architecture, testing strategy, or migrations |
+| The existing specification, `openspec/specs/`, or `engineering/specs/<feature>.md` as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets | What is to be built: scope items, exclusions, flows, constraints and decisions | Before cutting tickets; first of all when a requirement changes | Before working on a ticket of that feature, and when checking the result against the request |
+| `engineering/status.md` | Current progress, blockers, next verifiable output, and next ticket | When ongoing tracking or handoff is needed; update as relevant state changes | On arrival to pick up work |
+| The existing ticket system, or `engineering/tickets/` as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets | Each ticket's deliverable, acceptance criteria, and blocking dependencies | When asked to break down work or prepare development handoff | Read the assigned ticket and its dependencies before implementation |
 | `AGENTS.md` | Project working rules and the locations and reading triggers of supporting records | When establishing coordination or changing working rules | Before starting project work |
 | `CLAUDE.md` | Entry point directing agents to `AGENTS.md` | When establishing the default coordination setup; keep actual rules in `AGENTS.md` | As an entry point to the project rules |
 

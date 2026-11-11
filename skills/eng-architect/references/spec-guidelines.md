@@ -14,7 +14,7 @@ A bug fix, a small change, and a bounded architecture question do not get a spec
 |---|---|
 | Has its own location or format for specifications | That location and format. Fill what the sections below require and the project's format lacks |
 | Uses OpenSpec | `openspec/specs/` is the specification. Follow [OpenSpec](#openspec) and write no separate file |
-| Neither | `docs/dev/specs/<feature>.md`, one file per feature, placed as the core's [Engineering Documents](../../software-engineering-guidelines/SKILL.md#engineering-documents) sets |
+| Neither | `engineering/specs/<feature>.md`, one file per feature, placed as the core's [Engineering Documents](../../software-engineering-guidelines/SKILL.md#engineering-documents) sets |
 
 A specification is a state file: one per feature, updated in place, with no date or branch in its name.
 
@@ -61,7 +61,7 @@ A specification is a state file: one per feature, updated in place, with no date
 Rules for the content:
 
 - Every scope item reads "<who> can <do what>", has an id that never changes once tickets refer to it, and carries at least one checkable condition. A module, a layer or a technology is not a scope item.
-- The specification states behavior and limits. Architecture and the order of implementation go in `ENG.md` and the tickets.
+- The specification states behavior and limits. Architecture and the order of implementation go in `engineering/architecture.md` and the tickets.
 - A reader with only this file can start work. Do not point at the conversation for a missing fact.
 - Leave out a section that has nothing in it. `Scope` and `Not doing` are always present.
 
@@ -90,7 +90,7 @@ When the requirement changes after the specification is confirmed, whether the u
 1. Update the specification first, in place. Add, change or remove the scope items and their conditions, move what is dropped to `Not doing`, and record the reason under `Decisions`.
 2. Update every ticket that refers to a changed scope item: its acceptance criteria, its blockers, and its status when finished work no longer matches. Add tickets for new scope items and close the tickets of removed ones.
 3. Rerun the coverage check in [Ticket breakdown guidelines](ticket-breakdown-guidelines.md#coverage-check).
-4. Update `delivery-status.md` when the next ticket or a blocker changed.
+4. Update `engineering/status.md` when the next ticket or a blocker changed.
 
 Code does not change ahead of the specification. A change the user has not agreed to is asked about before step 1.
 

@@ -64,7 +64,7 @@ Use the project's established ticket system and prior user decisions. Ask only w
 
 ### Plain markdown (default)
 
-One file per ticket under `docs/dev/tickets/`, numbered from `01` in dependency order:
+One file per ticket under `engineering/tickets/`, numbered from `01` in dependency order:
 
 ```md
 # 07 — A customer can choose a service and a time slot
@@ -89,7 +89,7 @@ Use this directory as the backlog location when handing off implementation.
 
 When the project has an `openspec/` directory and the `openspec` CLI is available, one ticket is one change, never one task. The ticket's acceptance criteria become the change's requirements and scenarios, which are the specification as [Specification guidelines](spec-guidelines.md#openspec) sets out; the ordering inside one ticket belongs in its `tasks.md`.
 
-OpenSpec has no dependency relationship *between* changes. Keep the blocking edges in `delivery-status.md`: map each change to one milestone id and let the milestone order carry the sequence. Do not invent a `blocked by` field inside the change.
+OpenSpec has no dependency relationship *between* changes. Keep the blocking edges in `engineering/status.md`: map each change to one milestone id and let the milestone order carry the sequence. Do not invent a `blocked by` field inside the change.
 
 OpenSpec does not stop anyone from starting a change whose foundation is unbuilt. Do not start such a change.
 

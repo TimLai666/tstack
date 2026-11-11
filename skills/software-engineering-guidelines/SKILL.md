@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "The core of tstack and the guidelines for any software change. It names which tstack skill to use at each point of the work, gives the step list for each kind of task, and owns the rules the other skills share. This skill MUST be loaded before planning, designing, writing or changing code, reviewing, testing, shipping, or creating a Git commit (including a standalone commit request), and MUST NOT be skipped because the change is a one-liner. Triggers on: 寫 code, 改 code, 做功能, 修 bug, refactor, 重構, 開發, 實作, 寫程式, 架構設計, 需求釐清, code review, 測試, commit, init, 初始化專案, 建立 AGENTS.md, 建立 CLAUDE.md"
 metadata:
-  version: "3.5.0"
+  version: "4.0.0"
 ---
 
 ## The Stack
@@ -159,11 +159,14 @@ Each review skill adds the criteria for assigning these levels in its own domain
 
 ### Engineering Documents
 
-Specifications, tickets, review records, scan reports and task records that a skill writes into a project are engineering documents: they serve the people and agents developing the project, not its users. This applies to **eng-architect**, **security-scan**, **ui-review** and this skill's own task records.
+Specifications, tickets, status and architecture records, review records, scan reports and task records that a skill writes into a project are engineering documents: they serve the people and agents developing the project, not its users. This applies to **eng-architect**, **security-scan**, **ui-review** and this skill's own task records.
 
 - Use the location the project already has for that kind of document, whatever its name.
-- When the project has none, write under `docs/dev/`, at the path the skill names. The rest of `docs/` is for documentation written for the project's users; do not write engineering documents there.
-- When `docs/` is published, ask the user where engineering documents go before writing the first one. Signs of this are a documentation-site configuration in the project, or a deployment that takes `docs/` as its source.
+- When the project has none, write under `engineering/` at the project root. `docs/` is for documentation written for the project's users; do not write engineering documents there.
+- A person or an agent that does not use tstack can read and update every one of them.
+- A project that still keeps these documents in an older layout is migrated through **eng-architect** before any of them is created or updated.
+
+Before creating `engineering/` or writing a document into it, read [references/engineering-documents.md](references/engineering-documents.md) for the layout, the index file and the writing rules.
 
 ### Secrets
 
@@ -192,6 +195,7 @@ Check the actual state before writing this line; do not infer it from what was s
 | Scripting a change; recording a follow-up; a new repository or `.gitattributes`; writing documents, rules, prompts or skills; touching `AGENTS.md` or `CLAUDE.md` | [references/changing-code.md](references/changing-code.md) |
 | Choosing test timing, refactoring, editing skills or prompts | [references/testing.md](references/testing.md) |
 | A second attempt at something that failed; a series of experiments; handing work off, pausing it or resuming it | [references/iterations.md](references/iterations.md) |
+| Creating `engineering/` or writing a document into it | [references/engineering-documents.md](references/engineering-documents.md) |
 | Writing a commit message | [references/commit-messages.md](references/commit-messages.md) |
 | Designing or changing a CLI, an MCP tool or an API | [references/tool-discoverability.md](references/tool-discoverability.md) |
 | Creating or modifying Docker Compose files | [references/docker-compose.md](references/docker-compose.md) |

@@ -4,11 +4,11 @@
 
 Confirm the project root and resolve project files from it, even when starting in a subdirectory. Locate the plan that matches the user's scope by its content and project references. `docs/plans/`, `docs/plan-grilling/` and `*-plan.md` are discovery hints; the user may have chosen another location. Distinguish feature plans from status records rather than choosing by modification time.
 
-Read the applicable project instructions, the selected plan, and existing architecture documents, including `ENG.md` or `ARCHITECTURE.md` when present. Read the full relevant sections and their dependencies before designing or updating them. A missing conventional filename does not establish that no equivalent document exists.
+Read the applicable project instructions, the selected plan, and existing architecture documents, including `engineering/architecture.md`, `ENG.md` or `ARCHITECTURE.md` when present. Read the full relevant sections and their dependencies before designing or updating them. A missing conventional filename does not establish that no equivalent document exists.
 
 Inspect project configuration and documented workflows to establish the language, framework, database, deployment target, and ticket tooling. Verify required tool availability when relevant. Use source history when needed to resolve a decision or constraint. If a material choice remains unknown, ask with a recommendation.
 
-If `delivery-plan.md` exists, read [Legacy status migration](legacy-status-migration.md) before updating status records.
+If the project keeps engineering documents in an older layout, such as `delivery-plan.md`, `delivery-status.md`, `ENG.md`, `docs/tickets/` or `docs/dev/`, read [Legacy layout migration](legacy-layout-migration.md) before creating or updating any of them.
 
 Follow existing architecture documents, status tracking, and ticket tooling. When none exists and full development handoff is needed, use the default artifact set in Steps 4-5. For advice or a bounded architecture decision, deliver the requested analysis and update an existing decision record when appropriate. Do not create a parallel tracking system.
 
@@ -146,7 +146,7 @@ For each migration: reversible? locks tables? needs backfill? can run while old 
 
 ### Step 4 — Record shared technical decisions
 
-Use the project's existing architecture decision document. For the default full-handoff setup, write `ENG.md` to the project root. `ENG.md` is a **state file**: one per project, updated in place. Never date-stamp or branch-stamp the filename.
+Use the project's existing architecture decision document. For the default full-handoff setup, write `engineering/architecture.md` to the project root. `engineering/architecture.md` is a **state file**: one per project, updated in place. Never date-stamp or branch-stamp the filename.
 
 Keep shared architecture, testing strategy, standing assumptions, and migration order here. When tickets exist, keep path-specific acceptance criteria on their owning tickets and link to them. For architecture-only work, retain the requested analysis as described in the per-feature pass.
 
@@ -181,7 +181,7 @@ The title names the project, not the feature.
 
 ### Step 5 — Prepare development handoff
 
-Apply this step when the request includes tickets or development handoff. Update the existing project system. With no established arrangement and a full handoff to prepare, create the complete default set below: `ENG.md`, `delivery-status.md`, tickets, `AGENTS.md`, and the `CLAUDE.md` pointer.
+Apply this step when the request includes tickets or development handoff. Update the existing project system. With no established arrangement and a full handoff to prepare, create the complete default set below: `engineering/architecture.md`, `engineering/status.md`, tickets, `AGENTS.md`, and the `CLAUDE.md` pointer.
 
 Locate the existing status and coordination records using project instructions and root-relative paths. Read the complete relevant content before updating it, preserve unrelated sections, and update the existing records in place. Verify a record is absent before creating one; a missing file in the current subdirectory or an unfamiliar filename is not sufficient evidence.
 
@@ -195,12 +195,12 @@ Present the ticket set as a numbered list with title, blockers, and delivered be
 
 Tickets land where the Preamble established:
 
-- **Plain markdown** — one file per ticket under `docs/dev/tickets/`, placed as the core's [Engineering Documents](../../software-engineering-guidelines/SKILL.md#engineering-documents) sets and numbered in dependency order. Use that directory as the backlog when handing off implementation.
-- **OpenSpec** — one ticket is one change, never one task. Map each change to one milestone id in `delivery-status.md`; that milestone order carries the blocking edges between changes. Use the `openspec` skill for CLI commands, delta syntax, validation and archive flow if it is installed; if it is not, use the project's documented tooling when available. Otherwise report the missing capability and ask before switching an established ticket workflow; continue preparing the ticket content.
+- **Plain markdown** — one file per ticket under `engineering/tickets/`, placed as the core's [Engineering Documents](../../software-engineering-guidelines/SKILL.md#engineering-documents) sets and numbered in dependency order. Use that directory as the backlog when handing off implementation.
+- **OpenSpec** — one ticket is one change, never one task. Map each change to one milestone id in `engineering/status.md`; that milestone order carries the blocking edges between changes. Use the `openspec` skill for CLI commands, delta syntax, validation and archive flow if it is installed; if it is not, use the project's documented tooling when available. Otherwise report the missing capability and ask before switching an established ticket workflow; continue preparing the ticket content.
 
-Keep dependency ordering in the chosen ticket system or its designated status record, not in `ENG.md`.
+Keep dependency ordering in the chosen ticket system or its designated status record, not in `engineering/architecture.md`.
 
-#### 5b — Create or update `delivery-status.md`
+#### 5b — Create or update `engineering/status.md`
 
 Read [references/delivery-status-guidelines.md](delivery-status-guidelines.md) before writing.
 
@@ -222,13 +222,13 @@ Register actual artifact paths and when to read them. Default full-handoff examp
 
 ```md
 ## Required artifacts
-- `ENG.md` — the project's standing technical decisions.
+- `engineering/architecture.md` — the project's standing technical decisions.
   Read it before changing architecture, picking a test seam, or writing a migration.
-- `delivery-status.md` — where the project currently stands.
+- `engineering/status.md` — where the project currently stands.
   Read it first on arrival.
-- `docs/dev/specs/` (or `openspec/specs/`) — what is to be built and how to tell it is done.
+- `engineering/specs/` (or `openspec/specs/`) — what is to be built and how to tell it is done.
   Read the specification of the feature before working on its tickets. Update it before the code when a requirement changes.
-- `docs/dev/tickets/` (or `openspec/changes/`) — the tickets and their blocking edges.
+- `engineering/tickets/` (or `openspec/changes/`) — the tickets and their blocking edges.
   Pick up anything whose blockers are all done.
 ```
 
@@ -249,9 +249,9 @@ Update your own sections in place. Never delete or rewrite a section you do not 
 
 | Artifact | Must contain | Must not become |
 |---|---|---|
-| `delivery-status.md` | phase, blockers, next output, next ticket | roadmap copy or changelog dump |
+| `engineering/status.md` | phase, blockers, next output, next ticket | roadmap copy or changelog dump |
 | Tickets | one user-visible slice each, with its blocking edges | one ticket per layer, or one per phase |
-| `ENG.md` | what holds across tickets: architecture, seams, assumptions, migration order | a second copy of anything that lives on a ticket |
+| `engineering/architecture.md` | what holds across tickets: architecture, seams, assumptions, migration order | a second copy of anything that lives on a ticket |
 | `AGENTS.md` | shared operating rules any agent follows on every turn, stated without rationale or change history | a personal note file, a project introduction, or a changelog |
 | `CLAUDE.md` | pointer to `AGENTS.md` | a second full operating manual |
 
@@ -274,7 +274,7 @@ Before handing off to another agent:
 - [ ] State next ticket
 - [ ] State decision delta since previous handoff
 - [ ] Include source links for critical context
-- [ ] Confirm `delivery-status.md` was updated
+- [ ] Confirm `engineering/status.md` was updated
 - [ ] Confirm `AGENTS.md` is current
 - [ ] Confirm `CLAUDE.md` points to `AGENTS.md`
 
