@@ -31,7 +31,7 @@ class Contract(unittest.TestCase):
     def test_external_cli_permission_and_effort_flags(self):
         prompt = "literal 'quotes' $(touch SHOULD_NOT_RUN) `echo no`\nnext line"
         cases = [
-            ("implementation", 0, "opencode/big-pickle", ["--auto", "--agent", "build", "--print-logs", "ERROR"]),
+            ("implementation", 0, "opencode/big-pickle", ["--auto", "--agent", "build", "--print-logs", "error"]),
             ("frontend", 0, "gemini-3.8-flash-medium", ["--mode", "accept-edits", "--dangerously-skip-permissions"]),
             ("classification", 0, "auto", ["--allow-all-tools", "--trust-folder"]),
             ("review", 1, "gpt-6-sol", ["--approve-for-me", "model_reasoning_effort=medium"]),
@@ -45,6 +45,15 @@ class Contract(unittest.TestCase):
                 self.assertIn("-p=" + prompt if argv[0] == "agy" else prompt, argv)
                 if argv[0] != "agy":
                     self.assertNotIn("--dangerously-skip-permissions", argv)
+
+    def test_opencode_gets_its_directory_from_the_working_directory(self):
+        # `opencode run` 2.x rejects --dir; the worker is started with the project as its working directory.
+        argv = dispatch.cli_argv(POLICY["tasks"]["implementation"]["levels"][0], "opencode/big-pickle", "/project", "task")
+        self.assertEqual(argv[:2], ["opencode", "run"])
+        self.assertNotIn("--dir", argv)
+        self.assertNotIn("/project", argv)
+        # It also accepts the log level in lowercase only.
+        self.assertEqual(argv[argv.index("--log-level") + 1], "error")
 
     def test_testing_and_readonly_prompt_requirements(self):
         request = dict(project_dir="/project", role="tester", prompt="Check the contract", allowed_files=[],
