@@ -30,7 +30,7 @@ engineering/
 └── reports/                   only what the user asked to keep
 ```
 
-Create a file or subdirectory only when there is content for it. A project that has its own location for one kind of document keeps it there, and `README.md` names that location.
+Create a file or subdirectory only when there is content for it. A project may keep other working material for its developers in further subdirectories, such as `research/` or `contracts/`; `README.md` lists each one with what it holds. A project that has its own location for one kind of document keeps it there, and `README.md` names that location.
 
 There is no status file: a ticket's directory is its state. There is no review record: a review is delivered where it was asked for, and what it leaves undone becomes tickets.
 

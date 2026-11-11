@@ -149,6 +149,38 @@ class MigrateLayoutTest(unittest.TestCase):
         self.assertIn("state the order between OpenSpec changes", result.stdout)
         self.assertIn("AGENTS.md:1:", result.stdout)
 
+    def test_chosen_docs_directories_move(self):
+        self.write("docs/spec/v1.md", "[research](../research/a.md) [guide](../guide/use.md)\n")
+        self.write("docs/spec/req.json", "{}\n")
+        self.write("docs/research/a.md")
+        self.write("docs/guide/use.md", "See [spec](../spec/v1.md).\n")
+        self.write("docs/backlog/01-a.md", ticket("done"))
+        self.write("README.md", "Spec: docs/spec/v1.md\n")
+        dry = self.run_script()
+        self.assertIn("docs/spec/ (2 files)", dry.stdout)
+        self.assertIn("docs/guide/ (1 files)", dry.stdout)
+        self.assertTrue((self.root / "docs/spec/v1.md").is_file())
+        result = self.run_script("--move", "docs/spec=engineering/specs", "--move", "docs/research=engineering/research",
+                                 "--move", "docs/backlog=engineering/tickets", "--apply")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(self.text("engineering/specs/v1.md"),
+                         "[research](/engineering/research/a.md) [guide](/docs/guide/use.md)\n")
+        self.assertTrue((self.root / "engineering/specs/req.json").is_file())
+        self.assertTrue((self.root / "engineering/tickets/done/01-a.md").is_file())
+        self.assertTrue((self.root / "docs/guide/use.md").is_file())
+        self.assertFalse((self.root / "docs/spec").exists())
+        self.assertIn("README.md:1:", result.stdout)
+        self.assertEqual(self.text("docs/guide/use.md"), "See [spec](/engineering/specs/v1.md).\n")
+        self.assertNotIn("Other directories under docs/", result.stdout)
+
+    def test_move_option_is_validated(self):
+        self.write("docs/spec/v1.md")
+        for value in ("docs/spec", "docs/spec=specs", "../x=engineering/x", "docs/none=engineering/none",
+                      "engineering/a=engineering/b"):
+            result = self.run_script("--move", value)
+            self.assertEqual(result.returncode, 2, value)
+        self.assertTrue((self.root / "docs/spec/v1.md").is_file())
+
     def test_root_handoff_file_moves_into_engineering(self):
         self.write("HANDOFF.md")
         self.write("engineering/README.md")

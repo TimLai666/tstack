@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Move a project's engineering documents from older layouts into engineering/.
 
-Usage: migrate_layout.py [--root PATH] [--apply]
+Usage: migrate_layout.py [--root PATH] [--move SOURCE=DESTINATION ...] [--apply]
 
 Without --apply nothing is changed: the script prints what it would move, what
 blocks a move, what is left to do by hand, and which files still mention an old
@@ -18,6 +18,15 @@ Moves:
   docs/security-scan/report.md, docs/dev/security-scan.md
                                          -> engineering/reports/legacy-security-scan.md
   docs/software-engineering-guidelines/  -> engineering/reports/
+
+Other engineering documents, chosen by the user:
+  --move SOURCE=DESTINATION moves one more file or directory. SOURCE is a path
+  in the project, usually under docs/; DESTINATION is a path under engineering/.
+  Repeat the option for each one, for example
+    --move docs/spec=engineering/specs --move docs/research=engineering/research
+  Without --apply the report lists the directories under docs/ that no move
+  covers, so that the user can say which of them hold engineering documents.
+  A directory moved to engineering/tickets is filed like the other tickets.
 
 Tickets are filed by their old status field, and the field is removed, because
 the directory a ticket is in is now its state:
@@ -47,7 +56,8 @@ Rules:
   - The status field may be written **Status:** or Status:, in English or as 狀態.
   - The files under engineering/reports/legacy-* hold content that has no place
     in the new layout as it stands. The script lists what to carry over by hand.
-  - References to old paths in Markdown files are listed, not edited.
+  - A link in any other Markdown file that pointed at a moved file is updated
+    to the new location. A mention of an old path in prose is listed, not edited.
 
 Exit status: 0 when nothing is blocked, 1 when a move is blocked, 2 on a usage
 error.
@@ -134,9 +144,18 @@ def ticket_state(path):
     return "", None, f"status '{match.group(1)}' is not recognized; file it by hand and remove the line"
 
 
-def plan(root):
+def plan(root, extra=()):
     """Return (moves, blocked, notes); a move is (source, destination, edit)."""
     candidates, notes = [], []
+    directories = list(DIRECTORIES)
+    ticket_directories = list(TICKET_DIRECTORIES)
+    for source, destination in extra:
+        if (root / source).is_file():
+            candidates.append((source, destination, None))
+        elif destination == TICKETS:
+            ticket_directories.append(source)
+        else:
+            directories.append((source, destination))
     for source, destination in FILES:
         if not (root / source).is_file():
             continue
@@ -147,22 +166,23 @@ def plan(root):
     for name, task in UNDECIDED.items():
         if (root / name).is_file():
             notes.append(f"{name}: not moved; {task}, then ask the user before deleting it")
-    for source, destination in DIRECTORIES:
+    for source, destination in directories:
         for item in sorted((root / source).rglob("*")) if (root / source).is_dir() else []:
             if item.is_file():
                 relative = item.relative_to(root / source).as_posix()
                 candidates.append((f"{source}/{relative}", f"{destination}/{relative}", None))
     ticket_files = []
-    for source in TICKET_DIRECTORIES:
+    for source in ticket_directories:
         for item in sorted((root / source).rglob("*")) if (root / source).is_dir() else []:
             if item.is_file():
-                ticket_files.append((f"{source}/{item.relative_to(root / source).as_posix()}", item.name))
+                relative = item.relative_to(root / source).as_posix()
+                ticket_files.append((f"{source}/{relative}", relative))
     if (root / TICKETS).is_dir():
         for item in sorted((root / TICKETS).glob("*.md")):
             if item.name.lower() != "readme.md" and STATUS_LINE.search(read(item)):
                 ticket_files.append((f"{TICKETS}/{item.name}", item.name))
-    for source, name in ticket_files:
-        relative = source.split("/tickets/", 1)[1]
+    for source, relative in ticket_files:
+        name = relative.rsplit("/", 1)[-1]
         if not name.lower().endswith((".md", ".mdx")) or name.lower() == "readme.md":
             candidates.append((source, f"{TICKETS}/{relative}", None))
             continue
@@ -201,8 +221,11 @@ def is_ticket(path):
             and not path.lower().endswith("readme.md"))
 
 
-def relink(root, text, source, destination, moved):
-    """Rewrite the relative links of a file that moved from source to destination."""
+def relink(root, text, source, destination, moved, only_moved=False):
+    """Rewrite the relative links of a file that moved from source to destination.
+
+    With only_moved, the file itself stayed put and only its links to moved files change.
+    """
     def replace(match):
         image, label, target = match.groups()
         path, _, anchor = target.partition("#")
@@ -212,7 +235,7 @@ def relink(root, text, source, destination, moved):
         if old.startswith(".."):
             return match.group(0)
         new = moved.get(old, old)
-        if not (root / new).exists():
+        if not (root / new).exists() or (only_moved and old not in moved):
             return match.group(0)
         if not image and is_ticket(destination) and is_ticket(new):
             return label
@@ -244,6 +267,22 @@ def apply(root, moves):
         if changed != text:
             with open(path, "w", encoding="utf-8", newline="") as handle:
                 handle.write(changed)
+    arrived = set(moved.values())
+    for folder, names, files in os.walk(root):
+        names[:] = [n for n in names if n not in SKIPPED_DIRECTORIES]
+        for name in files:
+            relative = (Path(folder) / name).relative_to(root).as_posix()
+            if relative in arrived or not name.lower().endswith((".md", ".mdx")):
+                continue
+            try:
+                with open(Path(folder) / name, encoding="utf-8", newline="") as handle:
+                    text = handle.read()
+            except (OSError, UnicodeDecodeError):
+                continue
+            changed = relink(root, text, relative, relative, moved, only_moved=True)
+            if changed != text:
+                with open(Path(folder) / name, "w", encoding="utf-8", newline="") as handle:
+                    handle.write(changed)
     emptied = {str(Path(source).parent) for source, destination, _ in moves if source != destination}
     for folder in sorted(emptied, key=len, reverse=True):
         current = root / folder
@@ -252,9 +291,11 @@ def apply(root, moves):
             current = current.parent
 
 
-def references(root):
+def references(root, extra=()):
     """Lines in Markdown files that still mention an old path."""
     found = []
+    custom = [source + ("/" if (root / destination).is_dir() else "") for source, destination in extra
+              if (root / destination).exists() and not (root / source).exists()]
     for folder, names, files in os.walk(root):
         names[:] = [n for n in names if n not in SKIPPED_DIRECTORIES]
         for name in files:
@@ -262,7 +303,7 @@ def references(root):
                 continue
             path = Path(folder) / name
             for number, line in enumerate(read(path).splitlines(), 1):
-                if OLD_PATH.search(line):
+                if OLD_PATH.search(line) or any(path in line for path in custom):
                     found.append(f"{path.relative_to(root).as_posix()}:{number}: {line.strip()[:160]}")
     return found
 
@@ -274,17 +315,51 @@ def describe(source, destination, edit):
     return f"{source} -> {destination}{suffix}"
 
 
+def parse_moves(parser, root, values):
+    moves = []
+    for value in values or []:
+        source, separator, destination = value.partition("=")
+        source, destination = source.strip().strip("/"), destination.strip().strip("/")
+        if not separator or not source or not destination:
+            parser.error(f"--move takes SOURCE=DESTINATION, got: {value}")
+        if os.path.isabs(source) or ".." in Path(source).parts or ".." in Path(destination).parts:
+            parser.error(f"--move paths stay inside the project: {value}")
+        if not destination.startswith("engineering/"):
+            parser.error(f"--move destination has to be under engineering/: {value}")
+        if source == "engineering" or source.startswith("engineering/"):
+            parser.error(f"--move source is already under engineering/: {value}")
+        if not (root / source).exists() and not (root / destination).exists():
+            parser.error(f"--move source does not exist: {source}")
+        moves.append((source, destination))
+    return moves
+
+
+def uncovered_docs(root, extra):
+    """Directories directly under docs/ that no move covers, with their file counts."""
+    covered = [source for source, _ in list(DIRECTORIES) + list(extra)] + TICKET_DIRECTORIES + ["docs/security-scan"]
+    found = []
+    for item in sorted((root / "docs").iterdir()) if (root / "docs").is_dir() else []:
+        path = f"docs/{item.name}"
+        if not item.is_dir() or any(c == path or c.startswith(path + "/") or path.startswith(c + "/") for c in covered):
+            continue
+        found.append((path, sum(1 for f in item.rglob("*") if f.is_file())))
+    return found
+
+
 def main():
     parser = argparse.ArgumentParser(prog="migrate_layout.py", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", default=".", help="project root (default: current directory)")
+    parser.add_argument("--move", action="append", metavar="SOURCE=DESTINATION",
+                        help="also move this file or directory to a path under engineering/; repeatable")
     parser.add_argument("--apply", action="store_true", help="carry out the moves; without it only report")
     args = parser.parse_args()
     root = Path(args.root).resolve()
     if not root.is_dir():
         parser.error(f"not a directory: {root}")
 
-    moves, blocked, notes = plan(root)
+    extra = parse_moves(parser, root, args.move)
+    moves, blocked, notes = plan(root, extra)
     if args.apply and moves:
         apply(root, moves)
     if moves:
@@ -306,7 +381,7 @@ def main():
         print("Carry over by hand:")
         for path, task in by_hand:
             print(f"  {path}: {task}")
-    mentions = references(root)
+    mentions = references(root, extra)
     if mentions:
         print("Still mention an old path; update each to the new path:")
         for line in mentions:
@@ -318,6 +393,11 @@ def main():
             print(f"  {path}")
     if (moves or (root / "engineering").is_dir()) and not (root / "engineering" / "README.md").exists():
         print("engineering/README.md is missing; write it before finishing.")
+    others = [] if args.apply else uncovered_docs(root, extra)
+    if others:
+        print("Other directories under docs/; for each one that holds engineering documents, add --move SOURCE=engineering/NAME:")
+        for path, count in others:
+            print(f"  {path}/ ({count} files)")
     if not args.apply and moves:
         print("Run again with --apply to carry out the moves.")
     return 1 if blocked else 0

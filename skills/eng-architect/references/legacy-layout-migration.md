@@ -29,6 +29,16 @@ In a project whose tickets are OpenSpec changes, the tickets stay under `openspe
 
 `docs/plans/` and `docs/plan-grilling/` belong to another skill. Leave them where they are.
 
+## Other engineering documents under `docs/`
+
+A project may keep further engineering documents under `docs/` in folders of its own, such as specifications, research notes or interface contracts. The script does not know which folders these are, so the user chooses:
+
+1. The report of a run without `--apply` lists every directory under `docs/` that no move covers.
+2. Ask the user which of them hold engineering documents and where each goes under `engineering/`. Recommend `engineering/specs` for specifications and `engineering/tickets` for tickets, and a folder of the same name for anything else. Documentation written for the project's users stays in `docs/`, and so does a folder another skill owns, such as `docs/design/`.
+3. Pass each choice to the script as `--move SOURCE=DESTINATION`, in the dry run and in the applied run alike.
+
+A project that keeps its specifications in a format of its own keeps that format after the move.
+
 ## When to run it
 
 Run it when any older location above exists in the project, or when a ticket file still carries a status field, before creating or updating an engineering document.
@@ -38,14 +48,14 @@ Run it when any older location above exists in the project, or when a ticket fil
 Moving files changes the user's project, so the user decides.
 
 1. Look up the decision in project memory through **project-memory**, under the preference key `engineering-layout-migration`. An older entry under `delivery-status-migration` counts for the status record only.
-2. With no decision recorded, run the script without `--apply`, show the user what would move, and ask whether to migrate, keep the old layout, or defer.
-3. Record the answer through **project-memory** with that key and source `eng-architect`, including any condition for asking again. Recording the decision is separate from carrying it out.
+2. With no decision recorded, run the script without `--apply`, show the user what would move and which other directories under `docs/` it found, and ask whether to migrate, keep the old layout, or defer.
+3. Record the answer through **project-memory** with that key and source `eng-architect`, including the directories the user chose to move or to leave, and any condition for asking again. Recording the decision is separate from carrying it out.
 
 While the answer is pending, and when the user keeps or defers the old layout, keep using the existing files. Do not create `engineering/` beside them.
 
 ## Migrate
 
-The script is `scripts/migrate_layout.py`; its `--help` lists the moves and its rules. It moves files, files tickets by their old status and removes that field, and rewrites the links inside the files it moves so that they keep resolving. It does not rewrite content: the older documents that have no place in the new layout are parked under `engineering/reports/legacy-*`, and carrying their content over is done by hand in step 5.
+The script is `scripts/migrate_layout.py`; its `--help` lists the moves and its rules. It moves files, files tickets by their old status and removes that field, and rewrites links so that they keep resolving, both inside the files it moves and in other files that pointed at them. It does not rewrite content: the older documents that have no place in the new layout are parked under `engineering/reports/legacy-*`, and carrying their content over is done by hand in step 5.
 
 1. Run it without `--apply` and read the report.
 2. Resolve every blocked move first. A move is blocked when its destination exists or two older files share one destination: compare them, merge the current content into one file, and remove the other only after the user agrees.
