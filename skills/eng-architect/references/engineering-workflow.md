@@ -222,6 +222,8 @@ Register actual artifact paths and when to read them. Default full-handoff examp
   Read the specification of the feature before working on its tickets. Update it before the code when a requirement changes.
 - `engineering/tickets/` (or `openspec/changes/`) — the work, one slice per ticket. Open tickets are at the top level, tickets in progress in `doing/`, finished ones in `done/`.
   Pick up any open ticket whose blockers are all in `done/`. Move it to `done/` in the change that delivers it.
+- `engineering/handoff.md` — unfinished work that has no ticket. It exists only while there is some.
+  Read it on arrival, and write it when work without a ticket stops unfinished.
 ```
 
 **`AGENTS.md` is shared. Own your sections, leave the rest alone.** Other skills maintain their own sections in the same file:

@@ -12,7 +12,7 @@ Moves:
   docs/tickets/, docs/dev/tickets/       -> engineering/tickets/
   docs/dev/specs/                        -> engineering/specs/
   delivery-plan.md, delivery-status.md   -> engineering/reports/legacy-status.md
-  HANDOFF.md                             -> engineering/reports/legacy-handoff.md
+  HANDOFF.md                             -> engineering/handoff.md
   DESIGN-REVIEW.md, docs/dev/ui-review.md
                                          -> engineering/reports/legacy-ui-review.md
   docs/security-scan/report.md, docs/dev/security-scan.md
@@ -63,7 +63,7 @@ FILES = [
     ("ENG.md", "engineering/architecture.md"),
     ("delivery-plan.md", "engineering/reports/legacy-status.md"),
     ("delivery-status.md", "engineering/reports/legacy-status.md"),
-    ("HANDOFF.md", "engineering/reports/legacy-handoff.md"),
+    ("HANDOFF.md", "engineering/handoff.md"),
     ("DESIGN-REVIEW.md", "engineering/reports/legacy-ui-review.md"),
     ("docs/dev/ui-review.md", "engineering/reports/legacy-ui-review.md"),
     ("docs/security-scan/report.md", "engineering/reports/legacy-security-scan.md"),
@@ -79,10 +79,10 @@ BY_HAND = {
     "engineering/architecture.md": "keep the system as it is now; move the reasoning of each hard-to-reverse choice "
                                    "to a decision record and the migration steps of one change to its ticket",
     "engineering/reports/legacy-status.md": "write each Decision Log entry that still holds as a decision record, move "
-                                            "each handoff note to the ticket it concerns, state the order between "
+                                            "each handoff note to the ticket it concerns or to engineering/handoff.md, state the order between "
                                             "OpenSpec changes in their proposals, then delete the file",
-    "engineering/reports/legacy-handoff.md": "move each note to the ticket it concerns, each working rule to AGENTS.md "
-                                             "and each fact about a machine to project memory, then delete the file",
+    "engineering/handoff.md": "keep only unfinished work that has no ticket; move each other note to the ticket it "
+                              "concerns, each working rule to AGENTS.md and each fact about a machine to project memory",
     "engineering/reports/legacy-ui-review.md": "write each open item as a fix ticket and each component's copy and states "
                                                "into that feature's specification, then delete the file",
     "engineering/reports/legacy-security-scan.md": "write each unfixed finding as a fix ticket, after the user confirms "
@@ -301,8 +301,7 @@ def main():
         print(f"Note: {line}")
     arriving = {destination for _, destination, _ in moves}
     by_hand = [(path, task) for path, task in BY_HAND.items()
-               if path != "engineering/architecture.md" and ((root / path).exists() or path in arriving)
-               or path == "engineering/architecture.md" and path in arriving]
+               if path in arriving or (path.startswith("engineering/reports/") and (root / path).exists())]
     if by_hand:
         print("Carry over by hand:")
         for path, task in by_hand:

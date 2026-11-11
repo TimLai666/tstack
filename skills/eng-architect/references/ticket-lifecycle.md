@@ -83,5 +83,6 @@ Before another agent or a later session takes over, the repository alone has to 
 
 - [ ] Every ticket is in the directory that matches its real state.
 - [ ] Each ticket in progress has current `## Notes`, and each blocked ticket has its `**Blocked:**` line.
+- [ ] Unfinished work that has no ticket is in `engineering/handoff.md`, as the core's [Engineering Documents](../../software-engineering-guidelines/SKILL.md#engineering-documents) sets.
 - [ ] Decisions made since the last handover are in the specification or a decision record, not only in the conversation.
 - [ ] `AGENTS.md` is current, and `CLAUDE.md` points to it.

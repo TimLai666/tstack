@@ -59,6 +59,9 @@ A specification is a state file: one per feature, updated in place, with no date
 ## For the implementer
 - May decide: [details left to the implementer]
 - Must ask: [choices that go back to the user]
+
+## Sources
+- [Links to the discussions, designs and documents the requirements come from]
 ```
 
 Rules for the content:

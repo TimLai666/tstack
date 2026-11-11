@@ -149,11 +149,13 @@ class MigrateLayoutTest(unittest.TestCase):
         self.assertIn("state the order between OpenSpec changes", result.stdout)
         self.assertIn("AGENTS.md:1:", result.stdout)
 
-    def test_handoff_file_is_parked(self):
+    def test_root_handoff_file_moves_into_engineering(self):
         self.write("HANDOFF.md")
+        self.write("engineering/README.md")
         result = self.run_script("--apply")
-        self.assertTrue((self.root / "engineering/reports/legacy-handoff.md").is_file())
-        self.assertIn("legacy-handoff.md: move each note to the ticket it concerns", result.stdout)
+        self.assertTrue((self.root / "engineering/handoff.md").is_file())
+        self.assertIn("engineering/handoff.md: keep only unfinished work that has no ticket", result.stdout)
+        self.assertEqual(self.run_script().stdout.strip(), "Nothing to move.")
 
     def test_tickets_already_in_place_are_refiled_and_a_second_run_is_clean(self):
         self.write("engineering/README.md")

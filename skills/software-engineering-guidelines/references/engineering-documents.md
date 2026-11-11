@@ -10,6 +10,7 @@ The layout, the index file and the writing rules for the documents described in 
 | How is the system built? | `architecture.md` | Describes the present; updated in place |
 | Why was it built this way? | `decisions/NNNN-<topic>.md` | Added to, never rewritten |
 | What is left to do, and how far along is it? | `tickets/` | Written, worked, then moved to `done/` |
+| What was the last session in the middle of? | `## Notes` in the ticket being worked, or `handoff.md` when the work has no ticket | Written when work stops unfinished; removed when it is done |
 | How does one work in this project? | `AGENTS.md` at the project root | Updated in place |
 
 One question has one document. Before adding a file, name the question it answers and who reads it at which step; when an existing document answers that question, write there.
@@ -25,6 +26,7 @@ engineering/
 ├── tickets/NN-<slug>.md       open tickets
 ├── tickets/doing/             tickets in progress
 ├── tickets/done/              finished tickets
+├── handoff.md                 unfinished work that has no ticket; absent when there is none
 └── reports/                   only what the user asked to keep
 ```
 
@@ -33,6 +35,28 @@ Create a file or subdirectory only when there is content for it. A project that 
 There is no status file: a ticket's directory is its state. There is no review record: a review is delivered where it was asked for, and what it leaves undone becomes tickets.
 
 A report the user asks to keep is a record of one moment. Name it `reports/<YYYY-MM-DD>-<kind>.md` and do not update it later.
+
+## Handoff
+
+When work stops unfinished, the next session has to be able to continue from the repository alone.
+
+- Work on a ticket: write under `## Notes` in that ticket.
+- Work that has no ticket, including all work in a project that keeps no tickets: write `engineering/handoff.md`. Never write both for the same work.
+
+```md
+# Handoff
+
+Unfinished work that has no ticket. Delete a section when its work is done, and the file when it is empty.
+
+## [The task, in one line]
+- **Asked:** [what was requested, in the requester's words or with a link to them]
+- **Done and checked:** [what works, and how it was checked]
+- **Tried and failed:** [each approach and why it failed]
+- **Next:** [the next step, and the check that will show it worked]
+- **Sources:** [links to the discussion, design or documents the work depends on]
+```
+
+At the start of a session, read `engineering/handoff.md` when it exists and continue or clear what it describes. A fact that stays true after the work is done does not belong here: a working rule goes to `AGENTS.md`, a decision to the specification or a decision record.
 
 ## Files that stay at the project root
 
@@ -60,6 +84,7 @@ Working documents for the people and agents developing this project. Documentati
 | [specs/](specs/) | One file per feature: what it does, what it leaves out, how to tell it is done | Before working on that feature |
 | [decisions/](decisions/) | One file per hard-to-reverse choice, with the options that were rejected | Before proposing to change such a choice |
 | [tickets/](tickets/) | One file per slice of work | Picking the next piece of work |
+| [handoff.md](handoff.md) | Unfinished work that has no ticket. Present only while there is some | Arriving to pick up work |
 
 ## How to work with them
 

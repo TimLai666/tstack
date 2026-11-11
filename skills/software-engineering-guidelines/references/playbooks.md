@@ -4,6 +4,8 @@ One ordered list of steps for each kind of task. At the start of a task, pick th
 
 Pick by what the task is. Use Small change only when the change meets the definition of small and low-risk in the core's [Independent Review](../SKILL.md#independent-review). When two playbooks fit, use the one with more steps. Skills named in a step are loaded at that step.
 
+Before the first step of any playbook, read `engineering/handoff.md` when the project has one. When a task stops unfinished, leave what the next session needs as "Handoff" in [engineering-documents.md](engineering-documents.md) sets, before the Turn-End Report.
+
 ## Feature
 
 New or changed behavior.
