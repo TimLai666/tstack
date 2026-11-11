@@ -10,7 +10,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 ## Overview
@@ -32,6 +32,7 @@ Run it on request, and when another skill finds an older layout before writing a
 | `docs/security-scan/report.md`, `docs/dev/security-scan.md` | No kept report. Unfixed findings become fix tickets |
 | `docs/software-engineering-guidelines/` | The notes of the ticket the work belongs to |
 | `docs/plan-grilling/`, `docs/plans/` | `plans/` at the project root, where the `plan-grilling` skill saves plans |
+| `docs/design/` | `design/` at the project root, where the `design-studio` skill keeps its working files |
 
 `delivery-plan.md` is the oldest name of the status record. A feature plan with that name is not moved.
 
@@ -58,7 +59,7 @@ Moving files changes the user's project, so the user decides. Look up an earlier
 Show the report in the user's language, then ask together:
 
 - **Whether to migrate now, keep the old layout, or defer.** Skip this when the user asked for the migration.
-- **Which other directories under `docs/` hold engineering documents**, and where each goes under `engineering/`. Recommend `engineering/specs` for specifications, `engineering/tickets` for tickets, and a folder of the same name for anything else. Documentation written for the project's users stays in `docs/`, and so does a folder another skill owns, such as `docs/design/`.
+- **Which other directories under `docs/` hold engineering documents**, and where each goes under `engineering/`. Recommend `engineering/specs` for specifications, `engineering/tickets` for tickets, and a folder of the same name for anything else. Documentation written for the project's users stays in `docs/`.
 - **Whether `PLAN.md`, `TODOS.md` and files in the home directory came from this workflow**, when the report names them.
 
 Record the answers through **project-memory** with that key and source `migrate-engineering-docs`: the decision, the directories chosen to move or to leave, and any condition for asking again. While an answer is pending, and when the user keeps or defers the old layout, keep using the existing files and do not create `engineering/` beside them.

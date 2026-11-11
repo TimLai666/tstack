@@ -19,6 +19,7 @@ Moves:
                                          -> engineering/reports/legacy-security-scan.md
   docs/software-engineering-guidelines/  -> engineering/reports/
   docs/plan-grilling/, docs/plans/       -> plans/
+  docs/design/                           -> design/
 
 Other engineering documents, chosen by the user:
   --move SOURCE=DESTINATION moves one more file or directory. SOURCE is a path
@@ -85,6 +86,7 @@ DIRECTORIES = [
     ("docs/software-engineering-guidelines", "engineering/reports"),
     ("docs/plan-grilling", "plans"),
     ("docs/plans", "plans"),
+    ("docs/design", "design"),
 ]
 TICKET_DIRECTORIES = ["docs/tickets", "docs/dev/tickets"]
 TICKETS = "engineering/tickets"
@@ -115,7 +117,7 @@ NO_BLOCKER = re.compile(r"^[\s`*]*(none|n/?a|無|—|-|)[\s`*.]*$", re.IGNORECAS
 LINK = re.compile(r"(!?)\[([^\]\n]*)\]\(([^)\s]+)\)")
 OLD_PATH = re.compile(
     r"(?<![\w/.-])(delivery-plan\.md|delivery-status\.md|ENG\.md|DESIGN-REVIEW\.md)(?![\w-])"
-    r"|docs/(?:tickets|dev|security-scan|software-engineering-guidelines|plan-grilling|plans)/")
+    r"|docs/(?:tickets|dev|security-scan|software-engineering-guidelines|plan-grilling|plans|design)/")
 SKIPPED_DIRECTORIES = {".git", "node_modules", "vendor", "dist", "build", ".venv", "venv"}
 
 
