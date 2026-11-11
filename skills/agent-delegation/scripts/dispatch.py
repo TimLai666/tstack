@@ -626,7 +626,8 @@ def cli_argv(spec, model, project, prompt):
     tool, effort = spec["tool"], spec.get("effort")
     if tool == "opencode":
         # Error logs on stderr expose provider failures that `opencode run` otherwise never reports or exits on.
-        return [tool, "run", "--print-logs", "--log-level", "ERROR", "--auto", "--dir", project,
+        # `opencode run` has no directory flag; it works in the directory the worker is started in.
+        return [tool, "run", "--print-logs", "--log-level", "error", "--auto",
                 "--agent", "build", "-m", model, "--format", "json", prompt]
     if tool == "agy":
         return [tool, "--model", model, "--mode", "accept-edits", "--dangerously-skip-permissions", "-p=" + prompt]
