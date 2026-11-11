@@ -1,6 +1,6 @@
 ---
 name: agent-delegation
-description: "Rules and script for handing work to a subagent or another CLI (OpenCode, Antigravity, Copilot, Codex, Claude). This skill MUST be loaded before dispatching any subagent or CLI, even for a small task, and before changing an existing API's name, signature, usage or behavior. New delegation MUST go through scripts/dispatch.py and its task-local levels, and MUST NOT skip tools based on earlier turns. A main agent MUST NOT dispatch through its own CLI. A dispatched worker MUST NOT apply this skill or delegate further. Triggers on: subagent、派工、分工、antigravity、agy、opencode、copilot、codex、誰來寫、用哪個模型、介面變更"
+description: "Rules and script for handing work to a subagent or another CLI (OpenCode, Antigravity, Copilot, Codex, Claude). This skill MUST be loaded before dispatching any subagent or CLI, even for a small task, and before changing an existing API's name, signature, usage or behavior. New delegation MUST go through scripts/dispatch.py and its task-local levels, and MUST NOT skip tools based on earlier turns. It MUST NOT be applied to work that is not software engineering. A main agent MUST NOT dispatch through its own CLI. A dispatched worker MUST NOT apply this skill or delegate further. Triggers on: subagent、派工、分工、antigravity、agy、opencode、copilot、codex、誰來寫、用哪個模型、介面變更"
 metadata:
   version: "5.0.0"
 ---

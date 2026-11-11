@@ -2,7 +2,7 @@
 
 ### Preamble
 
-Confirm the project root and resolve project files from it, even when starting in a subdirectory. Locate the plan that matches the user's scope by its content and project references. `docs/plans/` and `*-plan.md` are discovery hints; the user may have chosen another location. Distinguish feature plans from status records rather than choosing by modification time.
+Confirm the project root and resolve project files from it, even when starting in a subdirectory. Locate the plan that matches the user's scope by its content and project references. `docs/plans/`, `docs/plan-grilling/` and `*-plan.md` are discovery hints; the user may have chosen another location. Distinguish feature plans from status records rather than choosing by modification time.
 
 Read the applicable project instructions, the selected plan, and existing architecture documents, including `ENG.md` or `ARCHITECTURE.md` when present. Read the full relevant sections and their dependencies before designing or updating them. A missing conventional filename does not establish that no equivalent document exists.
 
@@ -23,6 +23,16 @@ Follow the shared decision rules in SKILL.md. Collect unresolved tradeoffs durin
 Take the feature list from the plan document: the scope items, each phrased as something a person can do. Work them one at a time, in the order the plan gives, and finish one before opening the next. Assemble the whole-system picture in Step 2 from what these passes decide; do not draw it ahead of them.
 
 When there is no plan document, or the list is still written by module, first turn it into a feature list, preserving the agreed scope. Confirm only unresolved scope choices.
+
+A plan saved by the `plan-grilling` skill has no feature list. Build one from it:
+
+| Plan section | Use |
+|---|---|
+| Goal and constraints | The scope the feature list has to cover, and the constraints every ticket keeps |
+| How to evaluate it | The source of each ticket's acceptance criteria |
+| Decision record | Settled decisions. Reuse them without asking again, including the options the record rejects |
+| Unresolved items | Resolve the ones a ticket depends on before writing that ticket; carry the rest into the ticket that will meet them |
+| Next step | The first ticket in dependency order, when it is still ahead |
 
 For each feature, run 1a through 1e, then move to the next feature.
 

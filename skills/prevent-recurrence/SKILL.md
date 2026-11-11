@@ -1,6 +1,6 @@
 ---
 name: prevent-recurrence
-description: "Turn a mistake that keeps happening into something that cannot happen or that fails loudly, instead of adding another written rule. This skill MUST be used when the same kind of mistake has happened a second time in a project, when the user says an agent keeps doing something wrong (怎麼又、又犯了、一直犯同樣的錯、講過了), or asks to turn a rule into a check (把這個變成檢查、加個 lint). It MUST NOT answer a repeated mistake with only a new line in a rules file or a memory entry when a stronger level is available."
+description: "Turn a mistake that keeps happening into something that cannot happen or that fails loudly, instead of adding another written rule. This skill MUST be used when the same kind of mistake has happened a second time in a project, when the user says an agent keeps doing something wrong (怎麼又、又犯了、一直犯同樣的錯、講過了), or asks to turn a rule into a check (把這個變成檢查、加個 lint). It MUST NOT be used for mistakes outside software engineering work, and MUST NOT answer a repeated mistake with only a new line in a rules file or a memory entry when a stronger level is available."
 allowed-tools:
   - Bash
   - Read
@@ -10,7 +10,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 ## Overview

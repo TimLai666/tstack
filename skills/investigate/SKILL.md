@@ -1,6 +1,6 @@
 ---
 name: investigate
-description: "Find the root cause of a failure before fixing it. This skill MUST be used when a bug's cause is unknown or the user asks for root-cause analysis, and SHOULD be used for unexplained failures, regressions, flaky behavior, a red CI pipeline, an error that recurs, or an expected result that never appeared. It MUST NOT treat an apparently obvious cause as confirmed without evidence. When evidence already establishes the cause, go to verification and repair without restarting the investigation, unless the task is only to find the cause. Triggers on: 根因調查, 為什麼會這樣, 壞掉了, 怎麼又, 還是不行, CI 紅燈, pipeline 失敗, failing, broken, flaky"
+description: "Find the root cause of a failure before fixing it. This skill MUST be used when a bug's cause is unknown or the user asks for root-cause analysis, and SHOULD be used for unexplained failures, regressions, flaky behavior, a red CI pipeline, an error that recurs, or an expected result that never appeared. It MUST NOT be used for failures outside software and its systems, and MUST NOT treat an apparently obvious cause as confirmed without evidence. When evidence already establishes the cause, go to verification and repair without restarting the investigation, unless the task is only to find the cause. Triggers on: 根因調查, 為什麼會這樣, 壞掉了, 怎麼又, 還是不行, CI 紅燈, pipeline 失敗, failing, broken, flaky"
 allowed-tools:
   - Bash
   - Read
@@ -9,7 +9,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.6.0"
+  version: "1.7.0"
 ---
 
 ## Core rule

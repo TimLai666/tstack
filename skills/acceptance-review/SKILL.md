@@ -1,6 +1,6 @@
 ---
 name: acceptance-review
-description: "Check finished work against what was originally asked: every requirement is matched to a result that was actually exercised, and the original problem is shown to be solved. This skill MUST be used before reporting substantial work as done or handing it back, and when the user asks whether the result meets the request. Work this conversation produced MUST be checked by an independent reviewer who is not given the implementer's summary. It MUST NOT replace diff-review, security-scan or test-and-fix. Triggers on: 驗收、有沒有做到、有沒有符合需求、有沒有解決問題、做完了嗎、acceptance review"
+description: "Check finished work against what was originally asked: every requirement is matched to a result that was actually exercised, and the original problem is shown to be solved. This skill MUST be used before reporting substantial work as done or handing it back, and when the user asks whether the result meets the request. Work this conversation produced MUST be checked by an independent reviewer who is not given the implementer's summary. It MUST NOT be used outside software engineering work, and MUST NOT replace diff-review, security-scan or test-and-fix. Triggers on: 驗收、有沒有做到、有沒有符合需求、有沒有解決問題、做完了嗎、acceptance review"
 allowed-tools:
   - Bash
   - Read
@@ -9,7 +9,7 @@ allowed-tools:
   - Agent
   - AskUserQuestion
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 ## Overview
@@ -19,7 +19,7 @@ Check whether what was delivered does what was asked. Judge from the delivered r
 | Review of | Skill |
 |---|---|
 | The result against the original request | this skill |
-| Code logic and implementation | **diff-review** |
+| Code logic, implementation, and changes the request does not call for | **diff-review** |
 | Vulnerabilities | **security-scan** |
 | Rendered screens | **ui-review** |
 
@@ -80,7 +80,6 @@ When the request was to fix or change something that was wrong, reproduce the or
 - Something different from what was asked, presented as if it were the request.
 - Placeholders, sample or hard-coded data, stubs, disabled paths and "to be done later" notes inside what is presented as finished.
 - Requirements dropped without the user having agreed.
-- Work beyond the request that changes behavior the user did not ask to change.
 
 ## Step 5 — Report
 
@@ -90,7 +89,7 @@ Give the requirement table first, then the findings in the format and scale of t
 |---|---|
 | P0 | The main thing that was asked for is not delivered or does not work, or the original problem is still there |
 | P1 | A stated requirement is not met or only partly met |
-| P2 | An implied requirement is not met, or delivered work changes something that was not asked |
+| P2 | An implied requirement is not met |
 | P3 | A small deviation from the wording of the request that does not change what the user can do |
 
 ```text

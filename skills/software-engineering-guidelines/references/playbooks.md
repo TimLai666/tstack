@@ -15,7 +15,7 @@ New or changed behavior.
 5. Fill the slots. A failure whose cause is not established goes to **investigate** before any fix. A change to an existing API goes through **agent-delegation** first.
 6. Verify with **test-and-fix**.
 7. Have the diff reviewed once through **diff-review**, before handing back or opening a PR or MR, when the change is substantial or high-risk or is going to a PR or MR. A small, low-risk change gets its lightweight self-review.
-8. When the work is substantial, have the result checked against the request through **acceptance-review**.
+8. When the work is substantial, have the result checked against the request through **acceptance-review**, dispatched at the same time as the diff review. Fix the findings of both together, then have only what changed reviewed again.
 9. Go through the Pre-Ship Checklist. Commit under [Staging and Commits](../SKILL.md#staging-and-commits); push, open a PR or MR, or merge through **ship-it**.
 10. Record qualifying lessons through **project-memory**.
 11. Compare the result with the full authorized outcome and continue any required work that can still be completed. Then give the [Turn-End Report](../SKILL.md#turn-end-report).
@@ -31,7 +31,7 @@ Something that worked, or should work, does not.
 5. Add the [regression test](../SKILL.md#regression-tests) and make the fix.
 6. Verify with **test-and-fix**, and repeat the original reproduction.
 7. Have the diff reviewed once through **diff-review**, before handing back or opening a PR or MR, when the change is substantial or high-risk or is going to a PR or MR. A small, low-risk change gets its lightweight self-review.
-8. When the work is substantial, have the result checked against the request through **acceptance-review**.
+8. When the work is substantial, have the result checked against the request through **acceptance-review**, dispatched at the same time as the diff review. Fix the findings of both together, then have only what changed reviewed again.
 9. Commit the fix, then its test, under [Staging and Commits](../SKILL.md#staging-and-commits); deliver through **ship-it**.
 10. When this is the second time the same kind of mistake happened, use **prevent-recurrence**.
 11. Record qualifying lessons through **project-memory**.
@@ -47,7 +47,7 @@ Structure changes, behavior does not.
 4. Change in small units that each end in a state the tests can check.
 5. Run the same tests again and compare with step 2.
 6. Have the diff reviewed once through **diff-review**, before handing back or opening a PR or MR, when the change is substantial or high-risk or is going to a PR or MR. A small, low-risk change gets its lightweight self-review.
-7. When the work is substantial, have the result checked against the request through **acceptance-review**.
+7. When the work is substantial, have the result checked against the request through **acceptance-review**, dispatched at the same time as the diff review. Fix the findings of both together, then have only what changed reviewed again.
 8. Commit under [Staging and Commits](../SKILL.md#staging-and-commits); deliver through **ship-it**.
 9. Record qualifying lessons through **project-memory**.
 10. Compare the result with the full authorized outcome and continue any required work that can still be completed. Then give the [Turn-End Report](../SKILL.md#turn-end-report).
