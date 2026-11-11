@@ -232,7 +232,6 @@ Register actual artifact paths and when to read them. Default full-handoff examp
 |---|---|
 | The five items above | this skill |
 | `## Follow-ups` | `software-engineering-guidelines` |
-| `## Zeabur 部署規範` | `set-zeabur-conventions` |
 | Anything else | the user, or a skill not listed here |
 
 Update your own sections in place. Never delete or rewrite a section you do not own, including an unfamiliar one. The "must not become a personal note file" rule below applies to the sections this skill owns, not to the whole file.
