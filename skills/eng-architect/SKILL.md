@@ -1,6 +1,6 @@
 ---
 name: eng-architect
-description: "This skill MUST be used for architecture decisions, module boundaries, writing or updating the specification of a feature, or turning plans or specs into tickets. A requirement change in work that has a specification MUST update the specification and its tickets before the code. SHOULD be used when implementation requires unresolved architectural choices, the user is unsure how to divide the work, or work on a ticket starts or finishes. MUST NOT expand an already specified implementation into a new planning exercise. MUST NOT be used to review built screens, which belongs to ui-review. Triggers on: 寫規格, 規格書, 技術方案, 架構設計, 怎麼切模組, 拆任務, 切票, 排開發順序, 技術規劃."
+description: "This skill MUST be used for architecture decisions, module boundaries, writing or updating the specification of a feature, or turning plans or specs into tickets. A requirement change in work that has a specification MUST update the specification and its tickets before the code. SHOULD be used when implementation requires unresolved architectural choices, the user is unsure how to divide the work, work on a ticket starts or finishes, or a ticket is too large and has to be split. MUST NOT expand an already specified implementation into a new planning exercise. MUST NOT be used to review built screens, which belongs to ui-review. Triggers on: 拆票, 寫規格, 規格書, 技術方案, 架構設計, 怎麼切模組, 拆任務, 切票, 排開發順序, 技術規劃."
 allowed-tools:
   - Bash
   - Read
@@ -25,12 +25,16 @@ Read [Engineering workflow](references/engineering-workflow.md) in full before t
 
 ## Working a ticket
 
-In a project that keeps tickets, these apply to whoever implements one. Status sections and their update rules are in [Delivery status guidelines](references/delivery-status-guidelines.md).
+In a project that keeps tickets, whoever implements one reads [Ticket lifecycle](references/ticket-lifecycle.md) at these points and follows it:
 
-- **Pick up.** Read the status record and take its next ticket, or the one the user names. Read the ticket, the tickets that block it, and the specification scope item it names. Do not start a ticket whose blockers are not done. Mark it in progress.
-- **Requirement or specified behavior changes.** This includes a bug fix that changes behavior the specification states. Follow "Keeping it in sync" in [Specification guidelines](references/spec-guidelines.md) before changing the code.
-- **A finding or issue is left for later.** Add it to the ticket that owns that behavior, or write a new ticket that names its scope item and blockers. Do not leave it only in the conversation.
-- **Close.** When the work is merged, or handed back when there is no merge, and its acceptance criteria were verified, mark the ticket done and update the status record: the milestone, the blockers it cleared, and the next ticket. A ticket whose checks are not finished stays in progress.
+| Point | What it sets |
+|---|---|
+| Starting work | Which ticket can start, what to read, and whether the ticket has to be split first |
+| A requirement changes, a finding is left for later, or the work spans sessions | Where each of these is written |
+| The work is merged or handed back | Moving the ticket to `done/` in the same change |
+| Tickets are mirrored to an issue tracker | Which side is the source and how the two stay in step |
+
+A ticket's state is the directory it is in. Do not keep a status file.
 
 ## Shared decision rules
 
@@ -49,16 +53,17 @@ A request for discussion produces the corresponding analysis. An authorized impl
 
 ## Project records
 
-A project that keeps these records in an older layout is migrated first: read [Legacy layout migration](references/legacy-layout-migration.md) and use `scripts/migrate_layout.py`.
+A project that keeps these records in an older layout or whose tickets still carry a status field, is migrated first: read [Legacy layout migration](references/legacy-layout-migration.md) and use `scripts/migrate_layout.py`.
 
-Use existing documents and task systems that serve the purposes below. When no arrangement exists and full development handoff is needed, create the specification, `engineering/architecture.md`, `engineering/status.md`, ticket files, `AGENTS.md`, and the `CLAUDE.md` pointer. For a bounded architecture decision, select the records needed for the requested outcome.
+Use existing documents and task systems that serve the purposes below. When no arrangement exists and full development handoff is needed, create the specification, `engineering/architecture.md`, ticket files, `engineering/README.md`, `AGENTS.md`, and the `CLAUDE.md` pointer. These locations follow the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents). For a bounded architecture decision, select the records needed for the requested outcome.
 
 | File or location | Purpose | When to create or update | When to read |
 |---|---|---|---|
-| `engineering/architecture.md` | Shared architecture, testing strategy, assumptions, and migration order across tickets | When shared technical decisions need to persist | Before changing the relevant architecture, testing strategy, or migrations |
-| The existing specification, `openspec/specs/`, or `engineering/specs/<feature>.md` as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets | What is to be built: scope items, exclusions, flows, constraints and decisions | Before cutting tickets; first of all when a requirement changes | Before working on a ticket of that feature, and when checking the result against the request |
-| `engineering/status.md` | Current progress, blockers, next verifiable output, and next ticket | When ongoing tracking or handoff is needed; update as relevant state changes | On arrival to pick up work |
-| The existing ticket system, or `engineering/tickets/` as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets | Each ticket's deliverable, acceptance criteria, and blocking dependencies | When asked to break down work or prepare development handoff | Read the assigned ticket and its dependencies before implementation |
+| The existing specification, `openspec/specs/`, or `engineering/specs/<feature>.md` | What the feature does: scope items, exclusions, flows, constraints and decisions | Before cutting tickets; first of all when a requirement changes | Before working on a ticket of that feature, and when checking the result against the request |
+| `engineering/architecture.md` | How the system is built: components, flows, test seams, standing assumptions | When the structure changes | Before changing the architecture, the testing strategy or a migration |
+| `engineering/decisions/` | Why each hard-to-reverse choice was made, as [Decision records](references/decision-records.md) sets | At the moment of the decision | Before proposing to change such a choice |
+| The existing ticket system, or `engineering/tickets/` | Each ticket's deliverable, acceptance criteria and blockers; its directory is its state | When asked to break down work or prepare development handoff | When picking up work |
+| `engineering/README.md` | Index of the engineering documents for readers who do not use this stack | When `engineering/` is created or a kind of document is added or removed | On arrival |
 | `AGENTS.md` | Project working rules and the locations and reading triggers of supporting records | When establishing coordination or changing working rules | Before starting project work |
 | `CLAUDE.md` | Entry point directing agents to `AGENTS.md` | When establishing the default coordination setup; keep actual rules in `AGENTS.md` | As an entry point to the project rules |
 

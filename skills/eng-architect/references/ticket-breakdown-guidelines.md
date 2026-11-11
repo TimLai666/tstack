@@ -20,7 +20,7 @@ A ticket is one narrow path through every layer it needs (schema, logic, screen,
 
 Rules:
 
-- Every ticket title reads as "<who> can <do what>". A title whose subject is a module, a layer or a technology gets rewritten.
+- Every feature ticket title reads as "<who> can <do what>". A title whose subject is a module, a layer or a technology gets rewritten. A fix ticket is titled by the problem.
 - Test each ticket: once this is done, can anyone see or use the difference? If not, it is not a feature ticket; only the two exceptions below may be such tickets.
 - Layers still decide the order **inside** one ticket: schema first, then logic, then screen. Never use layers to split the ticket set.
 
@@ -64,7 +64,7 @@ Use the project's established ticket system and prior user decisions. Ask only w
 
 ### Plain markdown (default)
 
-One file per ticket under `engineering/tickets/`, numbered from `01` in dependency order:
+One file per ticket under `engineering/tickets/`, numbered from `01`. The number names the ticket; `Blocked by` decides what can start. The directory a ticket is in is its state, so the file carries no status field: read [Ticket lifecycle](ticket-lifecycle.md).
 
 ```md
 # 07 — A customer can choose a service and a time slot
@@ -73,7 +73,6 @@ One file per ticket under `engineering/tickets/`, numbered from `01` in dependen
 **User Story:** A customer can complete a booking
 **Spec:** booking.md S3
 **Blocked by:** 01 Project scaffold, 04 Services table
-**Status:** ready
 
 ## What it delivers
 [The end-to-end behaviour this makes work, from the user's side.]
@@ -83,13 +82,31 @@ One file per ticket under `engineering/tickets/`, numbered from `01` in dependen
 - [ ] ...
 ```
 
-Use this directory as the backlog location when handing off implementation.
+A ticket that fixes a problem instead of delivering a feature, such as a review finding left for later, uses this form:
+
+```md
+# 31 — Booking confirmation shows the wrong time zone
+
+**Fixes:** booking.md S3
+**Blocked by:** none
+
+## Problem
+[What happens, where, and how to reproduce it.]
+
+## Expected
+[The behavior the specification states, or the reason no scope item covers it.]
+
+## Acceptance criteria
+- [ ] ...
+```
+
+One fix ticket holds one problem. A child ticket made by splitting adds a `**Parent:**` line, and a ticket mirrored to an issue tracker adds an `**Issue:**` line; both are set out in [Ticket lifecycle](ticket-lifecycle.md).
 
 ### OpenSpec
 
 When the project has an `openspec/` directory and the `openspec` CLI is available, one ticket is one change, never one task. The ticket's acceptance criteria become the change's requirements and scenarios, which are the specification as [Specification guidelines](spec-guidelines.md#openspec) sets out; the ordering inside one ticket belongs in its `tasks.md`.
 
-OpenSpec has no dependency relationship *between* changes. Keep the blocking edges in `engineering/status.md`: map each change to one milestone id and let the milestone order carry the sequence. Do not invent a `blocked by` field inside the change.
+OpenSpec has no dependency relationship *between* changes. State what a change waits for in its `proposal.md`, naming the change ids.
 
 OpenSpec does not stop anyone from starting a change whose foundation is unbuilt. Do not start such a change.
 

@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "3.2.0"
+  version: "3.3.0"
 ---
 
 ## Overview
@@ -39,14 +39,15 @@ or [references/gitlab.md](references/gitlab.md). Later steps name an action, and
 the command for it is in that file. On another platform, use its authorized CLI
 or API and apply the same gates.
 
-Use the project's existing delivery document. With no other arrangement, look
-for `engineering/status.md`; older projects have `delivery-status.md` or
-`delivery-plan.md` at the root. Read the
-current phase, expected output and acceptance requirements, not just the first
+Read what this delivery is supposed to contain: the ticket being delivered and the
+specification scope item it names, or the project's own delivery document when it
+has one. Read the expected output and acceptance requirements, not just the first
 few lines. If the diff conflicts with the agreed scope, resolve that decision
-with the user before shipping. Do not create a status file just for this check.
+with the user before shipping.
 
-If the status record is still at one of the older locations, follow the [legacy layout migration rules](../eng-architect/references/legacy-layout-migration.md) to check the saved decision, ask when unresolved, and record the user's choice before changing the status arrangement.
+In a project that keeps tickets, the change that delivers a ticket also closes it as **eng-architect** sets: the ticket file moves to `done/`, and a mirrored issue is closed through the pull request description.
+
+If the project still keeps its engineering documents in an older layout, such as `delivery-status.md`, `delivery-plan.md` or `docs/tickets/`, follow the [legacy layout migration rules](../eng-architect/references/legacy-layout-migration.md) to check the saved decision, ask when unresolved, and record the user's choice before changing the arrangement.
 
 Small authorized changes may go on the current branch when the project allows
 it. Larger or riskier work on the base branch gets a suitable branch first,

@@ -159,11 +159,13 @@ Each review skill adds the criteria for assigning these levels in its own domain
 
 ### Engineering Documents
 
-Specifications, tickets, status and architecture records, review records, scan reports and task records that a skill writes into a project are engineering documents: they serve the people and agents developing the project, not its users. This applies to **eng-architect**, **security-scan**, **ui-review** and this skill's own task records.
+Specifications, the architecture record, decision records and tickets that a skill writes into a project are engineering documents: they serve the people and agents developing the project, not its users. This applies to **eng-architect**, which writes them, and to **diff-review**, **security-scan**, **ui-review** and **acceptance-review**, whose findings feed them.
 
 - Use the location the project already has for that kind of document, whatever its name.
 - When the project has none, write under `engineering/` at the project root. `docs/` is for documentation written for the project's users; do not write engineering documents there.
+- Each fact has one home. A ticket's state is the directory it is in; no file repeats it.
 - A person or an agent that does not use tstack can read and update every one of them.
+- A review or scan report is delivered in the conversation or the pull request and is not kept as a file. A finding that is left unfixed becomes a ticket through **eng-architect** in a project that keeps tickets, and otherwise an entry under the recording rule in [references/changing-code.md](references/changing-code.md). Write the report to `engineering/reports/` only when the user asks to keep it.
 - A project that still keeps these documents in an older layout is migrated through **eng-architect** before any of them is created or updated.
 
 Before creating `engineering/` or writing a document into it, read [references/engineering-documents.md](references/engineering-documents.md) for the layout, the index file and the writing rules.

@@ -10,7 +10,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.5.0"
+  version: "2.0.0"
 ---
 
 ## Overview
@@ -33,7 +33,7 @@ A review request produces findings and recommendations. Fix only when the user a
 
 Confirm the project root and locate the design sources for the screens under review, using project instructions and actual content. Read the applicable design baseline and the existing review record, including score history and unresolved findings. Follow relevant sections and references rather than limiting discovery by file count or assuming fixed headings.
 
-A `DESIGN.md` found here is **input, not output**: read it and score against its tokens; never overwrite it. This skill writes its own review record instead (Step 4).
+A `DESIGN.md` found here is **input, not output**: read it and score against its tokens; never overwrite it. This skill never writes it.
 
 Inspect the actual rendered screens and exercise the relevant interactions at the viewport sizes and states under review. Source code and design documents support this inspection; they do not substitute for viewing the rendered result. Record which screens, states, and interactions were checked. If rendering or interaction is unavailable, state the missing evidence and leave affected judgments unverified.
 
@@ -86,55 +86,33 @@ Report each finding in the format and scale of the core's [Findings and Severity
 
 Present findings and recommended fixes with evidence from the inspected screens and interactions. Ask about unresolved tradeoffs or changes to an agreed direction, and group related choices with a recommendation. Execute fixes only within the user's authorized scope. After an authorized UI fix, inspect the rendered result again and repeat the affected interactions before marking the finding resolved.
 
-## Step 4 — Update the review record
+## Step 4 — Deliver the review
 
-Use the existing project review record. A `DESIGN-REVIEW.md` at the project root is the older location of this record. When a persistent review is requested and no record exists, place it as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets, at `engineering/reviews/ui.md`; otherwise deliver the review directly. **Never write `DESIGN.md`**; that filename belongs to `design-studio`.
-
-The review record is a **state file**: one per project, updated in place, no date or branch in the filename. Prior scores stay in the score history table; git holds the rest.
-
-Update, do not replace:
-
-| Section | On re-review |
-|---|---|
-| Score history | Append one row. Never rewrite past rows |
-| Dimension scores | Overwrite with the current scores |
-| Open slop flags | Keep only what is still unresolved. Delete the ones that got fixed |
-| Component spec | Accumulate. Existing components stay unless the component itself is gone |
+Deliver the review in the conversation, or in the pull request when the review is for one. Do not keep a review file in the project.
 
 ```markdown
-# Design Review: [project]
-_Last reviewed: [date] - [branch]_
-
-## Score history
-| Date | Hier | White | Type | Color | Consist | Copy | Empty | Error | Motion | Mobile |
-|------|------|-------|------|-------|---------|------|-------|-------|--------|--------|
-[one row per review, oldest first]
+# UI Review: [project]
 
 ## Dimension scores
 | Dimension | Score | Notes |
 |-----------|-------|-------|
 [table]
 
-## Open slop flags
-[unresolved only]
+## Findings
+[P0 to P3, in the core's format]
 
-## Component spec
-
-### [Component name]
-- **Copy:** [exact labels, error messages, empty states, tooltips]
-- **States:** default | hover | active | disabled | loading | error | empty
-- **Mobile:** [specific behavior]
-- **Touch target:** [size in px]
+## Slop flags
+[each with the screen and what makes it read as generic]
 
 ## Token conformance
 | Token | Design baseline value | Used as | Verdict |
 |-------|-----------------|---------|---------|
 [one row per violation only — matches are not worth listing]
-
-## Motion
-| Trigger | Animation | Duration | Purpose |
-|---------|-----------|----------|---------|
 ```
+
+- When the feature has a specification with a `Screens` section, check each screen's states and exact copy against it and report each deviation as a finding. States or copy the specification lacks are reported as missing from it.
+- A finding that is not fixed now is recorded as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets.
+- When the user asks to keep the review, write it as a dated report as the same section sets.
 
 Use the project's established visual specification, whether it is `DESIGN.md` or an equivalent source. Reference its actual location when assessing conformance; keep design-system definitions in that source rather than creating a second set in the review record.
 
@@ -145,4 +123,4 @@ If no applicable baseline can be found, state that limitation and leave baseline
 - Findings come from actual rendered screens and exercised interactions, with the screens, states and viewport sizes that were inspected listed.
 - Screens or states that could not be rendered or viewed are reported as not reviewed, with the reason.
 - Authorized fixes were rechecked in the rendered result.
-- The review record, when kept, was updated in place and unrelated content preserved. `DESIGN.md` was not modified.
+- Findings left unfixed were recorded where the core's Engineering Documents sets. `DESIGN.md` was not modified.

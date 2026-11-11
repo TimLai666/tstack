@@ -39,6 +39,9 @@ A specification is a state file: one per feature, updated in place, with no date
 ## Flows and exceptions
 [The main flow of each scope item, and what happens in each exceptional case.]
 
+## Screens
+[For each screen or component: its states (default, loading, empty, error, disabled) and the exact copy of labels and messages.]
+
 ## Constraints
 [Technical and environment limits, and the data and formats this touches.]
 
@@ -61,7 +64,8 @@ A specification is a state file: one per feature, updated in place, with no date
 Rules for the content:
 
 - Every scope item reads "<who> can <do what>", has an id that never changes once tickets refer to it, and carries at least one checkable condition. A module, a layer or a technology is not a scope item.
-- The specification states behavior and limits. Architecture and the order of implementation go in `engineering/architecture.md` and the tickets.
+- The specification states the behavior the feature has now, and is updated in place when a later change alters it. Architecture and the order of implementation go in `engineering/architecture.md` and the tickets.
+- `Decisions` holds the choices about this feature's behavior. A hard-to-reverse choice that reaches across features is a [decision record](decision-records.md).
 - A reader with only this file can start work. Do not point at the conversation for a missing fact.
 - Leave out a section that has nothing in it. `Scope` and `Not doing` are always present.
 
@@ -90,7 +94,7 @@ When the requirement changes after the specification is confirmed, whether the u
 1. Update the specification first, in place. Add, change or remove the scope items and their conditions, move what is dropped to `Not doing`, and record the reason under `Decisions`.
 2. Update every ticket that refers to a changed scope item: its acceptance criteria, its blockers, and its status when finished work no longer matches. Add tickets for new scope items and close the tickets of removed ones.
 3. Rerun the coverage check in [Ticket breakdown guidelines](ticket-breakdown-guidelines.md#coverage-check).
-4. Update `engineering/status.md` when the next ticket or a blocker changed.
+4. Move a ticket out of `done/` when its finished work no longer matches the specification.
 
 Code does not change ahead of the specification. A change the user has not agreed to is asked about before step 1.
 
