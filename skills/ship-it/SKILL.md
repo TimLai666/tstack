@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "3.3.0"
+  version: "3.4.0"
 ---
 
 ## Overview
@@ -47,7 +47,7 @@ with the user before shipping.
 
 In a project that keeps tickets, the change that delivers a ticket also closes it as **eng-architect** sets: the ticket file moves to `done/`, and a mirrored issue is closed through the pull request description.
 
-If the project still keeps its engineering documents in an older layout, such as `delivery-status.md`, `delivery-plan.md` or `docs/tickets/`, follow the [legacy layout migration rules](../eng-architect/references/legacy-layout-migration.md) to check the saved decision, ask when unresolved, and record the user's choice before changing the arrangement.
+If the project still keeps its engineering documents in an older layout, such as `delivery-status.md`, `delivery-plan.md` or `docs/tickets/`, hand it to **migrate-engineering-docs**, which checks the saved decision and asks when it is unresolved. Until the user decides, deliver with the existing files.
 
 Small authorized changes may go on the current branch when the project allows
 it. Larger or riskier work on the base branch gets a suitable branch first,

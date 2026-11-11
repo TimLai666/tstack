@@ -8,7 +8,7 @@ Read the applicable project instructions, the selected plan, and existing archit
 
 Inspect project configuration and documented workflows to establish the language, framework, database, deployment target, and ticket tooling. Verify required tool availability when relevant. Use source history when needed to resolve a decision or constraint. If a material choice remains unknown, ask with a recommendation.
 
-If the project keeps engineering documents in an older layout, such as `delivery-plan.md`, `delivery-status.md`, `ENG.md`, `DESIGN-REVIEW.md`, `docs/tickets/` or `docs/dev/`, or its tickets carry a status field, read [Legacy layout migration](legacy-layout-migration.md) before creating or updating any of them.
+If the project keeps engineering documents in an older layout, such as `delivery-plan.md`, `delivery-status.md`, `ENG.md`, `DESIGN-REVIEW.md`, `docs/tickets/` or `docs/dev/`, or its tickets carry a status field, hand it to **migrate-engineering-docs** before creating or updating any of them.
 
 Follow existing architecture documents, status tracking, and ticket tooling. When none exists and full development handoff is needed, use the default artifact set in Steps 4-5. For advice or a bounded architecture decision, deliver the requested analysis and update an existing decision record when appropriate. Do not create a parallel tracking system.
 

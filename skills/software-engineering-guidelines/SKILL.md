@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "The core of tstack and the guidelines for any software change. It names which tstack skill to use at each point of the work, gives the step list for each kind of task, and owns the rules the other skills share. This skill MUST be loaded before planning, designing, writing or changing code, reviewing, testing, shipping, or creating a Git commit (including a standalone commit request), and MUST NOT be skipped because the change is a one-liner. Triggers on: 寫 code, 改 code, 做功能, 修 bug, refactor, 重構, 開發, 實作, 寫程式, 架構設計, 需求釐清, code review, 測試, commit, init, 初始化專案, 建立 AGENTS.md, 建立 CLAUDE.md"
 metadata:
-  version: "4.0.0"
+  version: "4.1.0"
 ---
 
 ## The Stack
@@ -21,6 +21,7 @@ tstack is installed as a whole. At each point of the work in this table, load th
 | Substantial work is about to be reported as done or handed back; the user asks whether the result meets the request | **acceptance-review** |
 | A security scan or hardening of the project is requested | **security-scan** |
 | Pushing, opening or updating a PR or MR, merging | **ship-it** |
+| The project keeps engineering documents in an older layout, or the user asks to migrate or tidy them | **migrate-engineering-docs** |
 | The same kind of mistake happened a second time; the user asks to turn a rule into a check | **prevent-recurrence** |
 | Dispatching a subagent or another CLI; changing an existing API's name, signature, usage or behavior | **agent-delegation** |
 
@@ -167,7 +168,7 @@ Specifications, the architecture record, decision records and tickets that a ski
 - A person or an agent that does not use tstack can read and update every one of them.
 - Work that stops unfinished leaves what the next session needs in the ticket's notes, or in `engineering/handoff.md` when it has no ticket.
 - A review or scan report is delivered in the conversation or the pull request and is not kept as a file. A finding that is left unfixed becomes a ticket through **eng-architect** in a project that keeps tickets, and otherwise an entry under the recording rule in [references/changing-code.md](references/changing-code.md). Write the report to `engineering/reports/` only when the user asks to keep it.
-- A project that still keeps these documents in an older layout is migrated through **eng-architect** before any of them is created or updated.
+- A project that still keeps these documents in an older layout is migrated through **migrate-engineering-docs** before any of them is created or updated.
 
 Before creating `engineering/` or writing a document into it, read [references/engineering-documents.md](references/engineering-documents.md) for the layout, the index file and the writing rules.
 

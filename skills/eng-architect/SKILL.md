@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "4.0.0"
+  version: "4.1.0"
 ---
 
 ## Overview
@@ -53,7 +53,7 @@ A request for discussion produces the corresponding analysis. An authorized impl
 
 ## Project records
 
-A project that keeps these records in an older layout or whose tickets still carry a status field, is migrated first: read [Legacy layout migration](references/legacy-layout-migration.md) and use `scripts/migrate_layout.py`.
+A project that keeps these records in an older layout or whose tickets still carry a status field, is migrated first through **migrate-engineering-docs**.
 
 Use existing documents and task systems that serve the purposes below. When no arrangement exists and full development handoff is needed, create the specification, `engineering/architecture.md`, ticket files, `engineering/README.md`, `AGENTS.md`, and the `CLAUDE.md` pointer. These locations follow the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents). For a bounded architecture decision, select the records needed for the requested outcome.
 

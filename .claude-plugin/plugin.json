@@ -1,7 +1,7 @@
 {
   "name": "tstack",
-  "description": "開發工作流：工程準則、架構與切票、根因調查、測試修復、diff 審查、資安掃描、UI 審查、驗收審查、交付（GitHub 與 GitLab）、subagent 派工、跨 agent 專案記憶，另附指令防護 hook。",
-  "version": "8.0.0",
+  "description": "開發工作流：工程準則、架構與切票、根因調查、測試修復、diff 審查、資安掃描、UI 審查、驗收審查、交付（GitHub 與 GitLab）、subagent 派工、跨 agent 專案記憶、舊專案工程文件遷移，另附指令防護 hook。",
+  "version": "8.1.0",
   "author": {
     "name": "TimLai666"
   },
