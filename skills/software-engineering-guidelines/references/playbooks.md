@@ -9,7 +9,7 @@ Pick by what the task is. Use Small change only when the change meets the defini
 New or changed behavior.
 
 1. Read this project's memory. The session-start hook provides it; when it is absent or lists keys only, load it through **project-memory**.
-2. Restate the goal and the smallest change that meets it. List what is asked, including the [Counterpart Operations](../SKILL.md#counterpart-operations). Settle the choices only the user can make; use **eng-architect** when architecture or the split into tickets is undecided.
+2. Restate the goal and the smallest change that meets it. List what is asked, including the [Counterpart Operations](../SKILL.md#counterpart-operations). Settle the choices only the user can make; use **eng-architect** when the feature needs a specification, when architecture or the split into tickets is undecided, and when a requirement changes in work that has a specification.
 3. Set the success criteria and choose the verification. Apply test-first when the change is large ([testing.md](testing.md)). Read [design.md](design.md).
 4. Write the skeleton ([Skeleton First](../SKILL.md#skeleton-first)) and decide for each slot whether to dispatch it.
 5. Fill the slots. A failure whose cause is not established goes to **investigate** before any fix. A change to an existing API goes through **agent-delegation** first.

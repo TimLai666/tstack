@@ -24,7 +24,7 @@ Rules:
 - Test each ticket: once this is done, can anyone see or use the difference? If not, it is not a feature ticket; only the two exceptions below may be such tickets.
 - Layers still decide the order **inside** one ticket: schema first, then logic, then screen. Never use layers to split the ticket set.
 
-When the work arrived through a plan document, its scope items were already written this way and each one maps to a story. When it did not, do that rewrite here before slicing.
+When the work has a specification, its scope items were already written this way and each one maps to a story. When it did not, do that rewrite here before slicing.
 
 ## Exception 1 — shared foundations
 
@@ -56,7 +56,7 @@ After slicing, go back over the per-feature analysis (1b-1d) and assign every ro
 - each shadow path
 - each interaction edge case
 
-A row no ticket owns is a missing ticket; add it now, not later. A row owned by two tickets means their boundary is unclear; redraw it. The same check applies upward: every story has at least one ticket, and the tickets under a story cover its whole acceptance criteria.
+A row no ticket owns is a missing ticket; add it now, not later. A row owned by two tickets means their boundary is unclear; redraw it. The same check applies upward: every story has at least one ticket, and the tickets under a story cover its whole acceptance criteria. Every scope item of the specification has at least one ticket, and the tickets that name it cover all of its `Done when` conditions. A ticket that names no scope item is one of the two exceptions below or is outside the specification.
 
 ## Where the tickets land
 
@@ -71,6 +71,7 @@ One file per ticket under `docs/dev/tickets/`, numbered from `01` in dependency 
 
 **Epic:** Booking flow
 **User Story:** A customer can complete a booking
+**Spec:** booking.md S3
 **Blocked by:** 01 Project scaffold, 04 Services table
 **Status:** ready
 
@@ -86,7 +87,7 @@ Use this directory as the backlog location when handing off implementation.
 
 ### OpenSpec
 
-When the project has an `openspec/` directory and the `openspec` CLI is available, one ticket is one change, never one task. The ticket's acceptance criteria become the change's requirements and scenarios; the ordering inside one ticket belongs in its `tasks.md`.
+When the project has an `openspec/` directory and the `openspec` CLI is available, one ticket is one change, never one task. The ticket's acceptance criteria become the change's requirements and scenarios, which are the specification as [Specification guidelines](spec-guidelines.md#openspec) sets out; the ordering inside one ticket belongs in its `tasks.md`.
 
 OpenSpec has no dependency relationship *between* changes. Keep the blocking edges in `delivery-status.md`: map each change to one milestone id and let the milestone order carry the sequence. Do not invent a `blocked by` field inside the change.
 

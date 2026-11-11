@@ -20,19 +20,9 @@ Follow the shared decision rules in SKILL.md. Collect unresolved tradeoffs durin
 
 ### Step 1 — Per-feature pass
 
-Take the feature list from the plan document: the scope items, each phrased as something a person can do. Work them one at a time, in the order the plan gives, and finish one before opening the next. Assemble the whole-system picture in Step 2 from what these passes decide; do not draw it ahead of them.
+Before this step, make sure the work has a confirmed specification: read [Specification guidelines](spec-guidelines.md) and write or update it when one is required. Take the feature list from its scope items, each phrased as something a person can do. Work them one at a time, in the order the specification gives, and finish one before opening the next. Assemble the whole-system picture in Step 2 from what these passes decide; do not draw it ahead of them.
 
-When there is no plan document, or the list is still written by module, first turn it into a feature list, preserving the agreed scope. Confirm only unresolved scope choices.
-
-A plan saved by the `plan-grilling` skill has no feature list. Build one from it:
-
-| Plan section | Use |
-|---|---|
-| Goal and constraints | The scope the feature list has to cover, and the constraints every ticket keeps |
-| How to evaluate it | The source of each ticket's acceptance criteria |
-| Decision record | Settled decisions. Reuse them without asking again, including the options the record rejects |
-| Unresolved items | Resolve the ones a ticket depends on before writing that ticket; carry the rest into the ticket that will meet them |
-| Next step | The first ticket in dependency order, when it is still ahead |
+For work that needs no specification, take the feature list from the plan document or the request. When the list is still written by module, first turn it into a feature list, preserving the agreed scope. Confirm only unresolved scope choices.
 
 For each feature, run 1a through 1e, then move to the next feature.
 
@@ -199,7 +189,7 @@ Locate the existing status and coordination records using project instructions a
 
 Read [references/ticket-breakdown-guidelines.md](ticket-breakdown-guidelines.md) before slicing anything.
 
-Cut by what someone can do, not by which layer the code sits in. Each ticket is one narrow path through every layer it needs, verifiable on its own, labelled with its Epic and User Story, and declaring the tickets that block it. Shared foundations collapse into one ticket the others depend on; a wide refactor goes expand → migrate in batches → contract. Then run the coverage check: every row from the per-feature pass (1b-1d) gets exactly one owning ticket, and every story has at least one ticket.
+Cut by what someone can do, not by which layer the code sits in. Each ticket is one narrow path through every layer it needs, verifiable on its own, labelled with its Epic, its User Story and the specification scope item it delivers, and declaring the tickets that block it. Shared foundations collapse into one ticket the others depend on; a wide refactor goes expand → migrate in batches → contract. Then run the coverage check: every row from the per-feature pass (1b-1d) gets exactly one owning ticket, and every story has at least one ticket.
 
 Present the ticket set as a numbered list with title, blockers, and delivered behavior. Check granularity, real dependency gates, coverage, and opportunities to merge or split. Ask together about unresolved choices that affect scope, sequencing, or an agreed approach. If those choices are already settled and ticket creation is authorized, write the set without another approval round.
 
@@ -236,6 +226,8 @@ Register actual artifact paths and when to read them. Default full-handoff examp
   Read it before changing architecture, picking a test seam, or writing a migration.
 - `delivery-status.md` — where the project currently stands.
   Read it first on arrival.
+- `docs/dev/specs/` (or `openspec/specs/`) — what is to be built and how to tell it is done.
+  Read the specification of the feature before working on its tickets. Update it before the code when a requirement changes.
 - `docs/dev/tickets/` (or `openspec/changes/`) — the tickets and their blocking edges.
   Pick up anything whose blockers are all done.
 ```

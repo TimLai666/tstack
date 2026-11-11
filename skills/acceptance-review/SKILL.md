@@ -9,7 +9,7 @@ allowed-tools:
   - Agent
   - AskUserQuestion
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 ## Overview
@@ -40,7 +40,7 @@ Apply the core's [Independent Review](../software-engineering-guidelines/SKILL.m
 Load **agent-delegation** and dispatch one reviewer, following its reuse rules. Use the `acceptance` task type; it gives the reviewer a sandbox directory outside the project and keeps the project's files read-only. The task states:
 
 - **The request in the user's own words.** Quote the original message, and every later message in which the user corrected, added to or narrowed it. Do not paraphrase and do not merge them into a tidy list.
-- **The agreed acceptance criteria**, when some were set.
+- **The agreed acceptance criteria**, when some were set, and the path of the specification when the work has one.
 - **Where the result is and how to run or open it**: the commands, the address, the files, the test accounts or sample data it needs.
 - **This file's absolute path** as the procedure to follow.
 - **Where the result may write.** Point output paths, databases and generated files at the sandbox directory or at a local or test environment. No project file may be modified.
@@ -51,10 +51,10 @@ When the reviewer returns, check each finding against the result. Fixing a findi
 
 ## Step 1 — List what was asked
 
-Build the list from the quoted messages only.
+Build the list from the quoted messages and, when the work has a specification the user confirmed, from its scope items and their conditions.
 
 - One row for each thing the user asked for, in their words, with the message it came from.
-- A later message that corrects or narrows an earlier one replaces it. Keep the latest version and note what it replaced.
+- A later message that corrects or narrows an earlier one replaces it. Keep the latest version and note what it replaced. A message later than the specification overrides it; report the specification as out of date.
 - Keep requirements that the request implies but does not spell out in a separate group, marked as implied. This covers the core's [Counterpart Operations](../software-engineering-guidelines/SKILL.md#counterpart-operations) for every requested action, and the states a requested screen cannot avoid, such as empty and error.
 - When a requirement can be read in more than one way, list the readings. Do not pick one.
 

@@ -1,6 +1,6 @@
 ---
 name: eng-architect
-description: "This skill MUST be used for architecture decisions, module boundaries, or turning plans or specs into tickets. SHOULD be used when implementation requires unresolved architectural choices or the user is unsure how to divide the work. MUST NOT expand an already specified implementation into a new planning exercise. MUST NOT be used to review built screens, which belongs to ui-review. Triggers on: 技術方案, 架構設計, 怎麼切模組, 拆任務, 切票, 排開發順序, 技術規劃."
+description: "This skill MUST be used for architecture decisions, module boundaries, writing or updating the specification of a feature, or turning plans or specs into tickets. A requirement change in work that has a specification MUST update the specification and its tickets before the code. SHOULD be used when implementation requires unresolved architectural choices or the user is unsure how to divide the work. MUST NOT expand an already specified implementation into a new planning exercise. MUST NOT be used to review built screens, which belongs to ui-review. Triggers on: 寫規格, 規格書, 技術方案, 架構設計, 怎麼切模組, 拆任務, 切票, 排開發順序, 技術規劃."
 allowed-tools:
   - Bash
   - Read
@@ -12,16 +12,16 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "2.3.0"
+  version: "3.0.0"
 ---
 
 ## Overview
 
-Design architecture and verifiable tickets. Preserve the requested scope and existing project decisions. Reviewing built screens belongs to **ui-review**.
+Write the specification, design the architecture, and cut verifiable tickets from them. Preserve the requested scope and existing project decisions. Reviewing built screens belongs to **ui-review**.
 
 ## Workflow
 
-Read [Engineering workflow](references/engineering-workflow.md) in full before the per-feature analysis, including its examples. Read the other references at the workflow step that needs them.
+Read [Engineering workflow](references/engineering-workflow.md) in full before the per-feature analysis, including its examples. Read the other references at the workflow step that needs them. Before cutting tickets, and whenever a requirement changes in work that has a specification, read [Specification guidelines](references/spec-guidelines.md).
 
 ## Shared decision rules
 
@@ -40,11 +40,12 @@ A request for discussion produces the corresponding analysis. An authorized impl
 
 ## Project records
 
-Use existing documents and task systems that serve the purposes below. When no arrangement exists and full development handoff is needed, create `ENG.md`, `delivery-status.md`, ticket files, `AGENTS.md`, and the `CLAUDE.md` pointer. For a bounded architecture decision, select the records needed for the requested outcome.
+Use existing documents and task systems that serve the purposes below. When no arrangement exists and full development handoff is needed, create the specification, `ENG.md`, `delivery-status.md`, ticket files, `AGENTS.md`, and the `CLAUDE.md` pointer. For a bounded architecture decision, select the records needed for the requested outcome.
 
 | File or location | Purpose | When to create or update | When to read |
 |---|---|---|---|
 | `ENG.md` | Shared architecture, testing strategy, assumptions, and migration order across tickets | When shared technical decisions need to persist | Before changing the relevant architecture, testing strategy, or migrations |
+| The existing specification, `openspec/specs/`, or `docs/dev/specs/<feature>.md` as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets | What is to be built: scope items, exclusions, flows, constraints and decisions | Before cutting tickets; first of all when a requirement changes | Before working on a ticket of that feature, and when checking the result against the request |
 | `delivery-status.md` | Current progress, blockers, next verifiable output, and next ticket | When ongoing tracking or handoff is needed; update as relevant state changes | On arrival to pick up work |
 | The existing ticket system, or `docs/dev/tickets/` as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets | Each ticket's deliverable, acceptance criteria, and blocking dependencies | When asked to break down work or prepare development handoff | Read the assigned ticket and its dependencies before implementation |
 | `AGENTS.md` | Project working rules and the locations and reading triggers of supporting records | When establishing coordination or changing working rules | Before starting project work |
