@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "The core of tstack and the guidelines for any software change. It names which tstack skill to use at each point of the work, gives the step list for each kind of task, and owns the rules the other skills share. This skill MUST be loaded before planning, designing, writing or changing code, reviewing, testing, shipping, or creating a Git commit (including a standalone commit request), and MUST NOT be skipped because the change is a one-liner. Triggers on: 寫 code, 改 code, 做功能, 修 bug, refactor, 重構, 開發, 實作, 寫程式, 架構設計, 需求釐清, code review, 測試, commit, init, 初始化專案, 建立 AGENTS.md, 建立 CLAUDE.md"
 metadata:
-  version: "3.4.0"
+  version: "3.5.0"
 ---
 
 ## The Stack
@@ -12,7 +12,7 @@ tstack is installed as a whole. At each point of the work in this table, load th
 | When | Use |
 |---|---|
 | Starting work in a project without its memory in context; when the work wraps up or something costly was learned; the user states a preference for every project; a fact about this machine or a remote host was found; before working on a remote host | **project-memory** |
-| A feature needs a specification; architecture, module boundaries or the split into tickets is undecided; a requirement changes in work that has a specification | **eng-architect** |
+| A feature needs a specification; architecture, module boundaries or the split into tickets is undecided; a requirement changes in work that has a specification; work on a ticket starts or finishes | **eng-architect** |
 | A failure whose cause is unknown, a red CI pipeline, the same error a second time, or an expected result that never appeared | **investigate** |
 | Code changed and not yet verified; before pushing; before calling something fixed or done | **test-and-fix** |
 | Substantial or high-risk code is about to be handed back or opened as a PR or MR; code changed after its review; the user hands over a diff | **diff-review**, which covers security-relevant changes following **security-scan** and changed screens following **ui-review** |

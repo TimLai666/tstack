@@ -1,6 +1,6 @@
 ---
 name: eng-architect
-description: "This skill MUST be used for architecture decisions, module boundaries, writing or updating the specification of a feature, or turning plans or specs into tickets. A requirement change in work that has a specification MUST update the specification and its tickets before the code. SHOULD be used when implementation requires unresolved architectural choices or the user is unsure how to divide the work. MUST NOT expand an already specified implementation into a new planning exercise. MUST NOT be used to review built screens, which belongs to ui-review. Triggers on: 寫規格, 規格書, 技術方案, 架構設計, 怎麼切模組, 拆任務, 切票, 排開發順序, 技術規劃."
+description: "This skill MUST be used for architecture decisions, module boundaries, writing or updating the specification of a feature, or turning plans or specs into tickets. A requirement change in work that has a specification MUST update the specification and its tickets before the code. SHOULD be used when implementation requires unresolved architectural choices, the user is unsure how to divide the work, or work on a ticket starts or finishes. MUST NOT expand an already specified implementation into a new planning exercise. MUST NOT be used to review built screens, which belongs to ui-review. Triggers on: 寫規格, 規格書, 技術方案, 架構設計, 怎麼切模組, 拆任務, 切票, 排開發順序, 技術規劃."
 allowed-tools:
   - Bash
   - Read
@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "3.0.0"
+  version: "3.1.0"
 ---
 
 ## Overview
@@ -22,6 +22,15 @@ Write the specification, design the architecture, and cut verifiable tickets fro
 ## Workflow
 
 Read [Engineering workflow](references/engineering-workflow.md) in full before the per-feature analysis, including its examples. Read the other references at the workflow step that needs them. Before cutting tickets, and whenever a requirement changes in work that has a specification, read [Specification guidelines](references/spec-guidelines.md).
+
+## Working a ticket
+
+In a project that keeps tickets, these apply to whoever implements one. Status sections and their update rules are in [Delivery status guidelines](references/delivery-status-guidelines.md).
+
+- **Pick up.** Read the status record and take its next ticket, or the one the user names. Read the ticket, the tickets that block it, and the specification scope item it names. Do not start a ticket whose blockers are not done. Mark it in progress.
+- **Requirement or specified behavior changes.** This includes a bug fix that changes behavior the specification states. Follow "Keeping it in sync" in [Specification guidelines](references/spec-guidelines.md) before changing the code.
+- **A finding or issue is left for later.** Add it to the ticket that owns that behavior, or write a new ticket that names its scope item and blockers. Do not leave it only in the conversation.
+- **Close.** When the work is merged, or handed back when there is no merge, and its acceptance criteria were verified, mark the ticket done and update the status record: the milestone, the blockers it cleared, and the next ticket. A ticket whose checks are not finished stays in progress.
 
 ## Shared decision rules
 

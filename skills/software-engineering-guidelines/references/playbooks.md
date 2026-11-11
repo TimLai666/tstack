@@ -9,14 +9,14 @@ Pick by what the task is. Use Small change only when the change meets the defini
 New or changed behavior.
 
 1. Read this project's memory. The session-start hook provides it; when it is absent or lists keys only, load it through **project-memory**.
-2. Restate the goal and the smallest change that meets it. List what is asked, including the [Counterpart Operations](../SKILL.md#counterpart-operations). Settle the choices only the user can make; use **eng-architect** when the feature needs a specification, when architecture or the split into tickets is undecided, and when a requirement changes in work that has a specification.
+2. In a project that keeps tickets, pick up the ticket through **eng-architect**. Restate the goal and the smallest change that meets it. List what is asked, including the [Counterpart Operations](../SKILL.md#counterpart-operations). Settle the choices only the user can make; use **eng-architect** when the feature needs a specification, when architecture or the split into tickets is undecided, and when a requirement changes in work that has a specification.
 3. Set the success criteria and choose the verification. Apply test-first when the change is large ([testing.md](testing.md)). Read [design.md](design.md).
 4. Write the skeleton ([Skeleton First](../SKILL.md#skeleton-first)) and decide for each slot whether to dispatch it.
 5. Fill the slots. A failure whose cause is not established goes to **investigate** before any fix. A change to an existing API goes through **agent-delegation** first.
 6. Verify with **test-and-fix**.
 7. Have the diff reviewed once through **diff-review**, before handing back or opening a PR or MR, when the change is substantial or high-risk or is going to a PR or MR. A small, low-risk change gets its lightweight self-review.
-8. When the work is substantial, have the result checked against the request through **acceptance-review**, dispatched at the same time as the diff review. Fix the findings of both together, then have only what changed reviewed again.
-9. Go through the Pre-Ship Checklist. Commit under [Staging and Commits](../SKILL.md#staging-and-commits); push, open a PR or MR, or merge through **ship-it**.
+8. When the work is substantial, have the result checked against the request through **acceptance-review**, dispatched at the same time as the diff review. Fix the findings of both together, then have only what changed reviewed again. Record a confirmed finding that is left unfixed under the recording rule in [changing-code.md](changing-code.md).
+9. Go through the Pre-Ship Checklist. Commit under [Staging and Commits](../SKILL.md#staging-and-commits); push, open a PR or MR, or merge through **ship-it**. In a project that keeps tickets, close the ticket through **eng-architect** once the work is merged or handed back.
 10. Record qualifying lessons through **project-memory**.
 11. Compare the result with the full authorized outcome and continue any required work that can still be completed. Then give the [Turn-End Report](../SKILL.md#turn-end-report).
 
@@ -27,12 +27,12 @@ Something that worked, or should work, does not.
 1. Read this project's memory, and search it for the symptom.
 2. Reproduce the failure on the real target and write down the exact symptom.
 3. Establish the root cause. When it is not already shown by evidence, use **investigate**.
-4. Write the fix skeleton: the root cause, every place that has the same fault, and the check that proves each one. Check what the fix could break elsewhere with **diff-review**'s blast-radius check.
+4. Write the fix skeleton: the root cause, every place that has the same fault, and the check that proves each one. Check what the fix could break elsewhere with **diff-review**'s blast-radius check. When the fix changes behavior that a specification states, update the specification through **eng-architect** before the code.
 5. Add the [regression test](../SKILL.md#regression-tests) and make the fix.
 6. Verify with **test-and-fix**, and repeat the original reproduction.
 7. Have the diff reviewed once through **diff-review**, before handing back or opening a PR or MR, when the change is substantial or high-risk or is going to a PR or MR. A small, low-risk change gets its lightweight self-review.
-8. When the work is substantial, have the result checked against the request through **acceptance-review**, dispatched at the same time as the diff review. Fix the findings of both together, then have only what changed reviewed again.
-9. Commit the fix, then its test, under [Staging and Commits](../SKILL.md#staging-and-commits); deliver through **ship-it**.
+8. When the work is substantial, have the result checked against the request through **acceptance-review**, dispatched at the same time as the diff review. Fix the findings of both together, then have only what changed reviewed again. Record a confirmed finding that is left unfixed under the recording rule in [changing-code.md](changing-code.md).
+9. Commit the fix, then its test, under [Staging and Commits](../SKILL.md#staging-and-commits); deliver through **ship-it**. In a project that keeps tickets, close the ticket through **eng-architect** once the work is merged or handed back.
 10. When this is the second time the same kind of mistake happened, use **prevent-recurrence**.
 11. Record qualifying lessons through **project-memory**.
 12. Compare the result with the full authorized outcome and continue any required work that can still be completed. Then give the [Turn-End Report](../SKILL.md#turn-end-report).
@@ -47,8 +47,8 @@ Structure changes, behavior does not.
 4. Change in small units that each end in a state the tests can check.
 5. Run the same tests again and compare with step 2.
 6. Have the diff reviewed once through **diff-review**, before handing back or opening a PR or MR, when the change is substantial or high-risk or is going to a PR or MR. A small, low-risk change gets its lightweight self-review.
-7. When the work is substantial, have the result checked against the request through **acceptance-review**, dispatched at the same time as the diff review. Fix the findings of both together, then have only what changed reviewed again.
-8. Commit under [Staging and Commits](../SKILL.md#staging-and-commits); deliver through **ship-it**.
+7. When the work is substantial, have the result checked against the request through **acceptance-review**, dispatched at the same time as the diff review. Fix the findings of both together, then have only what changed reviewed again. Record a confirmed finding that is left unfixed under the recording rule in [changing-code.md](changing-code.md).
+8. Commit under [Staging and Commits](../SKILL.md#staging-and-commits); deliver through **ship-it**. In a project that keeps tickets, close the ticket through **eng-architect** once the work is merged or handed back.
 9. Record qualifying lessons through **project-memory**.
 10. Compare the result with the full authorized outcome and continue any required work that can still be completed. Then give the [Turn-End Report](../SKILL.md#turn-end-report).
 
