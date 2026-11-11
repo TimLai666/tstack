@@ -15,7 +15,19 @@ Engineering documents live under `engineering/`, as the core's [Engineering Docu
 
 `delivery-plan.md` is the oldest name of the status record. It must not be mistaken for a feature plan by a `*-plan.md` search, and a feature plan with that name is not moved.
 
-`PLAN.md`, `TODOS.md`, `docs/plans/` and `docs/plan-grilling/` were never written by this skill. Leave them where they are.
+The oldest versions of this workflow also left these, which the script reports and does not move, because people write files with the same names:
+
+| File | When an earlier version of this workflow wrote it |
+|---|---|
+| `PLAN.md` at the root | Carry the scope it still describes into a specification |
+| `TODOS.md` at the root | Turn each open item into a ticket, or into a `Follow-ups` entry in a project without tickets |
+| `~/.mystack/projects/<project>/` in the user's home directory | Plans, design notes and checkpoints kept outside the repository. Carry over what the open work still needs |
+
+Ask the user whether each of these came from this workflow, and delete it only after they agree.
+
+In a project whose tickets are OpenSpec changes, the tickets stay under `openspec/`. Only the status record moves, and the order it set between changes is written into each change's `proposal.md`.
+
+`docs/plans/` and `docs/plan-grilling/` belong to another skill. Leave them where they are.
 
 ## When to run it
 
@@ -41,7 +53,7 @@ The script is `scripts/migrate_layout.py`; its `--help` lists the moves and its 
 4. File by hand each ticket the report could not file, and fill in each `**Blocked:**` line it created.
 5. Carry over what the report lists under "Carry over by hand":
    - **`engineering/architecture.md`**: bring it to the current form in Step 4 of the [Engineering workflow](engineering-workflow.md). Move the reasoning of each hard-to-reverse choice to a [decision record](decision-records.md) and the migration steps of one change to its ticket.
-   - **`legacy-status.md`** and **`legacy-handoff.md`**: write each decision that still holds as a decision record. Move each handoff note to the `## Notes` of the ticket it concerns, each working rule to `AGENTS.md`, and each fact about a machine to project memory through **project-memory**. Check that every blocker named is on its ticket and that every ticket called done is in `done/`.
+   - **`legacy-status.md`** and **`legacy-handoff.md`**: write each decision that still holds as a decision record. Move each handoff note to the `## Notes` of the ticket it concerns, each working rule to `AGENTS.md`, and each fact about a machine to project memory through **project-memory**. Check that every blocker named is on its ticket and that every ticket called done is in `done/`. For OpenSpec changes, write what each change waits for into its `proposal.md`.
    - **`legacy-ui-review.md`**: write each open item as a fix ticket, and each component's copy and states into the `Screens` section of that feature's specification.
    - **`legacy-security-scan.md`**: write each unfixed finding as a fix ticket. When the repository is public or its visibility is unknown, get the user's confirmation first.
    - **Other files under `engineering/reports/`**: move what is still needed into the notes of the ticket it belongs to.

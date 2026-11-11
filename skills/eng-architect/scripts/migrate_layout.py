@@ -32,7 +32,10 @@ filed the same way.
 
 Rules:
   - delivery-plan.md is moved only when it reads as a status record (it has a
-    "Next Verifiable Output" or "Next Ticket" heading). A feature plan stays.
+    "Next Verifiable Output", "Next Ticket" or "Next OpenSpec Change" heading).
+    A feature plan stays.
+  - PLAN.md and TODOS.md at the root are reported and never moved: the oldest
+    versions of this workflow wrote them, and so do people.
   - A move is blocked, and reported, when its destination exists or when two
     sources share one destination. Nothing is overwritten or deleted.
   - Tracked files move with `git mv`; other files are renamed.
@@ -76,7 +79,8 @@ BY_HAND = {
     "engineering/architecture.md": "keep the system as it is now; move the reasoning of each hard-to-reverse choice "
                                    "to a decision record and the migration steps of one change to its ticket",
     "engineering/reports/legacy-status.md": "write each Decision Log entry that still holds as a decision record, move "
-                                            "each handoff note to the ticket it concerns, then delete the file",
+                                            "each handoff note to the ticket it concerns, state the order between "
+                                            "OpenSpec changes in their proposals, then delete the file",
     "engineering/reports/legacy-handoff.md": "move each note to the ticket it concerns, each working rule to AGENTS.md "
                                              "and each fact about a machine to project memory, then delete the file",
     "engineering/reports/legacy-ui-review.md": "write each open item as a fix ticket and each component's copy and states "
@@ -84,7 +88,11 @@ BY_HAND = {
     "engineering/reports/legacy-security-scan.md": "write each unfixed finding as a fix ticket, after the user confirms "
                                                    "when the repository is public, then delete the file",
 }
-STATUS_HEADING = re.compile(r"^#+\s*`?(Next Verifiable Output|Next Ticket)`?\s*$", re.MULTILINE)
+STATUS_HEADING = re.compile(r"^#+\s*`?(Next Verifiable Output|Next Ticket|Next OpenSpec Change)`?\s*$", re.MULTILINE)
+UNDECIDED = {
+    "PLAN.md": "if an earlier version of this workflow wrote it, carry its scope into a specification",
+    "TODOS.md": "if an earlier version of this workflow wrote it, turn each open item into a ticket",
+}
 STATUS_LINE = re.compile(r"^(?:\*\*)?(?:Status|狀態)[:：]?(?:\*\*)?[:：]?[ \t]*(.*?)[ \t]*\r?\n", re.MULTILINE | re.IGNORECASE)
 DONE = {"done", "complete", "completed", "closed", "merged", "finished", "shipped", "完成", "已完成"}
 DOING = {"in progress", "doing", "wip", "active", "started", "in review", "進行中"}
@@ -136,6 +144,9 @@ def plan(root):
             notes.append(f"{source}: does not read as a status record, left in place")
             continue
         candidates.append((source, destination, None))
+    for name, task in UNDECIDED.items():
+        if (root / name).is_file():
+            notes.append(f"{name}: not moved; {task}, then ask the user before deleting it")
     for source, destination in DIRECTORIES:
         for item in sorted((root / source).rglob("*")) if (root / source).is_dir() else []:
             if item.is_file():

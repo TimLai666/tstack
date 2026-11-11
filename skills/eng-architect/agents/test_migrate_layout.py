@@ -129,6 +129,26 @@ class MigrateLayoutTest(unittest.TestCase):
                          "[ticket](/engineering/tickets/done/01-a.md) [guide](/docs/guide.md)\n")
         self.assertIn("Moved with the tickets", result.stdout)
 
+    def test_oldest_generation_project(self):
+        plan = ("# Delivery Plan\n\n## Current Phase\nbuild\n\n## Milestones\n- M1 add-login\n\n"
+                "## Next Verifiable Output\nlogin\n\n## Next OpenSpec Change\nadd-login\n\n## Decision Log\n- x\n\n"
+                "## Handoff Notes\n- y\n")
+        self.write("delivery-plan.md", plan)
+        self.write("openspec/changes/add-login/proposal.md")
+        self.write("openspec/specs/auth/spec.md")
+        self.write("PLAN.md", "# Plan\n")
+        self.write("TODOS.md", "- later\n")
+        self.write("AGENTS.md", "Read `delivery-plan.md` first.\n")
+        result = self.run_script("--apply")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(self.text("engineering/reports/legacy-status.md"), plan)
+        for path in ("openspec/changes/add-login/proposal.md", "openspec/specs/auth/spec.md", "PLAN.md", "TODOS.md"):
+            self.assertTrue((self.root / path).is_file(), path)
+        self.assertIn("PLAN.md: not moved", result.stdout)
+        self.assertIn("TODOS.md: not moved", result.stdout)
+        self.assertIn("state the order between OpenSpec changes", result.stdout)
+        self.assertIn("AGENTS.md:1:", result.stdout)
+
     def test_handoff_file_is_parked(self):
         self.write("HANDOFF.md")
         result = self.run_script("--apply")
