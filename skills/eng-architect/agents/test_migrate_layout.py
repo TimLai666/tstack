@@ -83,6 +83,7 @@ class MigrateLayoutTest(unittest.TestCase):
             self.assertNotIn("Status", self.text(base + path), path)
             self.assertIn("**Blocked by:** none\n\n## What it delivers", self.text(base + path))
         self.assertIn("**Blocked:** reason not recorded", self.text(base + "04-blocked.md"))
+        self.assertIn("04-blocked.md: its status was blocked", result.stdout)
         self.assertNotIn("**Status:**", self.text(base + "04-blocked.md"))
         self.assertIn("**Status:** waiting for legal", self.text(base + "05-odd.md"))
         self.assertIn("05-odd.md: status 'waiting for legal' is not recognized", result.stdout)
@@ -99,6 +100,40 @@ class MigrateLayoutTest(unittest.TestCase):
         self.assertEqual(self.text(base + "doing/02-b.md"), "# 02\n\n\nbody\n")
         self.assertEqual(self.text(base + "03-c.md"), "# 03\n\n\nbody\n")
         self.assertIn("Status: line is described", self.text(base + "04-d.md"))
+
+    def test_blocked_status_with_blockers_is_only_removed(self):
+        body = "# 02\n\n**Blocked by:** [01 scaffold](01-a.md)\n**Status:** blocked\n\nbody\n"
+        self.write("docs/tickets/01-a.md", ticket("done"))
+        self.write("docs/tickets/02-b.md", body)
+        result = self.run_script("--apply")
+        self.assertEqual(self.text("engineering/tickets/02-b.md"), "# 02\n\n**Blocked by:** 01 scaffold\n\nbody\n")
+        self.assertNotIn("its status was blocked", result.stdout)
+
+    def test_links_survive_the_move(self):
+        self.write("src/main.go")
+        self.write("docs/guide.md")
+        self.write("docs/tickets/README.md", "[01](01-a.md) [guide](../guide.md)\n")
+        self.write("docs/tickets/01-a.md", "# 01\n\n**Status:** done\n\n[code](../../src/main.go#L3) [02](02-b.md) "
+                                           "[site](https://example.com/a.md) [gone](missing.md) ![shot](../guide.md)\n")
+        self.write("docs/tickets/02-b.md", "# 02\n\nSee [01 — first](01-a.md).\n")
+        self.write("ENG.md", "[ticket](docs/tickets/01-a.md) [guide](docs/guide.md)\n")
+        result = self.run_script("--apply")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(self.text("engineering/tickets/done/01-a.md"),
+                         "# 01\n\n\n[code](/src/main.go#L3) 02 [site](https://example.com/a.md) [gone](missing.md) "
+                         "![shot](/docs/guide.md)\n")
+        self.assertEqual(self.text("engineering/tickets/02-b.md"), "# 02\n\nSee 01 — first.\n")
+        self.assertEqual(self.text("engineering/tickets/README.md"),
+                         "[01](/engineering/tickets/done/01-a.md) [guide](/docs/guide.md)\n")
+        self.assertEqual(self.text("engineering/architecture.md"),
+                         "[ticket](/engineering/tickets/done/01-a.md) [guide](/docs/guide.md)\n")
+        self.assertIn("Moved with the tickets", result.stdout)
+
+    def test_handoff_file_is_parked(self):
+        self.write("HANDOFF.md")
+        result = self.run_script("--apply")
+        self.assertTrue((self.root / "engineering/reports/legacy-handoff.md").is_file())
+        self.assertIn("legacy-handoff.md: move each note to the ticket it concerns", result.stdout)
 
     def test_tickets_already_in_place_are_refiled_and_a_second_run_is_clean(self):
         self.write("engineering/README.md")

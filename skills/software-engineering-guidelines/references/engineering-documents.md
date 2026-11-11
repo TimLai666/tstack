@@ -76,5 +76,6 @@ Working documents for the people and agents developing this project. Documentati
 - **Readable without any tool.** A person or an agent that has never used this stack can read and update every file. Describe a step by what is done, such as "reviewed before merging", and do not name a skill, a plugin or a command of this stack inside the documents.
 - **Plain Markdown.** No file needs a script to be read or updated.
 - **No dates or branches in the names** of specifications, the architecture record and tickets. Git holds the history.
-- **Refer by name, not by path.** Tickets move between directories; refer to a ticket by its number and to a scope item by its id.
+- **Refer by name, not by path.** Tickets move between directories; refer to a ticket by its number and to a scope item by its id, without a link.
+- **Link from the repository root.** A link from an engineering document to a file in the repository starts with `/`, such as `/src/server/auth.ts`, so that it still resolves after the document moves.
 - **Register in `AGENTS.md`.** `AGENTS.md` names `engineering/` and says when each document is read, so that any agent tool finds them.

@@ -16,7 +16,8 @@ engineering/tickets/
 
 - The number is the ticket's name. It does not set the order of work.
 - A ticket can start when every ticket it names under `Blocked by` is in `done/`. Any ticket that can start may be picked, and several may be in progress at once.
-- Tickets refer to each other, and specifications refer to tickets, by number and never by path.
+- Tickets refer to each other, and specifications refer to tickets, by number and never by a link or a path. A link from a ticket to any other file in the repository starts from the repository root, with a leading `/`.
+- No index repeats a ticket's state. A list of tickets kept beside them names each ticket and nothing about its progress.
 - A ticket that cannot proceed stays where it is and gets a `**Blocked:**` line that says what is missing and who or what it waits for. Remove the line when it clears.
 
 There is no status file. To report progress, list the three directories.

@@ -12,6 +12,7 @@ Moves:
   docs/tickets/, docs/dev/tickets/       -> engineering/tickets/
   docs/dev/specs/                        -> engineering/specs/
   delivery-plan.md, delivery-status.md   -> engineering/reports/legacy-status.md
+  HANDOFF.md                             -> engineering/reports/legacy-handoff.md
   DESIGN-REVIEW.md, docs/dev/ui-review.md
                                          -> engineering/reports/legacy-ui-review.md
   docs/security-scan/report.md, docs/dev/security-scan.md
@@ -23,7 +24,8 @@ the directory a ticket is in is now its state:
   done, completed, closed, merged        -> engineering/tickets/done/
   in progress, doing, wip, active        -> engineering/tickets/doing/
   ready, open, todo, not started, ...    -> engineering/tickets/
-  blocked                                -> stays open; the line becomes **Blocked:**
+  blocked, with tickets under Blocked by  -> stays open; the field is removed
+  blocked, with nothing under Blocked by -> stays open; the line becomes **Blocked:**
 A ticket whose status value is not recognized keeps the line and is reported.
 Tickets already in engineering/tickets/ that still carry a status field are
 filed the same way.
@@ -35,6 +37,10 @@ Rules:
     sources share one destination. Nothing is overwritten or deleted.
   - Tracked files move with `git mv`; other files are renamed.
   - A source directory is removed only when the move left it empty.
+  - Links inside a moved Markdown file are rewritten so that they survive this
+    move and later moves between ticket directories: a link from one ticket to
+    another becomes its link text, and any other relative link becomes a path
+    from the repository root.
   - The status field may be written **Status:** or Status:, in English or as 狀態.
   - The files under engineering/reports/legacy-* hold content that has no place
     in the new layout as it stands. The script lists what to carry over by hand.
@@ -54,6 +60,7 @@ FILES = [
     ("ENG.md", "engineering/architecture.md"),
     ("delivery-plan.md", "engineering/reports/legacy-status.md"),
     ("delivery-status.md", "engineering/reports/legacy-status.md"),
+    ("HANDOFF.md", "engineering/reports/legacy-handoff.md"),
     ("DESIGN-REVIEW.md", "engineering/reports/legacy-ui-review.md"),
     ("docs/dev/ui-review.md", "engineering/reports/legacy-ui-review.md"),
     ("docs/security-scan/report.md", "engineering/reports/legacy-security-scan.md"),
@@ -68,8 +75,10 @@ TICKETS = "engineering/tickets"
 BY_HAND = {
     "engineering/architecture.md": "keep the system as it is now; move the reasoning of each hard-to-reverse choice "
                                    "to a decision record and the migration steps of one change to its ticket",
-    "engineering/reports/legacy-status.md": "write each Decision Log entry that still holds as a decision record, check "
-                                            "that every blocker is on its ticket, then delete the file",
+    "engineering/reports/legacy-status.md": "write each Decision Log entry that still holds as a decision record, move "
+                                            "each handoff note to the ticket it concerns, then delete the file",
+    "engineering/reports/legacy-handoff.md": "move each note to the ticket it concerns, each working rule to AGENTS.md "
+                                             "and each fact about a machine to project memory, then delete the file",
     "engineering/reports/legacy-ui-review.md": "write each open item as a fix ticket and each component's copy and states "
                                                "into that feature's specification, then delete the file",
     "engineering/reports/legacy-security-scan.md": "write each unfixed finding as a fix ticket, after the user confirms "
@@ -80,6 +89,9 @@ STATUS_LINE = re.compile(r"^(?:\*\*)?(?:Status|狀態)[:：]?(?:\*\*)?[:：]?[ \
 DONE = {"done", "complete", "completed", "closed", "merged", "finished", "shipped", "完成", "已完成"}
 DOING = {"in progress", "doing", "wip", "active", "started", "in review", "進行中"}
 OPEN = {"ready", "open", "todo", "to do", "not started", "pending", "backlog", "new", "planned", "待辦", "未開始", "就緒"}
+BLOCKED_BY = re.compile(r"^(?:\*\*)?Blocked by[:：]?(?:\*\*)?[:：]?[ \t]*(.*)$", re.MULTILINE | re.IGNORECASE)
+NO_BLOCKER = re.compile(r"^[\s`*]*(none|n/?a|無|—|-|)[\s`*.]*$", re.IGNORECASE)
+LINK = re.compile(r"(!?)\[([^\]\n]*)\]\(([^)\s]+)\)")
 OLD_PATH = re.compile(
     r"(?<![\w/.-])(delivery-plan\.md|delivery-status\.md|ENG\.md|DESIGN-REVIEW\.md)(?![\w-])"
     r"|docs/(?:tickets|dev|security-scan|software-engineering-guidelines)/")
@@ -95,7 +107,8 @@ def read(path):
 
 def ticket_state(path):
     """Return (subdirectory, edit, note) from a ticket's old status field."""
-    match = STATUS_LINE.search(read(path))
+    text = read(path)
+    match = STATUS_LINE.search(text)
     if not match:
         return "", None, None
     value = re.sub(r"[_\-]+", " ", match.group(1).strip("`* ").lower())
@@ -106,6 +119,9 @@ def ticket_state(path):
     if value in OPEN:
         return "", "strip", None
     if value.startswith(("blocked", "卡住", "阻塞")):
+        blockers = BLOCKED_BY.search(text)
+        if blockers and not NO_BLOCKER.match(blockers.group(1)):
+            return "", "strip", None
         return "", "blocked", "its status was blocked; say on the **Blocked:** line what it waits for"
     return "", None, f"status '{match.group(1)}' is not recognized; file it by hand and remove the line"
 
@@ -169,7 +185,32 @@ def is_tracked(root, path):
     return result.returncode == 0
 
 
+def is_ticket(path):
+    return (path.startswith(TICKETS + "/") and path.lower().endswith((".md", ".mdx"))
+            and not path.lower().endswith("readme.md"))
+
+
+def relink(root, text, source, destination, moved):
+    """Rewrite the relative links of a file that moved from source to destination."""
+    def replace(match):
+        image, label, target = match.groups()
+        path, _, anchor = target.partition("#")
+        if not path or path.startswith(("/", "#")) or re.match(r"[a-zA-Z][a-zA-Z0-9+.-]*:", path):
+            return match.group(0)
+        old = os.path.normpath(os.path.join(os.path.dirname(source), path)).replace(os.sep, "/")
+        if old.startswith(".."):
+            return match.group(0)
+        new = moved.get(old, old)
+        if not (root / new).exists():
+            return match.group(0)
+        if not image and is_ticket(destination) and is_ticket(new):
+            return label
+        return f"{image}[{label}](/{new}{'#' + anchor if anchor else ''})"
+    return LINK.sub(replace, text)
+
+
 def apply(root, moves):
+    moved = {source: destination for source, destination, _ in moves}
     for source, destination, edit in moves:
         if source != destination:
             (root / destination).parent.mkdir(parents=True, exist_ok=True)
@@ -178,11 +219,20 @@ def apply(root, moves):
                                capture_output=True, text=True)
             else:
                 os.rename(root / source, root / destination)
+    for source, destination, edit in moves:
+        path = root / destination
+        if not destination.lower().endswith((".md", ".mdx")):
+            continue
+        with open(path, encoding="utf-8", newline="") as handle:
+            text = handle.read()
+        changed = text
         if edit:
-            path = root / destination
-            text = path.read_text(encoding="utf-8")
             replacement = "" if edit == "strip" else "**Blocked:** reason not recorded\n"
-            path.write_text(STATUS_LINE.sub(replacement, text, count=1), encoding="utf-8", newline="")
+            changed = STATUS_LINE.sub(replacement, changed, count=1)
+        changed = relink(root, changed, source, destination, moved)
+        if changed != text:
+            with open(path, "w", encoding="utf-8", newline="") as handle:
+                handle.write(changed)
     emptied = {str(Path(source).parent) for source, destination, _ in moves if source != destination}
     for folder in sorted(emptied, key=len, reverse=True):
         current = root / folder
@@ -251,6 +301,11 @@ def main():
         print("Still mention an old path; update each to the new path:")
         for line in mentions:
             print(f"  {line}")
+    index_files = [d for _, d, _ in moves if d.startswith(TICKETS + "/") and not is_ticket(d)]
+    if index_files:
+        print("Moved with the tickets; remove any copy of ticket state they hold, or regenerate them:")
+        for path in index_files:
+            print(f"  {path}")
     if (moves or (root / "engineering").is_dir()) and not (root / "engineering" / "README.md").exists():
         print("engineering/README.md is missing; write it before finishing.")
     if not args.apply and moves:
