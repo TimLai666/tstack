@@ -181,6 +181,19 @@ class MigrateLayoutTest(unittest.TestCase):
             self.assertEqual(result.returncode, 2, value)
         self.assertTrue((self.root / "docs/spec/v1.md").is_file())
 
+    def test_saved_plans_move_to_the_root_plans_directory(self):
+        self.write("docs/plan-grilling/login-plan.md", "See [guide](../guide.md).\n")
+        self.write("docs/plans/billing-plan.md")
+        self.write("docs/guide.md")
+        self.write("AGENTS.md", "Plans are in docs/plan-grilling/.\n")
+        result = self.run_script("--apply")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(self.text("plans/login-plan.md"), "See [guide](/docs/guide.md).\n")
+        self.assertTrue((self.root / "plans/billing-plan.md").is_file())
+        self.assertFalse((self.root / "docs/plan-grilling").exists())
+        self.assertIn("AGENTS.md:1:", result.stdout)
+        self.assertNotIn("engineering/README.md is missing", result.stdout)
+
     def test_root_handoff_file_moves_into_engineering(self):
         self.write("HANDOFF.md")
         self.write("engineering/README.md")

@@ -12,7 +12,7 @@ allowed-tools:
   - AskUserQuestion
   - WebSearch
 metadata:
-  version: "4.1.0"
+  version: "4.2.0"
 ---
 
 ## Overview

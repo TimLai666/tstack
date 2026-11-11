@@ -66,6 +66,7 @@ At the start of a session, read `engineering/handoff.md` when it exists and cont
 | `README.md` | The entry for the project's users and newcomers |
 | `.gitattributes` | Git reads it from the root |
 | `DESIGN.md` | The visual baseline, read from the root by design tools. Not written by this stack |
+| `plans/` | Plans saved by the `plan-grilling` skill, which serves work of every kind and not only software. Not written by this stack; a specification is written from a plan |
 
 Nothing else is written to the root.
 

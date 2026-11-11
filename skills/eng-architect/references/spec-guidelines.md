@@ -76,7 +76,7 @@ Rules for the content:
 
 Take it from the user's messages, the project's existing documents and prior decisions. Ask only for the choices that remain open and would change the scope.
 
-A plan saved by the `plan-grilling` skill, by default under `docs/plan-grilling/`, is a source and not the specification. Carry it over:
+A plan saved by the `plan-grilling` skill, by default under `plans/` at the project root, is a source and not the specification. Carry it over:
 
 | Plan section | Goes to |
 |---|---|

@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "The core of tstack and the guidelines for any software change. It names which tstack skill to use at each point of the work, gives the step list for each kind of task, and owns the rules the other skills share. This skill MUST be loaded before planning, designing, writing or changing code, reviewing, testing, shipping, or creating a Git commit (including a standalone commit request), and MUST NOT be skipped because the change is a one-liner. Triggers on: 寫 code, 改 code, 做功能, 修 bug, refactor, 重構, 開發, 實作, 寫程式, 架構設計, 需求釐清, code review, 測試, commit, init, 初始化專案, 建立 AGENTS.md, 建立 CLAUDE.md"
 metadata:
-  version: "4.1.0"
+  version: "4.2.0"
 ---
 
 ## The Stack

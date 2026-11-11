@@ -2,7 +2,7 @@
 
 ### Preamble
 
-Confirm the project root and resolve project files from it, even when starting in a subdirectory. Locate the plan that matches the user's scope by its content and project references. `docs/plans/`, `docs/plan-grilling/` and `*-plan.md` are discovery hints; the user may have chosen another location. Distinguish feature plans from status records rather than choosing by modification time.
+Confirm the project root and resolve project files from it, even when starting in a subdirectory. Locate the plan that matches the user's scope by its content and project references. `plans/` at the project root is where the `plan-grilling` skill saves plans; `docs/plans/`, `docs/plan-grilling/` and `*-plan.md` are older locations and further discovery hints; the user may have chosen another location. Distinguish feature plans from status records rather than choosing by modification time.
 
 Read the applicable project instructions, the selected plan, and existing architecture documents, including `engineering/architecture.md`, `ENG.md` or `ARCHITECTURE.md` when present. Read the full relevant sections and their dependencies before designing or updating them. A missing conventional filename does not establish that no equivalent document exists.
 

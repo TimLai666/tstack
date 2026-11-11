@@ -10,7 +10,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 ## Overview
@@ -31,6 +31,7 @@ Run it on request, and when another skill finds an older layout before writing a
 | `DESIGN-REVIEW.md`, `docs/dev/ui-review.md` | No review record. Open items become fix tickets, component copy and states go into the feature's specification |
 | `docs/security-scan/report.md`, `docs/dev/security-scan.md` | No kept report. Unfixed findings become fix tickets |
 | `docs/software-engineering-guidelines/` | The notes of the ticket the work belongs to |
+| `docs/plan-grilling/`, `docs/plans/` | `plans/` at the project root, where the `plan-grilling` skill saves plans |
 
 `delivery-plan.md` is the oldest name of the status record. A feature plan with that name is not moved.
 
@@ -43,8 +44,6 @@ The oldest versions of this workflow also left these, which the script reports a
 | `~/.mystack/projects/<project>/` in the user's home directory | Plans, design notes and checkpoints kept outside the repository. Carry over what the open work still needs |
 
 In a project whose tickets are OpenSpec changes, the tickets stay under `openspec/`. Only the status record moves, and the order it set between changes is written into each change's `proposal.md`.
-
-`docs/plans/` and `docs/plan-grilling/` belong to another skill. Leave them where they are.
 
 ## Step 1 — Look, change nothing
 

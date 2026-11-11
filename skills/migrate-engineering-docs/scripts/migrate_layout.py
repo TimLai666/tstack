@@ -18,6 +18,7 @@ Moves:
   docs/security-scan/report.md, docs/dev/security-scan.md
                                          -> engineering/reports/legacy-security-scan.md
   docs/software-engineering-guidelines/  -> engineering/reports/
+  docs/plan-grilling/, docs/plans/       -> plans/
 
 Other engineering documents, chosen by the user:
   --move SOURCE=DESTINATION moves one more file or directory. SOURCE is a path
@@ -82,6 +83,8 @@ FILES = [
 DIRECTORIES = [
     ("docs/dev/specs", "engineering/specs"),
     ("docs/software-engineering-guidelines", "engineering/reports"),
+    ("docs/plan-grilling", "plans"),
+    ("docs/plans", "plans"),
 ]
 TICKET_DIRECTORIES = ["docs/tickets", "docs/dev/tickets"]
 TICKETS = "engineering/tickets"
@@ -112,7 +115,7 @@ NO_BLOCKER = re.compile(r"^[\s`*]*(none|n/?a|無|—|-|)[\s`*.]*$", re.IGNORECAS
 LINK = re.compile(r"(!?)\[([^\]\n]*)\]\(([^)\s]+)\)")
 OLD_PATH = re.compile(
     r"(?<![\w/.-])(delivery-plan\.md|delivery-status\.md|ENG\.md|DESIGN-REVIEW\.md)(?![\w-])"
-    r"|docs/(?:tickets|dev|security-scan|software-engineering-guidelines)/")
+    r"|docs/(?:tickets|dev|security-scan|software-engineering-guidelines|plan-grilling|plans)/")
 SKIPPED_DIRECTORIES = {".git", "node_modules", "vendor", "dist", "build", ".venv", "venv"}
 
 
@@ -391,7 +394,8 @@ def main():
         print("Moved with the tickets; remove any copy of ticket state they hold, or regenerate them:")
         for path in index_files:
             print(f"  {path}")
-    if (moves or (root / "engineering").is_dir()) and not (root / "engineering" / "README.md").exists():
+    into_engineering = any(d.startswith("engineering/") for _, d, _ in moves)
+    if (into_engineering or (root / "engineering").is_dir()) and not (root / "engineering" / "README.md").exists():
         print("engineering/README.md is missing; write it before finishing.")
     others = [] if args.apply else uncovered_docs(root, extra)
     if others:
