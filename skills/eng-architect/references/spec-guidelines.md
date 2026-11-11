@@ -68,6 +68,7 @@ Rules for the content:
 
 - Every scope item reads "<who> can <do what>", has an id that never changes once tickets refer to it, and carries at least one checkable condition. A module, a layer or a technology is not a scope item.
 - The specification states the behavior the feature has now, and is updated in place when a later change alters it. Architecture and the order of implementation go in `engineering/architecture.md` and the tickets.
+- `Screens` states what each screen does: its states and the exact copy. How a screen looks is set by the project's visual baseline, `DESIGN.md`, and by `design/compiled-spec.md` where the `design-studio` skill wrote one; the specification does not restate it. When the two disagree about a state or a piece of copy, the specification is corrected first and the visual spec follows it.
 - `Decisions` holds the choices about this feature's behavior. A hard-to-reverse choice that reaches across features is a [decision record](decision-records.md).
 - A reader with only this file can start work. Do not point at the conversation for a missing fact.
 - Leave out a section that has nothing in it. `Scope` and `Not doing` are always present.

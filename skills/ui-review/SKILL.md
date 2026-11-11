@@ -10,7 +10,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 ## Overview
@@ -110,7 +110,7 @@ Deliver the review in the conversation, or in the pull request when the review i
 [one row per violation only — matches are not worth listing]
 ```
 
-- When the feature has a specification with a `Screens` section, check each screen's states and exact copy against it and report each deviation as a finding. States or copy the specification lacks are reported as missing from it.
+- When the feature has a specification with a `Screens` section, check each screen's states and exact copy against it and report each deviation as a finding. Check how the screen looks against the visual baseline, not against the specification. States or copy the specification lacks are reported as missing from it.
 - A finding that is not fixed now is recorded as the core's [Engineering Documents](../software-engineering-guidelines/SKILL.md#engineering-documents) sets.
 - When the user asks to keep the review, write it as a dated report as the same section sets.
 
