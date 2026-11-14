@@ -15,9 +15,18 @@ Usage:
   memory.py load [--all] [--json] [--fit N] [--global | --machine | --host NAME]
   memory.py add --type T --key K --insight S --confidence N [--global | --machine | --host NAME]
                 [--files a,b] [--source X] [--absorbs k1,k2]
+  memory.py promote --key K --to PATH
   memory.py search QUERY [--json] [--global | --machine | --host NAME]
   memory.py stats [--global | --machine | --host NAME]
   memory.py path [--global | --machine | --host NAME]
+
+promote marks a project lesson as written into the repository file PATH (such as
+AGENTS.md or engineering/architecture.md): load stops showing it, load --all lists
+it with where it went, search still finds it, and no line leaves the file. Write
+the line into the file and commit it before running promote. Re-adding the same
+key brings the entry back. The project store keeps only what depends on this
+machine as well as on the project; a lesson that holds on any machine belongs
+in the repository.
 
 load prints the project's memory, then the global preferences, then the machine
 facts, then the names of the remote hosts that have facts. --global, --machine
@@ -39,10 +48,10 @@ import sys
 from datetime import datetime, timezone
 
 TYPES = ("pitfall", "pattern", "preference", "architecture", "tool")
-# Always expanded on load: nothing else in the project writes these down, so the
-# store is the only place they exist. architecture and tool stay collapsed —
-# AGENTS.md and the code itself already carry them, and spending the top of the
-# output on them is spending it on something the agent is about to read anyway.
+# Always expanded on load: what stays in this store is machine-bound, so no file
+# in the repository carries it. architecture and tool stay collapsed —
+# AGENTS.md and the code itself already carry most of them, and spending the top
+# of the output on them is spending it on something the agent is about to read anyway.
 UNWRITTEN_TYPES = ("pitfall", "pattern", "preference")
 GENERIC_KEYS = ("lesson", "note", "item", "memo", "learning", "entry", "thing", "misc")
 HOME = os.path.expanduser("~")
@@ -154,6 +163,18 @@ def branch(cwd=None):
         return ""
 
 
+def project_root(cwd=None):
+    """The git top level, or the current directory outside a repository."""
+    try:
+        top = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=cwd, capture_output=True, text=True, timeout=5,
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        top = ""
+    return top or os.path.abspath(cwd or os.getcwd())
+
+
 def host_name(raw):
     """A host's folder name, or None when the name cannot be one."""
     name = (raw or "").strip().lower()
@@ -197,12 +218,18 @@ def hosts_with_facts():
     return found
 
 
-def live_entries(path):
-    """Deduplicated entries that still print on their own, plus damaged line numbers."""
+def live_entries(path, with_promoted=False):
+    """Deduplicated entries that still print on their own, plus damaged line numbers.
+
+    A promoted entry (its newest line carries promoted_to) is left out unless
+    with_promoted is set: the repository file it went into is what the agent
+    reads now.
+    """
     entries, corrupt = read_all(path)
     entries = dedupe(entries)
     hidden = absorbed_keys(entries)
-    return [e for e in entries if e["key"] not in hidden], corrupt
+    return [e for e in entries
+            if e["key"] not in hidden and (with_promoted or not e.get("promoted_to"))], corrupt
 
 
 def render_machine(entries, corrupt, host=None, wide="machine"):
@@ -279,8 +306,9 @@ def _detail(e):
     merged = "  (absorbs %s)" % ", ".join(absorbs) if absorbs else ""
     files = e.get("files") or []
     tail = "  [%s]" % ", ".join(files) if files else ""
-    return "- **%s** (%s/10) — %s%s%s" % (
-        e["key"], e.get("confidence", "?"), e.get("insight", ""), merged, tail)
+    gone = "  (promoted to %s)" % e["promoted_to"] if e.get("promoted_to") else ""
+    return "- **%s** (%s/10) — %s%s%s%s" % (
+        e["key"], e.get("confidence", "?"), e.get("insight", ""), merged, tail, gone)
 
 
 def render(entries, corrupt, path, header, expand_all=False):
@@ -329,6 +357,9 @@ def add_reminder():
         "Before this session ends, save verified project-specific solutions found through\n"
         "repeated failed attempts or costly searching, time or token use (confidence 7+).\n"
         "Exclude routine work logs, open bugs and existing project guidance.\n"
+        "A lesson that holds on any machine goes into the project's AGENTS.md (engineering/architecture.md\n"
+        "for an architecture fact) as condition then what to do, story in the commit body, not into this store.\n"
+        "A stored lesson applied a second time goes there the same way, then: python3 %s promote --key <key> --to <file>\n"
         "Verify suspected stale lessons before updating the same key; preserve conditions\n"
         "where the old method still works and label any unknown replacement.\n"
         "  python3 %s add --type <pitfall|pattern|preference|architecture|tool> "
@@ -342,7 +373,7 @@ def add_reminder():
         "The same kind of fact about a machine reached from here goes in that host's store: add --host <name>.\n"
         "Draft the fields and save qualifying entries without waiting to be asked.\n"
         "Report saved entries; if nothing qualifies, no announcement is needed."
-        % (os.path.abspath(__file__), MACHINE_INSIGHT_LIMIT)
+        % (os.path.abspath(__file__), os.path.abspath(__file__), MACHINE_INSIGHT_LIMIT)
     )
 
 
@@ -362,15 +393,16 @@ def cmd_load(args):
         return 0
     path = store_path()
     # Absorbed keys are dropped here rather than inside render(), so `search`
-    # still finds an absorbed entry under its old key.
-    entries, corrupt = live_entries(path)
+    # still finds an absorbed entry under its old key. --all is the whole-store
+    # view, so it keeps the entries already promoted into the repository.
+    entries, corrupt = live_entries(path, with_promoted=args.all)
     if args.json:
         print(json.dumps(entries, ensure_ascii=False, indent=2))
         return 0
     project = render(entries, corrupt, path,
                      "# Project memory — %d learning(s)" % len(entries), expand_all=args.all)
-    # --json is machine output and --all is the export path that SKILL.md pastes
-    # into AGENTS.md; machine facts and a prompt aimed at the current session
+    # --json is machine output and --all is the whole-store view used for a
+    # handover export; machine facts and a prompt aimed at the current session
     # belong in neither.
     if args.all:
         print(project)
@@ -453,7 +485,7 @@ def cmd_add(args):
     stem = re.sub(r"-\d+$", "", key)
     if not stem or stem in GENERIC_KEYS:
         print("ERROR: --key %r says nothing about the lesson; use a descriptive "
-              "key such as 'n-plus-one-products'" % key, file=sys.stderr)
+              "key such as 'node-18-default-here'" % key, file=sys.stderr)
         return 2
     if len(re.sub(r"[^a-z]", "", key)) < 4:
         print("ERROR: --key %r is too short to be recognisable" % key, file=sys.stderr)
@@ -502,6 +534,42 @@ def cmd_add(args):
     return 0
 
 
+def cmd_promote(args):
+    """Record that a project lesson now lives in a repository file, as a new line with the same key."""
+    key = _kebab(args.key)
+    target = os.path.normpath(args.to.strip().replace("\\", "/")).replace(os.sep, "/")
+    if not key or not target or target == ".":
+        print("ERROR: --key and --to are both required", file=sys.stderr)
+        return 2
+    if os.path.isabs(target) or re.match(r"^[A-Za-z]:", target) or target == ".." or target.startswith("../"):
+        print("ERROR: --to is a path inside the repository, relative to its root, such as AGENTS.md", file=sys.stderr)
+        return 2
+    path = store_path()
+    entries, _corrupt = read_all(path)
+    uniq = dedupe(entries)
+    current = {e["key"]: e for e in uniq}
+    if key not in current:
+        print("ERROR: no entry with key %r in %s; run `search` to find the key" % (key, path), file=sys.stderr)
+        return 2
+    if key in absorbed_keys(uniq):
+        owner = [e["key"] for e in uniq if key in (e.get("absorbs") or [])]
+        print("ERROR: %s was absorbed into %s; promote that key instead" % (key, ", ".join(owner)), file=sys.stderr)
+        return 2
+    if current[key].get("promoted_to"):
+        print("ALREADY_PROMOTED %s -> %s" % (key, current[key]["promoted_to"]))
+        return 0
+    if not os.path.isfile(os.path.join(project_root(), target)):
+        print("WARNING: %s does not exist under the project root; write the rule into it first, "
+              "the mark is recorded anyway" % target, file=sys.stderr)
+    entry = dict(current[key])
+    entry["ts"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    entry["promoted_to"] = target
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    print("PROMOTED %s -> %s" % (key, target))
+    return 0
+
+
 def cmd_search(args):
     chosen = scope(args)
     if chosen is None:
@@ -545,10 +613,12 @@ def cmd_stats(args):
     # is actually in play. Absorbed keys are reported separately rather than
     # dropped: they are the other half of the gap between lines and keys.
     absorbed = absorbed_keys(uniq)
-    live = [e for e in uniq if e["key"] not in absorbed]
+    promoted = [e for e in uniq if e["key"] not in absorbed and e.get("promoted_to")]
+    live = [e for e in uniq if e["key"] not in absorbed and not e.get("promoted_to")]
     print("PATH: %s" % path)
-    print("TOTAL: %d line(s), %d live key(s)%s" % (
-        len(entries), len(live), ", %d absorbed" % len(absorbed) if absorbed else ""))
+    print("TOTAL: %d line(s), %d live key(s)%s%s" % (
+        len(entries), len(live), ", %d absorbed" % len(absorbed) if absorbed else "",
+        ", %d promoted" % len(promoted) if promoted else ""))
     # Ahead of the early return: a store whose keys are all absorbed still needs
     # to report damaged lines.
     if corrupt:
@@ -613,6 +683,12 @@ def main():
                          % MACHINE_INSIGHT_LIMIT)
     ad.add_argument("--host", metavar="NAME", help="facts about the machine reached under this name, such as an SSH alias; kept on this machine")
     ad.set_defaults(func=cmd_add)
+
+    pr = sub.add_parser("promote", help="mark a project lesson as written into a repository file, so load stops showing it")
+    pr.add_argument("--key", required=True)
+    pr.add_argument("--to", required=True, metavar="PATH",
+                    help="the repository file the lesson now lives in, relative to the project root, such as AGENTS.md")
+    pr.set_defaults(func=cmd_promote)
 
     se = sub.add_parser("search", help="filter learnings by substring")
     se.add_argument("query")

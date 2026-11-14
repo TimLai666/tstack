@@ -1,6 +1,6 @@
 ---
 name: project-memory
-description: "Shared cross-agent memory in four stores: project lessons, the user's preferences for every project, facts about this machine, and facts about remote hosts. This skill MUST be invoked when starting work in a project whose memory is not already in context, and again as the work wraps up to record what was learned. It MUST also be invoked on the triggers below, and SHOULD be invoked whenever the user states something worth remembering. A cross-project preference MUST go in the global store, not in the user's instruction files; a machine fact MUST go in the machine or host store. It MUST NOT be used for task lists or open bugs. Triggers on: 記一下, 之前踩過什麼雷, 有什麼教訓, remember this, 把這個記起來, 以後都這樣, 這台沒裝"
+description: "Shared cross-agent memory in four stores: project lessons, the user's preferences for every project, facts about this machine, and facts about remote hosts. This skill MUST be invoked when starting work in a project whose memory is not already in context, and again as the work wraps up to record what was learned. It MUST also be invoked on the triggers below, and SHOULD be invoked whenever the user states something worth remembering. A cross-project preference MUST go in the global store, not in the user's instruction files; a machine fact MUST go in the machine or host store; a project lesson that holds on any machine MUST be promoted into the project's AGENTS.md or engineering documents instead of staying in the store. It MUST NOT be used for task lists or open bugs. Triggers on: 記一下, 之前踩過什麼雷, 有什麼教訓, remember this, 把這個記起來, 以後都這樣, 這台沒裝"
 allowed-tools:
   - Bash
   - Read
@@ -8,7 +8,7 @@ allowed-tools:
   - Edit
   - AskUserQuestion
 metadata:
-  version: "1.17.0"
+  version: "1.18.0"
 ---
 
 ## Purpose and workflow
@@ -37,6 +37,7 @@ python3 "$_MEM" --help
 | `load --all` | Same but every entry expanded |
 | `load --json` | Same, as a JSON array |
 | `add` | Append one learning, optionally merging older ones into it |
+| `promote --key K --to PATH` | Mark a project lesson as written into the repository file at PATH, so `load` stops showing it |
 | `search QUERY` | Filter learnings by substring |
 | `stats` | Counts by type and average confidence |
 | `path` | Print the store path for this project |
@@ -56,7 +57,7 @@ python3 "$_MEM" load
 
 ```
 ## Only recorded here (pitfall, pattern, preference)
-- **n-plus-one-products** (9/10) — Product.includes(:variants) needed in catalog controller
+- **node-18-default-here** (9/10) — this machine defaults to node 18 and the build needs 20; run nvm use 20 first
 
 ## Index — 42 more, run `search <key>` for the full text
 - **architecture**: no-orm-raw-sql, events-are-append-only
@@ -68,13 +69,14 @@ related to what you are about to do, run `search <key>` before you touch that
 area:
 
 ```bash
-python3 "$_MEM" search n-plus-one-products
+python3 "$_MEM" search node-18-default-here
 ```
 
 Already deduplicated: same key, newest wins. `NO_LEARNINGS` means a fresh
 project; carry on. Damaged lines are skipped and reported rather than aborting.
 
-`--all` expands everything, for when you want to read the whole store.
+`--all` expands everything, for when you want to read the whole store, and adds
+the entries already promoted into the repository, each with where it went.
 
 `load` ends with a recording reminder; `--json` and `--all` omit it.
 
@@ -91,7 +93,7 @@ asking the user to supply or approve each field. Report what was saved.
    the project is put together and load as keys only. Pick by which of those the
    entry is, not by how important it feels or by which one gets shown.
 2. **Key** — kebab-case, and it must describe the lesson, for example
-   `n-plus-one-products`, not `lesson-001`. The script rejects generic and
+   `node-18-default-here`, not `lesson-001`. The script rejects generic and
    numbered keys.
 3. **Insight** — a concise, reusable lesson: applicable conditions, failed approaches worth avoiding, the verified solution and its evidence or location. Include the root cause when confirmed; label anything still uncertain.
 4. **Confidence** — 1-10
@@ -99,10 +101,10 @@ asking the user to supply or approve each field. Report what was saved.
 ```bash
 python3 "$_MEM" add \
   --type pitfall \
-  --key n-plus-one-products \
-  --insight 'Product.includes(:variants) needed in catalog controller — N+1 caused 3s load' \
+  --key node-18-default-here \
+  --insight 'This machine defaults to node 18 and the build needs 20; nvm use 20 before building. Found after the build failed on an unknown syntax error' \
   --confidence 9 \
-  --files 'app/controllers/catalog_controller.rb'
+  --files 'package.json'
 ```
 
 The script fills in timestamp, branch and slug. `--source` defaults to
@@ -125,9 +127,9 @@ preservation rules and how to restore an absorbed key.
   each occurrence was cheap. Say in the report that it is a second occurrence.
 - A rule the user was promised will be remembered is written in that same turn.
   Report its key and a one-sentence summary of what was saved.
-- A line that would be at home in `AGENTS.md` is written there instead. This
-  store holds what only surfaces while doing the work: what broke, what the fix
-  turned out to be, what the user wants done differently next time.
+- A lesson that holds on any machine goes into the repository, not into this
+  store; see [Promoting a lesson into the repository](#promoting-a-lesson-into-the-repository).
+  This store keeps what depends on this machine as well as on the project.
 - For technical lessons, record repeated failed attempts followed by a verified
   solution, or a useful approach found only after substantial searching, time or
   token use. The entry must help avoid repeating that cost in a similar case.
@@ -141,6 +143,61 @@ preservation rules and how to restore an absorbed key.
 
 ---
 
+## Promoting a lesson into the repository
+
+This store lives in the user's home directory and does not travel with the
+repository. A lesson that an agent on any other machine would need is written
+into the repository instead.
+
+**Machine-bound or portable.** A lesson is machine-bound when it depends on
+something about this machine: a local path, what is or is not installed here,
+where a credential is kept, this machine's operating system, shell or tool
+version. It stays in this store (or, when it says nothing about the project,
+goes in the machine store). Every other lesson is portable and is promoted.
+Split a mixed lesson into its portable part and its machine-bound part. A lesson
+that must not be in the repository (a confidential host name, where a credential
+is kept, something about one user's own account) stays in this store whatever
+machine it holds on.
+
+**Where a portable lesson goes**, by type:
+
+| Type | Home in the repository |
+|---|---|
+| `preference`, `pitfall`, `pattern` | The `AGENTS.md` of the directory the lesson is about, the root one when it concerns the whole project, as one line: the condition, then what to do |
+| `architecture` | `engineering/architecture.md` when the project keeps one, otherwise `AGENTS.md` |
+| `tool` | Almost always machine-bound; when it is not, `AGENTS.md` |
+
+The line in `AGENTS.md` states the rule only, without the reason or the story,
+following the core's [Agent Context Files](../software-engineering-guidelines/references/changing-code.md#agent-context-files).
+The failed routes and the evidence go into the body of the commit that writes
+the line, one paragraph per lesson, so that `git log -S` on the rule finds them.
+Write the promotion as a commit of its own.
+
+**When.**
+
+1. At recording time: a portable lesson is written into the repository directly and does not enter this store.
+2. When a stored lesson is applied a second time, that is, it decides what the agent does in this project: promote it then.
+3. When the user asks to tidy the project's memory or documents.
+
+When the repository cannot take the line now (it is not the user's to change,
+the file has uncommitted changes of someone else, or the user does not want a
+commit at this point), record the lesson in this store and promote it later.
+A lesson is never dropped because it could not be promoted.
+
+**How.** Write the line into the file, commit it with the story in the commit
+body, then mark the entry here:
+
+```bash
+python3 "$_MEM" promote --key run-migrations-before-tests --to AGENTS.md
+```
+
+`load` stops showing a promoted entry and `load --all` lists it with where it
+went; `search` still finds it. No line leaves the file. To bring an entry back,
+re-add the same key. A promoted lesson that turns out wrong is corrected in the
+file it went to, not by re-adding it here.
+
+---
+
 ## Global, machine and host stores
 
 | It is about | Record with | Stored on this machine at |
@@ -150,7 +207,7 @@ preservation rules and how to restore an absorbed key.
 | A machine reached from here, for example over SSH | `add --host NAME` | `~/.tstack/hosts/NAME/` |
 
 - A machine fact holds in every project worked on there: a tool that is or is not installed and where, a path that cannot run programs, which package manager or shell works, where a credential is configured, how a local service is reached.
-- A global preference is recorded here and nowhere else. Do not add it to the user's own instruction files such as `~/.claude/CLAUDE.md` or a home-level `AGENTS.md`; those are the user's to edit. A preference that applies to this project only stays in the project store.
+- A global preference is recorded here and nowhere else. Do not add it to the user's own instruction files such as `~/.claude/CLAUDE.md` or a home-level `AGENTS.md`; those are the user's to edit. A preference that applies to this project only is promoted into the project's `AGENTS.md`, or stays in the project store when it is machine-bound.
 - `NAME` is the name used to reach the host, such as its SSH alias. Use the same name every time.
 - Host facts are recorded from this machine and stay on it. Nothing is written on the remote host.
 - Each entry in these stores is at most 300 characters: the condition, then what to do. Leave the story of how it was found out.
@@ -178,7 +235,9 @@ python3 "$_MEM" add --host devbox --type tool --key docker-needs-sudo \
    method that no longer works under those conditions. If the cause is unresolved,
    report the uncertainty without rewriting the old lesson as disproven.
 3. Once invalidity is confirmed, use `add` with the same key to replace the current
-   lesson without asking for approval. Record the evidence, affected conditions
+   lesson without asking for approval. A lesson already promoted into the
+   repository is corrected in the file it went to instead; re-adding it here
+   would bring it back into the store. Record the evidence, affected conditions
    and verified replacement. If no replacement is known, state that limit instead
    of continuing to recommend the failed method. Keep any conditions where the
    old method remains valid, and preserve applicable absorption relationships.
@@ -201,7 +260,8 @@ python3 <project-memory>/scripts/memory.py add \
   --confidence 8 --source '<skill-or-agent-name>' --files '<file>'
 ```
 
-Same rules apply: confidence 7 or above, project-specific, actually encountered.
+Same rules apply: confidence 7 or above, project-specific, actually encountered,
+and a portable lesson is promoted into the repository rather than stored.
 
 ---
 

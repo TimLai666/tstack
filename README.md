@@ -41,7 +41,7 @@ tstack 是一個整體，只支援整組安裝。各個 skill 會直接引用彼
 | `acceptance-review` | 驗收審查：拿使用者原本的需求逐項對照實際做出來的成果，確認每一項都做到、原本的問題真的解決。宣稱做完之前由獨立的 reviewer 做，不看實作者的說明 |
 | `ship-it` | commit 之後的交付：push、開 PR 或 MR、合併。支援 GitHub 與 GitLab。合併前必須全綠：該 commit 的每個檢查都通過（不分必要與否），自動審查留下的意見也都處理完 |
 | `agent-delegation` | 派工給 subagent 或其他 CLI（OpenCode、Antigravity、Copilot、Codex、Claude）的規範與派工腳本 |
-| `project-memory` | 跨 agent 共用的記憶：專案裡花了很多力氣才找到的做法、你在每個專案都適用的偏好、這台機器的事實、遠端主機的事實 |
+| `project-memory` | 跨 agent 共用的記憶：專案裡只在這台機器成立的做法、你在每個專案都適用的偏好、這台機器的事實、遠端主機的事實；在任何機器都成立的專案教訓升級進 `AGENTS.md` 或工程文件 |
 
 ## Hooks
 

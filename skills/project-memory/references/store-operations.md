@@ -31,7 +31,7 @@ it stands on its own again.
 `~/.tstack/projects/<slug>/learnings.jsonl`, one JSON object per line:
 
 ```json
-{"ts":"2026-04-04T10:00:00Z","type":"pitfall","key":"n-plus-one-products","insight":"Product.includes(:variants) needed in catalog controller","confidence":9,"source":"user-stated","branch":"feat/catalog","files":["app/controllers/catalog_controller.rb"]}
+{"ts":"2026-04-04T10:00:00Z","type":"pitfall","key":"node-18-default-here","insight":"This machine defaults to node 18 and the build needs 20; nvm use 20 before building","confidence":9,"source":"user-stated","branch":"feat/catalog","files":["package.json"]}
 ```
 
 `<slug>` comes from the git remote (`org-repo`), falling back to the directory
@@ -49,19 +49,26 @@ the next run of this version picks those lines up the same way.
 
 The wider stores use the same format: global preferences in `~/.tstack/global/learnings.jsonl`, machine facts in `~/.tstack/machine/learnings.jsonl`, and facts about a remote host in `~/.tstack/hosts/<name>/learnings.jsonl`. All of them live on the machine the agent runs on and are not tied to a project. Their `branch` field is empty.
 
+A line with a `promoted_to` field is the mark left by `promote`: a copy of the
+entry naming the repository file it was written into. It is the newest line for
+its key until the key is re-added.
+
 The format is append-only, one line per learning, with no index and no lock.
 
 ---
 
 ## Export
 
-Turn the memory into markdown for a `CLAUDE.md`, `AGENTS.md` or handover doc:
+Turn the memory into markdown for a handover doc:
 
 ```bash
 python3 "$_MEM" load --all
 ```
 
 Use `--all` for an export; the default view collapses most entries to their key.
+Entries marked `(promoted to …)` are already in the repository; leave them out
+of the export. `AGENTS.md` is not an export target: a lesson reaches it through
+promotion, one rule line at a time.
 
 The output is already markdown. Copy it, or append it to the target file if the
 user asks. Never append automatically.
