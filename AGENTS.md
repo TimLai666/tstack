@@ -1,18 +1,6 @@
 # AGENTS.md
 
-在這個 repo 工作的 coding agent 都照這份規則做。`CLAUDE.md` 只引用本檔。專案介紹、安裝與測試指令在 [README.md](README.md)。
-
-## 結構
-
-```
-.claude-plugin/plugin.json        ← plugin 名稱、描述、版本
-.claude-plugin/marketplace.json   ← marketplace 宣告，只列 tstack 一個 plugin
-hooks/                            ← hooks.json、提醒與指令防護腳本、它們的測試
-scripts/                          ← check_stack.py 一致性檢查與它的測試
-skills/<skill>/                   ← skill 本體
-```
-
-每個 skill 一個資料夾：`SKILL.md` 是主檔，`references/` 放細節，`scripts/` 放可執行工具，`agents/` 放腳本的測試，`assets/` 放模板。
+在這個 repo 工作的 coding agent 都照這份規則做。`CLAUDE.md` 只引用本檔。專案介紹、目錄結構、安裝與測試指令在 [README.md](README.md)。
 
 ## Frontmatter
 
@@ -33,6 +21,7 @@ skills/<skill>/                   ← skill 本體
 
 ## 修改規則
 
+- 每個 skill 一個資料夾：`SKILL.md` 是主檔，`references/` 放細節，`scripts/` 放可執行工具，`agents/` 放腳本的測試，`assets/` 放模板。
 - 新內容放進最合適的既有段落，不一律加在檔尾，不製造重複段落。加了規則後回頭檢查既有內容與示例是否仍一致。
 - 條文只寫規則本身，不解釋原因，不寫成變更紀錄。規則改了就地更新原文。
 - `SKILL.md` 內文、`references/`，以及腳本與 hook 印出的文字一律用英文。維持中文的只有 description 裡的中文觸發詞，以及規定 agent 原文對使用者說的固定字樣（例如「未視覺確認」、「背景：」開頭的那一行、回報的「宿主：」與「工具與模型：」）、用來比對輸入的字串（例如舊版派工 prompt 的執行者標記），以及其他 skill 寫進使用者專案的既有章節名稱。

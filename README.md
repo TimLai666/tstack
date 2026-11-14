@@ -25,6 +25,16 @@ npx skills add TimLai666/tstack --all
 
 tstack 是一個整體，只支援整組安裝。各個 skill 會直接引用彼此的內容，`software-engineering-guidelines` 是核心，負責指出什麼情況該用哪一個 skill，並保存所有 skill 共用的規則。只裝其中幾個會讓引用落空。
 
+## 結構
+
+```
+.claude-plugin/plugin.json        ← plugin 名稱、描述、版本
+.claude-plugin/marketplace.json   ← marketplace 宣告，只列 tstack 一個 plugin
+hooks/                            ← hooks.json、提醒與指令防護腳本、它們的測試
+scripts/                          ← check_stack.py 一致性檢查與它的測試
+skills/<skill>/                   ← skill 本體：SKILL.md 主檔、references/ 細節、scripts/ 工具、agents/ 測試、assets/ 模板
+```
+
 ## Skills
 
 | Skill | 適合什麼需求 |
