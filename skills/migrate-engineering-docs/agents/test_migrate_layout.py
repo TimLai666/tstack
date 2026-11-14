@@ -277,8 +277,36 @@ class MigrateLayoutTest(unittest.TestCase):
         self.assertNotIn("AGENTS.md:2:", result.stdout)
         self.assertEqual(self.text("AGENTS.md"), text)
 
+    def test_agent_context_files_are_reported_and_left_alone(self):
+        self.write("CLAUDE.md", "# Rules\n\nAlways run the tests.\n")
+        self.write("AGENTS.md", "## Rules\n- Run the tests.\n\n## 專案結構\n```\nsrc/\n```\n\n## Installation\nnpm i\n"
+                                "\n## Setup rules\n- Never run setup twice.\n\n```bash\n# Install dependencies\nnpm i\n```\n"
+                                "#usage note\n\n## 安裝步驟\n1. x\n")
+        self.write("packages/api/CLAUDE.md", "﻿@AGENTS.md\n")
+        self.write("packages/web/CLAUDE.md", "See AGENTS.md\n")
+        self.write("node_modules/dep/CLAUDE.md", "junk\n")
+        self.write("third_party/dep/CLAUDE.md", "junk\n")
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("Agent context files to bring to the current rules", result.stdout)
+        self.assertIn("CLAUDE.md: holds more than the line @AGENTS.md", result.stdout)
+        self.assertIn("packages/web/CLAUDE.md: holds more than", result.stdout)
+        self.assertNotIn("packages/api/CLAUDE.md", result.stdout)
+        self.assertNotIn("node_modules", result.stdout)
+        self.assertNotIn("third_party", result.stdout)
+        self.assertIn("AGENTS.md:4: section '## 專案結構' reads like an introduction", result.stdout)
+        self.assertIn("AGENTS.md:9: section '## Installation'", result.stdout)
+        self.assertIn("section '## 安裝步驟'", result.stdout)
+        self.assertNotIn("AGENTS.md:1:", result.stdout)
+        self.assertNotIn("Setup rules", result.stdout)
+        self.assertNotIn("Install dependencies", result.stdout)
+        self.assertNotIn("usage note", result.stdout)
+        self.assertEqual(self.text("CLAUDE.md"), "# Rules\n\nAlways run the tests.\n")
+
     def test_clean_project_reports_nothing(self):
         self.write("README.md", "hello\n")
+        self.write("CLAUDE.md", "@AGENTS.md\n")
+        self.write("AGENTS.md", "## Rules\n- Run the tests.\n")
         result = self.run_script()
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout.strip(), "Nothing to move.")

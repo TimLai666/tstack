@@ -14,13 +14,15 @@ default or retain a custom project style. Wait for that decision before creating
 the commit. If the user declines the default without specifying an alternative,
 ask which format they want. Do not record automatic fallback as a user decision.
 
-After confirmation, record a custom project style in the project's `AGENTS.md`,
-including its format and any specified language, preserving unrelated content.
+After confirmation, record the chosen style in the project's `AGENTS.md` as one
+line, preserving unrelated content: a custom style with its format and any
+specified language, or that the project uses the Conventional Commits default.
 If the style is already documented elsewhere, link to that source instead of
-duplicating it. If the user adopts this skill's default, use it and record that
-choice through **project-memory** as preference `commit-message-style`, with
-source `software-engineering-guidelines`. A one-commit exception applies only to that commit and must not be
-saved as the project's ongoing style. Report any failure to save a decision.
+duplicating it. An older project may hold the choice in project memory under the
+preference key `commit-message-style`; it counts, and is promoted into
+`AGENTS.md` through **project-memory** when met. A one-commit exception applies
+only to that commit and must not be saved as the project's ongoing style. Report
+any failure to save a decision.
 
 The default format is Conventional Commits:
 

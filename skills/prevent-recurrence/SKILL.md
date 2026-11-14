@@ -10,7 +10,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 ## Overview
@@ -32,7 +32,7 @@ Go down this list and stop at the first level that can carry the rule.
 | 1. Structure | The wrong thing is no longer possible | One supported way to do the task; one owner for each piece of state; one source of truth in place of lists kept in sync by hand; the old path and the dead code an agent would copy are deleted |
 | 2. A check that fails | The wrong thing is written and then rejected, with an error that names what to do instead | A type or schema that cannot hold the bad state; a lint rule; a CI step; a pre-commit or agent hook; a script the project runs after every change |
 | 3. A test | The behavior is pinned | A test that fails when the behavior breaks and keeps passing when only the internals change |
-| 4. A written rule | Nothing fails when it is skipped | An entry in `AGENTS.md` or **project-memory**. Use this level only for judgment calls that no check can make |
+| 4. A written rule | Nothing fails when it is skipped | A line in `AGENTS.md`, or in **project-memory** where its [promotion rule](../project-memory/SKILL.md#promoting-a-lesson-into-the-repository) keeps it. Use this level only for judgment calls that no check can make |
 
 Say for each class which level was chosen and why the level above it does not work.
 
@@ -46,7 +46,7 @@ An exception to a check goes on the offending line, with the reason.
 
 ## Step 4 — Record what enforces what
 
-Record through **project-memory** one entry per class: the rule in one sentence and what enforces it. When an existing entry describes a rule that nothing enforced and the mistake happened again, add the entry again under the same key with what now enforces it. Once the mistake can no longer happen, add it again under the same key saying so and naming the check. The store is append-only; nothing is deleted.
+For levels 1 to 3 the check is the record: its error message, test name or comment names the mistake it stops. A written rule in `AGENTS.md` or in project memory that a check now enforces is removed from `AGENTS.md`, or re-added under the same key through **project-memory** naming the check. A level-4 rule goes where **project-memory**'s promotion rule puts it.
 
 ## Report
 

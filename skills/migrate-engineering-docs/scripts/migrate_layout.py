@@ -61,6 +61,15 @@ Rules:
   - A link in any other Markdown file that pointed at a moved file is updated
     to the new location. A mention of an old path in prose is listed, not edited.
 
+Agent context files are reported, never edited:
+  - A CLAUDE.md whose content is more than the single line `@AGENTS.md` is
+    listed; its instructions belong in the AGENTS.md beside it.
+  - A heading in an AGENTS.md made of an introduction word alone (structure,
+    overview, installation, usage, getting started, and their Chinese
+    equivalents) is listed; such a section belongs in the README.md beside it.
+    Headings inside code fences and longer headings such as "Setup rules" are
+    not listed. The list is a prompt to check each section, not a verdict.
+
 Exit status: 0 when nothing is blocked, 1 when a move is blocked, 2 on a usage
 error.
 """
@@ -118,7 +127,7 @@ LINK = re.compile(r"(!?)\[([^\]\n]*)\]\(([^)\s]+)\)")
 OLD_PATH = re.compile(
     r"(?<![\w/.-])(delivery-plan\.md|delivery-status\.md|ENG\.md|DESIGN-REVIEW\.md)(?![\w-])"
     r"|docs/(?:tickets|dev|security-scan|software-engineering-guidelines|plan-grilling|plans|design)/")
-SKIPPED_DIRECTORIES = {".git", "node_modules", "vendor", "dist", "build", ".venv", "venv"}
+SKIPPED_DIRECTORIES = {".git", "node_modules", "vendor", "third_party", "dist", "build", ".venv", "venv"}
 
 
 def read(path):
@@ -313,6 +322,49 @@ def references(root, extra=()):
     return found
 
 
+# A heading made of one of these words alone (plus an optional "project" in front or a
+# Chinese "說明/步驟/方式" behind). "## Setup rules" or "## Usage limits" is not matched: a
+# longer heading is more often a rule, and the agent reads every section anyway.
+INTRO_HEADING = re.compile(
+    r"^#{1,6}\s+(?:project\s+)?(?:structure|layout|overview|introduction|about|install(?:ation)?|setup|"
+    r"getting\s+started|usage|quick\s*start|requirements|features|(?:專案|目錄)?結構|背景|簡介|介紹|概覽|概述|"
+    r"安裝|使用(?:方式|方法)?|用法|快速開始|功能)(?:說明|步驟|方式)?\s*:?\s*$", re.IGNORECASE)
+
+
+def intro_headings(text):
+    """(line number, heading) for every heading outside a code fence that reads like an introduction."""
+    found, fence = [], None
+    for number, raw in enumerate(text.splitlines(), 1):
+        line = raw.strip()
+        marker = re.match(r"^(`{3,}|~{3,})", line)
+        if marker:
+            if fence is None:
+                fence = marker.group(1)[0]
+            elif line.startswith(fence * 3):
+                fence = None
+            continue
+        if fence is None and INTRO_HEADING.match(line):
+            found.append((number, line))
+    return found
+
+
+def agent_context_files(root):
+    """(path, what is wrong) for every CLAUDE.md and AGENTS.md that is not yet as the core sets."""
+    found = []
+    for folder, names, files in os.walk(root):
+        names[:] = [n for n in names if n not in SKIPPED_DIRECTORIES]
+        here = Path(folder)
+        for name in sorted(files):
+            if name == "CLAUDE.md" and read(here / name).lstrip("﻿").strip() != "@AGENTS.md":
+                found.append((f"{(here / name).relative_to(root).as_posix()}",
+                              "holds more than the line @AGENTS.md; move its instructions into the AGENTS.md beside it"))
+            elif name == "AGENTS.md":
+                for number, line in intro_headings(read(here / name)):
+                    found.append((f"{(here / name).relative_to(root).as_posix()}:{number}",
+                                  f"section {line!r} reads like an introduction; if it is, it belongs in the README.md beside it"))
+    return found
+
+
 def describe(source, destination, edit):
     if source == destination:
         return f"{source}: status field {'removed' if edit == 'strip' else 'turned into **Blocked:**'}"
@@ -399,6 +451,11 @@ def main():
     into_engineering = any(d.startswith("engineering/") for _, d, _ in moves)
     if (into_engineering or (root / "engineering").is_dir()) and not (root / "engineering" / "README.md").exists():
         print("engineering/README.md is missing; write it before finishing.")
+    context = agent_context_files(root)
+    if context:
+        print("Agent context files to bring to the current rules (not edited by this script):")
+        for path, task in context:
+            print(f"  {path}: {task}")
     others = [] if args.apply else uncovered_docs(root, extra)
     if others:
         print("Other directories under docs/; for each one that holds engineering documents, add --move SOURCE=engineering/NAME:")
