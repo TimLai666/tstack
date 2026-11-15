@@ -13,10 +13,18 @@ Judge completion over the whole agreed feature or problem. Order intermediate wo
 - A feature covers every layer, entry point, and edge case it needs.
 - A fix covers the root cause, every occurrence of the same pattern, and the related edge cases. Do not stop at the reported spot.
 
+### Fixing at the cause
+
+- Make the change where the cause is, not where the failure shows. Among the changes that remove the cause, choose the simplest.
+- A change the cause requires is part of the task, however far it reaches: restructuring a module, changing a data shape, replacing a mechanism. The rule against refactoring things that aren't broken does not apply to it.
+- Decide the design of the fix yourself. Its size is not a reason to ask the user, to wait for approval, or to fall back to a smaller fix. A fix that changes an existing API's name, signature, usage or behavior still goes through **agent-delegation** first.
+- Do not deliver a temporary or partial fix. A swallowed error, a special case for the failing input, an added retry or wait, a loosened check and a disabled test are not fixes. A request worded as a quick or small fix is still fixed at the cause.
+- When a real blocker keeps the cause from being removed, report the remaining gap as above. Do not put a patch in its place.
+
 When editing existing code:
 
 - Don't "improve" adjacent code, comments, or formatting; don't refactor things that aren't broken; don't delete pre-existing dead code. Mention what you spot and suggest how to handle it, under the recording rule below.
-- Match existing style, even if you'd do it differently.
+- Match existing style, even if you'd do it differently. A workaround already in the code is not a style: do not copy it. When it has the same cause as the task, remove it with the task; otherwise record it under the recording rule below.
 - Remove imports/variables/functions that YOUR changes made unused.
 - Write and change files with the editing tools. Content that spans lines or contains non-ASCII characters, quotes or backslashes does not go through shell quoting or a heredoc.
 - When a change has to be scripted, read the target first, confirm the number of matches the script will replace, write the result to a temporary file, and swap it in only after checking it. Before overwriting, restoring or discarding a file, read its full diff, including uncommitted work that is not yours.

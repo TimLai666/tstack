@@ -11,7 +11,7 @@ Before the first step of any playbook, read `engineering/handoff.md` when the pr
 New or changed behavior.
 
 1. Read this project's memory. The session-start hook provides it; when it is absent or lists keys only, load it through **project-memory**.
-2. In a project that keeps tickets, pick up the ticket through **eng-architect**. Restate the goal and the smallest change that meets it. List what is asked, including the [Counterpart Operations](../SKILL.md#counterpart-operations). Settle the choices only the user can make; use **eng-architect** when the feature needs a specification, when architecture or the split into tickets is undecided, and when a requirement changes in work that has a specification.
+2. In a project that keeps tickets, pick up the ticket through **eng-architect**. Restate the goal and the simplest change that meets all of it. List what is asked, including the [Counterpart Operations](../SKILL.md#counterpart-operations). Settle the choices only the user can make; use **eng-architect** when the feature needs a specification, when architecture or the split into tickets is undecided, and when a requirement changes in work that has a specification.
 3. Set the success criteria and choose the verification. Apply test-first when the change is large ([testing.md](testing.md)). Read [design.md](design.md).
 4. Write the skeleton ([Skeleton First](../SKILL.md#skeleton-first)) and decide for each slot whether to dispatch it.
 5. Fill the slots. A failure whose cause is not established goes to **investigate** before any fix. A change to an existing API goes through **agent-delegation** first.
@@ -29,7 +29,7 @@ Something that worked, or should work, does not.
 1. Read this project's memory, and search it for the symptom.
 2. Reproduce the failure on the real target and write down the exact symptom.
 3. Establish the root cause. When it is not already shown by evidence, use **investigate**.
-4. Write the fix skeleton: the root cause, every place that has the same fault, and the check that proves each one. Check what the fix could break elsewhere with **diff-review**'s blast-radius check. When the fix changes behavior that a specification states, update the specification through **eng-architect** before the code.
+4. Write the fix skeleton: the root cause, every place that has the same fault, and the check that proves each one, following [Fixing at the cause](changing-code.md#fixing-at-the-cause). Check what the fix could break elsewhere with **diff-review**'s blast-radius check. When the fix changes behavior that a specification states, update the specification through **eng-architect** before the code.
 5. Add the [regression test](../SKILL.md#regression-tests) and make the fix.
 6. Verify with **test-and-fix**, and repeat the original reproduction.
 7. Have the diff reviewed once through **diff-review**, before handing back or opening a PR or MR, when the change is substantial or high-risk or is going to a PR or MR. A small, low-risk change gets its lightweight self-review.

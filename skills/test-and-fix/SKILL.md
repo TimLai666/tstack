@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
 metadata:
-  version: "1.7.0"
+  version: "1.7.1"
 ---
 
 ## Preamble
@@ -64,7 +64,7 @@ For each test:
 For each failure, locate the root cause first. If it cannot be established from the tested changes and evidence, invoke **investigate**.
 
 1. Add or update the regression test required by the core's [Regression Tests](../software-engineering-guidelines/SKILL.md#regression-tests).
-2. Make the minimal fix, then rerun the failing case and relevant regression checks.
+2. Make the fix under the core's [Fixing at the cause](../software-engineering-guidelines/references/changing-code.md#fixing-at-the-cause), then rerun the failing case and relevant regression checks.
 3. Commit under the core's [Staging and Commits](../software-engineering-guidelines/SKILL.md#staging-and-commits).
 
 Report verification gaps explicitly.

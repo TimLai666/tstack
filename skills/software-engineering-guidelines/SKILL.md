@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "The core of tstack and the guidelines for any software change. It names which tstack skill to use at each point of the work, gives the step list for each kind of task, and owns the rules the other skills share. This skill MUST be loaded before planning, designing, writing or changing code, reviewing, testing, shipping, or creating a Git commit (including a standalone commit request), and MUST NOT be skipped because the change is a one-liner. Triggers on: 寫 code, 改 code, 做功能, 修 bug, refactor, 重構, 開發, 實作, 寫程式, 架構設計, 需求釐清, code review, 測試, commit, init, 初始化專案, 建立 AGENTS.md, 建立 CLAUDE.md"
 metadata:
-  version: "4.4.0"
+  version: "4.5.0"
 ---
 
 ## The Stack
@@ -60,14 +60,14 @@ If a senior engineer would call it overcomplicated, simplify.
 
 **Touch everything the task needs and nothing else. Clean up only your own mess.**
 
-- Finish the full authorized outcome in the turn: implementation, integration, verification and necessary repairs. Do not hold required work back for a later turn. When a real blocker prevents completion, finish what is independent of it and report the exact remaining gap. A feature covers every layer, entry point and edge case it needs. A fix covers the root cause, every occurrence of the same pattern and the related edge cases.
-- Don't "improve" adjacent code, comments or formatting, refactor what is not broken, or delete pre-existing dead code. Match the existing style. Remove what your own change made unused.
+- Finish the full authorized outcome in the turn: implementation, integration, verification and necessary repairs. Do not hold required work back for a later turn. When a real blocker prevents completion, finish what is independent of it and report the exact remaining gap. A feature covers every layer, entry point and edge case it needs. A fix covers the root cause, every occurrence of the same pattern and the related edge cases. It is made where the cause is, however far that reaches, and is never a temporary patch.
+- Don't "improve" adjacent code, comments or formatting, refactor what is not broken, or delete pre-existing dead code. Match the existing style, but do not copy a workaround. Remove what your own change made unused.
 - Mention out-of-scope issues you find and record them in the project's follow-up location.
 - Write and change files with the editing tools. Content that spans lines or contains non-ASCII characters, quotes or backslashes does not go through shell quoting or a heredoc.
 
 Every changed line traces directly to the user's request.
 
-Read [references/changing-code.md](references/changing-code.md) before any of these: scripting a change, or overwriting, restoring or discarding a file; recording a follow-up; creating a repository or its `.gitattributes`; writing documents, rules, prompts or skills; creating or editing `AGENTS.md` or `CLAUDE.md`.
+Read [references/changing-code.md](references/changing-code.md) before any of these: fixing a fault; scripting a change, or overwriting, restoring or discarding a file; recording a follow-up; creating a repository or its `.gitattributes`; writing documents, rules, prompts or skills; creating or editing `AGENTS.md` or `CLAUDE.md`.
 
 ### 4. Testing Strategy (Test-First + scoped TDD)
 
@@ -196,7 +196,7 @@ Check the actual state before writing this line; do not infer it from what was s
 |---|---|
 | Starting any task | [references/playbooks.md](references/playbooks.md) |
 | Designing anything larger than a single-location change | [references/design.md](references/design.md) |
-| Scripting a change; recording a follow-up; a new repository or `.gitattributes`; writing documents, rules, prompts or skills; touching `AGENTS.md` or `CLAUDE.md` | [references/changing-code.md](references/changing-code.md) |
+| Fixing a fault; scripting a change; recording a follow-up; a new repository or `.gitattributes`; writing documents, rules, prompts or skills; touching `AGENTS.md` or `CLAUDE.md` | [references/changing-code.md](references/changing-code.md) |
 | Choosing test timing, refactoring, editing skills or prompts | [references/testing.md](references/testing.md) |
 | A second attempt at something that failed; a series of experiments; handing work off, pausing it or resuming it | [references/iterations.md](references/iterations.md) |
 | Creating `engineering/` or writing a document into it | [references/engineering-documents.md](references/engineering-documents.md) |

@@ -9,7 +9,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
 metadata:
-  version: "1.7.0"
+  version: "1.7.1"
 ---
 
 ## Core rule
@@ -81,7 +81,7 @@ Identify the earliest verified point where actual behavior diverges from expecte
 
 ## Step 5 — Fix the confirmed cause
 
-Make the smallest change that addresses the verified root cause. Before editing, explain the cause and why the proposed change resolves it. Mention related unresolved problems only when they affect the user's outcome or the scope of this fix.
+Fix the verified root cause under the core's [Fixing at the cause](../software-engineering-guidelines/references/changing-code.md#fixing-at-the-cause). Before editing, explain the cause and why the proposed change resolves it. Mention related unresolved problems only when they affect the user's outcome or the scope of this fix.
 
 Add the regression test required by the core's [Regression Tests](../software-engineering-guidelines/SKILL.md#regression-tests). Commit under [Staging and Commits](../software-engineering-guidelines/SKILL.md#staging-and-commits).
 
