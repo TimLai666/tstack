@@ -8,7 +8,7 @@ allowed-tools:
   - Edit
   - AskUserQuestion
 metadata:
-  version: "1.18.0"
+  version: "1.18.1"
 ---
 
 ## Purpose and workflow
@@ -167,8 +167,8 @@ machine it holds on.
 | `architecture` | `engineering/architecture.md` when the project keeps one, otherwise `AGENTS.md` |
 | `tool` | Almost always machine-bound; when it is not, `AGENTS.md` |
 
-The line in `AGENTS.md` states the rule only, without the reason or the story,
-following the core's [Agent Context Files](../software-engineering-guidelines/references/changing-code.md#agent-context-files).
+The line in `AGENTS.md` states the rule without the story. A prohibition or an
+absolute rule keeps one sentence of reason. It follows the core's [Agent Context Files](../software-engineering-guidelines/references/changing-code.md#agent-context-files).
 The failed routes and the evidence go into the body of the commit that writes
 the line, one paragraph per lesson, so that `git log -S` on the rule finds them.
 Write the promotion as a commit of its own.
