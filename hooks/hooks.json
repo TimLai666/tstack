@@ -16,16 +16,6 @@
         "hooks": [{"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/reminders.py\" pre-agent", "timeout": 10}]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Agent",
-        "hooks": [{"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/reminders.py\" post-agent", "timeout": 10}]
-      },
-      {
-        "matcher": "Bash|PowerShell",
-        "hooks": [{"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/reminders.py\" post-bash", "timeout": 10}]
-      }
-    ],
     "PreCompact": [
       {
         "matcher": "manual|auto",

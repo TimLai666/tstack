@@ -2,14 +2,13 @@
 """Reminders that point Claude Code to the tstack skills, and the project memory at session start.
 
 Usage: reminders.py MODE, with the hook event JSON on stdin.
-Modes: session-start, pre-agent, post-agent, post-bash, pre-compact.
+Modes: session-start, pre-agent, pre-compact.
 Any error prints nothing and exits 0, so the reminders never block work.
 """
 import json
 import os
 from pathlib import Path
 import re
-import shlex
 import subprocess
 import sys
 import time
@@ -32,8 +31,6 @@ SKILLS = ("\n\nThese two apply to software engineering work only. Before plannin
 DENY_AGENT = (
     "This conversation has not loaded the agent-delegation skill yet. Load it first, let it decide which tool and model does this work, "
     "then dispatch again. When this work is not software engineering, repeat the call unchanged. This notice blocks only once per session.")
-AFTER_AGENT = "The subagent reported back. Check the trial-and-error lessons and evidence it reported against the project-memory skill, and after verifying the ones that meet the recording standard, write them in."
-AFTER_COMMIT = "The commit is done. Use the project-memory skill to check whether this work involved repeated trial and error or a solution that took a lot of time to find, and record it if it meets the standard."
 BEFORE_COMPACT = "When summarizing, keep the trial-and-error lessons from this session that are not yet written to project-memory, including the trigger, the failed approach, the effective approach and the verification evidence."
 
 
@@ -119,22 +116,6 @@ def remind_once(session):
     return True
 
 
-def is_commit(command):
-    for segment in re.split(r"&&|\|\||[;|\n]", command or ""):
-        try:
-            tokens = shlex.split(segment)
-        except ValueError:
-            continue
-        if not tokens or tokens[0] != "git":
-            continue
-        i = 1
-        while i < len(tokens) and tokens[i].startswith("-"):
-            i += 2 if tokens[i] in ("-C", "-c") else 1
-        if i < len(tokens) and tokens[i] == "commit" and "--dry-run" not in tokens:
-            return True
-    return False
-
-
 def respond(mode, event):
     if mode == "session-start":
         return context("SessionStart", session_start(event.get("cwd")))
@@ -152,10 +133,6 @@ def respond(mode, event):
             return context("PreToolUse", DENY_AGENT)
         return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                                        "permissionDecisionReason": DENY_AGENT}}
-    if mode == "post-agent":
-        return context("PostToolUse", AFTER_AGENT)
-    if mode == "post-bash" and is_commit((event.get("tool_input") or {}).get("command")):
-        return context("PostToolUse", AFTER_COMMIT)
     return None
 
 

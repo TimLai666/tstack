@@ -173,24 +173,7 @@ class Reminders(unittest.TestCase):
         self.assertEqual(other["permissionDecision"], "deny")
 
     def test_subagents_are_never_reminded(self):
-        for mode, event in (("pre-agent", "PreToolUse"), ("post-agent", "PostToolUse")):
-            with self.subTest(mode=mode):
-                self.assertIsNone(self.context(mode, event, {"tool_name": "Agent", "agent_id": "a1", "agent_type": "Explore"}))
-
-    def test_subagent_return_reminds_to_verify_reported_lessons(self):
-        text = self.context("post-agent", "PostToolUse", {"tool_name": "Agent"})["additionalContext"]
-        self.assertIn("project-memory", text)
-
-    def test_only_git_commit_reminds_to_record_lessons(self):
-        commits = ["git commit -m 'fix: x'", "git add -A && git commit -F msg.txt", "git -C repo commit -q -m x"]
-        others = ["git status", "git commit --dry-run -m x", "echo 'git commit'", "python3 -m unittest"]
-        for command in commits:
-            with self.subTest(command=command):
-                text = self.context("post-bash", "PostToolUse", {"tool_name": "Bash", "tool_input": {"command": command}})
-                self.assertIn("project-memory", text["additionalContext"])
-        for command in others:
-            with self.subTest(command=command):
-                self.assertIsNone(self.context("post-bash", "PostToolUse", {"tool_name": "Bash", "tool_input": {"command": command}}))
+        self.assertIsNone(self.context("pre-agent", "PreToolUse", {"tool_name": "Agent", "agent_id": "a1", "agent_type": "Explore"}))
 
     def test_compaction_summary_keeps_unrecorded_lessons(self):
         out = self.run_hook("pre-compact", dict(hook_event_name="PreCompact", trigger="auto"))
@@ -198,7 +181,7 @@ class Reminders(unittest.TestCase):
         self.assertFalse(out.lstrip().startswith("{"))
 
     def test_broken_input_never_blocks_work(self):
-        for mode in ("session-start", "pre-agent", "post-agent", "post-bash", "pre-compact", "unknown"):
+        for mode in ("session-start", "pre-agent", "pre-compact", "post-agent", "post-bash", "unknown"):
             with self.subTest(mode=mode):
                 self.assertEqual(self.run_hook(mode, raw="not json"), "")
 
@@ -209,8 +192,7 @@ class Reminders(unittest.TestCase):
 
     def test_hook_config_routes_every_event_to_an_existing_mode(self):
         config = json.loads((HOOKS / "hooks.json").read_text(encoding="utf-8"))["hooks"]
-        expected = {("SessionStart", "session-start"), ("PreToolUse", "pre-agent"), ("PostToolUse", "post-agent"),
-                    ("PostToolUse", "post-bash"), ("PreCompact", "pre-compact")}
+        expected = {("SessionStart", "session-start"), ("PreToolUse", "pre-agent"), ("PreCompact", "pre-compact")}
         seen, guards = set(), []
         for event, groups in config.items():
             for group in groups:
@@ -226,12 +208,7 @@ class Reminders(unittest.TestCase):
         matchers = {hook["command"].rsplit(" ", 1)[-1]: group["matcher"]
                     for groups in config.values() for group in groups for hook in group["hooks"]}
         self.assertEqual(set(matchers["session-start"].split("|")), {"startup", "resume", "clear", "compact", "fork"})
-        self.assertEqual(matchers["post-bash"], "Bash|PowerShell")
-
-    def test_commit_from_powershell_also_reminds(self):
-        for command in ("git commit -m 'x'; git push", "git -C repo commit -m \"fix: y\""):
-            out = self.context("post-bash", "PostToolUse", {"tool_name": "PowerShell", "tool_input": {"command": command}})
-            self.assertIn("project-memory", out["additionalContext"])
+        self.assertNotIn("PostToolUse", config)
 
     def test_forked_session_gets_the_memory_too(self):
         self.remember(("retry-needs-token", "呼叫付款 API 前要先換新的 token"))
