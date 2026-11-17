@@ -2,7 +2,7 @@
 name: software-engineering-guidelines
 description: "The core of tstack and the guidelines for any software change. It names which tstack skill to use at each point of the work, gives the step list for each kind of task, and owns the rules the other skills share. This skill MUST be loaded before planning, designing, writing or changing code, reviewing, testing, shipping, or creating a Git commit (including a standalone commit request), and MUST NOT be skipped because the change is a one-liner. Triggers on: 寫 code, 改 code, 做功能, 修 bug, refactor, 重構, 開發, 實作, 寫程式, 架構設計, 需求釐清, code review, 測試, commit, init, 初始化專案, 建立 AGENTS.md, 建立 CLAUDE.md"
 metadata:
-  version: "4.5.1"
+  version: "4.6.0"
 ---
 
 ## The Stack
@@ -171,6 +171,14 @@ Specifications, the architecture record, decision records and tickets that a ski
 - A project that still keeps these documents in an older layout is migrated through **migrate-engineering-docs** before any of them is created or updated.
 
 Before creating `engineering/` or writing a document into it, read [references/engineering-documents.md](references/engineering-documents.md) for the layout, the index file and the writing rules.
+
+### Command Output and Search
+
+Only what the work needs enters the conversation.
+
+- A command whose output may be long, such as a build, a test suite, an install or a staging command over many files, writes its output to a file in a temporary directory outside the project. Print its exit status and the tail or the matching lines, and read any other part from that file instead of running the command again. Do not shorten output by piping into `tail` or `head` alone: the pipe replaces the command's exit status, and what it cuts off is gone.
+- When the size of a file or of a command's output is unknown, check it first, then read only the part that is needed.
+- A search that stands alone uses the host's search tool when it has one. When the matches feed the next command, search inside that command so one call does both: `rg` when it is on PATH, otherwise `git grep` inside a Git repository, otherwise `grep -rn`. Do not install a search tool for this; one of the three is always present.
 
 ### Secrets
 
