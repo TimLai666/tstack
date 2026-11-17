@@ -12,7 +12,7 @@ Each step of the dispatch flow in [SKILL.md](../SKILL.md) points here. Read only
 - [ ] Before parallel dispatch, give each run its own files that may be changed and its own output directory, not overlapping each other and not overlapping any directory the main agent itself will clean or overwrite.
 - [ ] Parallel dispatches that need a browser each use their own browser instance, not a shared one.
 - [ ] In an unattended scheduled or background flow, first set the number of parallel runs and each dispatch's time or tool-call limit, and write them into the prompt.
-- [ ] Query the task type and levels through the script, and check the installation status of the external CLIs this task may use. When a command is not found, first verify following "CLI not installed", then choose reuse or a new session following the next section, and submit this task.
+- [ ] Query the task type and levels through the script, then choose reuse or a new session following the next section, and submit this task. The script skips a level whose command is not found; see "CLI not found or failed to launch".
 
 ### Agent and session reuse
 
@@ -56,15 +56,16 @@ The script records the raw output and actual flags of every failure. For `native
 
 Stop and ask the user to decide only when every option for the type has failed, or when continuing really requires the user to log in, grant permissions, pay extra, widen the task scope or decide on handling that may lose work. When a single tool needs one of these but there is still an authorized option that can safely continue, first redispatch through the script; do not ask the user to fix that tool. The designated-model consultation for changes to an existing API keeps that section's failure handling.
 
-### CLI not installed
+### CLI not found or failed to launch
 
-- Before skipping a CLI because it is not installed, the main agent MUST verify the installation status, and MUST NOT conclude it is not installed from a single `command not found`, an empty `which` result or a script launch error alone. First check command resolution and PATH in both the current runtime and the shell the user normally uses, then confirm from existing settings, package manager install records and the tool's standard install locations. Check only the relevant locations; do not scan the whole disk.
-- When you find a candidate executable, run a version or help query with its explicit path to confirm it is that CLI. Installed but not on PATH, insufficient permissions, a broken launcher or a missing runtime are each recorded as the matching launch problem, not as not installed. When verification is blocked, record it truthfully as unconfirmed and proceed on the error evidence you have; do not claim it is not installed.
-- Once confirmed not installed, keep the verification commands and results, skip that external CLI following the decision table and continue with the available options. Do not install or reinstall it yourself, or use a launch method that downloads the tool automatically. Unless the user gives an explicit instruction to install, do not install a CLI to complete a dispatch. After confirming it is not installed, add `--not-installed` when continuing, and put the verification commands and results in `--failure-reason`. The script records this verification; later dispatches skip that tool automatically while PATH has not changed, the command is still not found and fewer than 7 days have passed, and attach the evidence from that time in `attempts`. If any of these three conditions does not hold, it launches as usual and verifies again. Do not add this flag when you cannot confirm whether it is installed. Judge the availability of the host's built-in tool separately; do not skip it because an external CLI of the same name is not installed.
+- The script checks each external CLI's command on its own PATH before starting it. A level whose command is not found is not started: the script adds an `attempts` item with `skipped` set to `command_not_found` and tries the next level in the same call. The main agent does not verify the installation first and does not report that level as failed.
+- A skipped item says only that the command was not on the PATH of the process that ran the script. It does not show that the tool is not installed, so describe it in those words, in the report and anywhere else.
+- A command that is found but cannot start (no permission, a broken launcher, a missing runtime) returns `cli_failed`, usually with `launch_error`. Read the raw error, record it as that launch problem and continue to the next level with `--outcome dispatch-failed`.
+- Do not install or reinstall a CLI to complete a dispatch, and do not use a launch method that downloads the tool, unless the user explicitly asks for the installation. Judge the availability of the host's built-in tool separately; a missing external command of the same name is no reason to skip it.
 
 | Symptom | What to report |
 | --- | --- |
-| CLI not installed or failed to launch | Paste the verification commands, results and conclusion, distinguishing not installed, PATH problems and other launch errors |
+| CLI not found or failed to launch | For a skipped level, quote the `evidence` of its `attempts` item and say the command was not found on this runtime's PATH, installation not verified. For a launch failure, paste the original error |
 | Model does not exist or the CLI needs an upgrade | Paste the original error and the output of `agy models` / `opencode models` / `codex debug models` |
 | Permission denied, not logged in | Paste the original error and state which permission or login command is needed |
 | Timeout | Paste the timeout setting and the part already completed |

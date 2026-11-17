@@ -117,6 +117,7 @@ class Contract(unittest.TestCase):
                             timeout=False, interrupted=False, cleanup_pending=True, cleanup_error="access denied")
 
             with mock.patch.object(dispatch, "snapshot", return_value="same"), \
+                    mock.patch.object(dispatch.shutil, "which", return_value="copilot"), \
                     mock.patch.object(dispatch, "execute", side_effect=cleanup_denied) as execute:
                 result = dispatch.drive(root, path, state, POLICY["tasks"]["classification"], paths, 1, 1)
             self.assertEqual(result["status"], "awaiting_review")

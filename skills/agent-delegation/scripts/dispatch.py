@@ -45,8 +45,6 @@ class NotStarted(DispatchError):
 
 
 ACTIVE = ("starting", "new", "running")
-NOT_INSTALLED_FILE = "not-installed.cache"  # Not *.json: the registry scan reads every *.json as a dispatch.
-NOT_INSTALLED_TTL = 7 * 86400
 
 def text_value(value, name):
     if not isinstance(value, str) or not value.strip() or "\0" in value:
@@ -326,34 +324,18 @@ def alive(pid):
         return True
 
 
-def path_fingerprint():
-    return hashlib.sha256(os.environ.get("PATH", "").encode("utf-8", "surrogateescape")).hexdigest()
-
-
-def read_not_installed(root):
-    try:
-        data = json.loads((root / NOT_INSTALLED_FILE).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
-def known_not_installed(root, tool):
-    """The main agent's earlier confirmation, while PATH is unchanged, recent and the command still absent."""
-    entry = read_not_installed(root).get(tool)
-    if not isinstance(entry, dict) or entry.get("path") != path_fingerprint():
-        return None
-    age = time.time() - entry.get("verified_at", 0)
-    if not 0 <= age <= NOT_INSTALLED_TTL or shutil.which(tool):
-        return None
-    return entry
-
-
-def record_not_installed(root, tool, evidence):
-    with lock_file(root / ".not-installed.lock"):
-        data = read_not_installed(root)
-        data[tool] = {"path": path_fingerprint(), "verified_at": time.time(), "evidence": evidence}
-        atomic_write(root / NOT_INSTALLED_FILE, data)
+def skip_missing(state, task, start):
+    """Record each level from start whose command is not on PATH; return the first level that can be tried."""
+    levels, level = task["levels"], start
+    while level <= len(levels):
+        tool = levels[level - 1]["tool"]
+        if tool == state["request"]["host"] or shutil.which(tool):
+            break
+        state["attempts"].append({"level": level, "tool": tool, "model": None, "native": False,
+                                  "skipped": "command_not_found",
+                                  "evidence": f"shutil.which({tool!r}) found nothing on this process's PATH; installation was not checked"})
+        level += 1
+    return level
 
 
 def claim(root, path, state, spec, write_paths, native, timeout):
@@ -639,24 +621,25 @@ def cli_argv(spec, model, project, prompt):
 
 
 def output_result(state, path):
-    current = state.get("current_level")
     native = state["status"] == "native_required"
+    # No level is current once all are used up; the last one that ran stays in attempts.
+    now = (lambda key, default=None: default) if state["status"] == "exhausted" else state.get
     return {"status": state["status"], "dispatch_id": state["dispatch_id"], "state_path": str(path),
-            "task_type": state["request"]["task_type"], "level": current,
-            "tool": state.get("current_tool"), "model": state.get("current_model"),
-            "family": state.get("current_family"), "effort": state.get("current_effort"),
-            "prompt": state.get("prompt", ""), "attempts": state["attempts"],
+            "task_type": state["request"]["task_type"], "level": now("current_level"),
+            "tool": now("current_tool"), "model": now("current_model"),
+            "family": now("current_family"), "effort": now("current_effort"),
+            "prompt": now("prompt", ""), "attempts": state["attempts"],
             "memory_reminder": REMINDER, "reason": state.get("reason", ""),
             "native_tool": NATIVE_TOOLS[state["request"]["host"]] if native else None,
             "instruction": ("Not dispatched yet. Use the current host's built-in subagent with the specified model and the full prompt. When the tool is unavailable, continue to the next level with the actual error."
                             if native else
                             "No worker was started for this level. Retry the same level with --outcome dispatch-failed after the slot frees." if state["status"] == "not_started" else
                             ("The external CLI failed and no file changed. Read the error, output, model_probe and fatal_error of the last attempt to find the cause;"
-                             " when launch_error is true, first check \"CLI not installed\" in references/dispatch-flow.md. Once this level is judged unable to run, continue to the next level with dispatch --dispatch-id "
-                             + state["dispatch_id"] + " --outcome dispatch-failed --failure-reason '<original error and judgement>';"
-                             " when installation is confirmed absent, add --not-installed and later dispatches will skip this tool automatically.")
+                             " when launch_error is true, first check \"CLI not found or failed to launch\" in references/dispatch-flow.md. Once this level is judged unable to run, continue to the next level with dispatch --dispatch-id "
+                             + state["dispatch_id"] + " --outcome dispatch-failed --failure-reason '<original error and judgement>'.")
                             if state["status"] == "cli_failed" else
                             "Still running. Query again with status --wait; when it is judged stuck, use cancel." if state["status"] in ACTIVE else
+                            "No level is left and nothing is running. Report each attempt's failure or skip evidence to the user and ask how to proceed." if state["status"] == "exhausted" else
                             "The main agent personally checks the scope, diff and verification results, then reports the outcome.")}
 
 
@@ -681,17 +664,15 @@ def with_runtime(result, state):
 
 def drive(root, path, state, task, write_paths, start, timeout, stall=180):
     r = state["request"]
-    for level in range(start, len(task["levels"]) + 1):
+    level = start - 1
+    while True:
+        level = skip_missing(state, task, level + 1)
+        if level > len(task["levels"]):
+            break
         spec = dict(task["levels"][level - 1])
         if spec.get("effort") and spec["effort"] != "low":
             spec["effort"] = r.get("effort", spec["effort"])
         native = spec["tool"] == r["host"]
-        known = None if native else known_not_installed(root, spec["tool"])
-        if known:
-            state["attempts"].append({"level": level, "tool": spec["tool"], "model": None, "native": False,
-                                      "skipped": "not_installed", "evidence": known["evidence"],
-                                      "verified_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(known["verified_at"]))})
-            continue
         state.update(current_level=level, current_tool=spec["tool"], current_model=None, current_family=spec["family"],
                      current_effort=spec.get("effort"), reason="", prompt=build_prompt(r, task, state))
         atomic_write(path, state)
@@ -754,14 +735,14 @@ def drive(root, path, state, task, write_paths, start, timeout, stall=180):
                      else "Verify the result yourself first; neither a normal report nor partially changed files are taken over automatically."))
         atomic_write(path, state)
         return output_result(state, path)
-    state.update(status="exhausted", reason="Every level of this task type has failed; the user must decide.")
+    state.update(status="exhausted", reason="Every level of this task type has failed or was skipped because its command was not found; the user must decide.")
     atomic_write(path, state)
     return output_result(state, path)
 
 
 def dispatch(a, policy):
     if a.request is not None:
-        if a.outcome or a.failure_reason or a.feedback or a.partial_work_reviewed or a.not_installed:
+        if a.outcome or a.failure_reason or a.feedback or a.partial_work_reviewed:
             raise DispatchError("A new task must not carry continuation outcome arguments")
         raw = sys.stdin.read() if a.request == "-" else Path(a.request).read_text(encoding="utf-8")
         r, paths = validate_request(json.loads(raw), policy)
@@ -816,17 +797,9 @@ def dispatch(a, policy):
             return output_result(state, path)
         reason = text_value(a.failure_reason, "--failure-reason")
         current = state.get("current_level", 1)
-        if a.not_installed and a.outcome != "dispatch-failed":
-            raise DispatchError("--not-installed works only with --outcome dispatch-failed")
         if a.outcome == "dispatch-failed":
             if status not in ("native_required", "cli_failed", "not_started"):
                 raise DispatchError("External execution results must be reviewed first and must not be reported as not dispatched")
-            if a.not_installed:
-                last = state["attempts"][-1] if state["attempts"] else {}
-                launch_failed = last.get("launch_error") or (last.get("model_probe") or {}).get("launch_error")
-                if status != "cli_failed" or last.get("native") or not launch_failed:
-                    raise DispatchError("--not-installed applies only to a cli_failed whose command could not launch (launch_error)")
-                record_not_installed(root, last["tool"], reason)
             wanted = current if status == "not_started" else current + 1
         else:
             if not a.partial_work_reviewed:
@@ -865,7 +838,9 @@ def run(root, path, state, task, paths, start, a):
                     "started_at": time.time()}
     with contextlib.suppress(FileNotFoundError):
         stop_path(root, state).unlink()
-    if a.foreground or task["levels"][start - 1]["tool"] == state["request"]["host"]:
+    # Skip missing commands first: a host or exhausted result is then returned by this call, with no background run.
+    start = state["run"]["start"] = skip_missing(state, task, start)
+    if a.foreground or start > len(task["levels"]) or task["levels"][start - 1]["tool"] == state["request"]["host"]:
         return drive(root, path, state, task, paths, start, a.timeout, a.stall_timeout)
     log_path = root / (state["dispatch_id"] + ".supervisor.log")
     argv = [sys.executable, str(Path(__file__).resolve()), "supervise",
@@ -1063,8 +1038,7 @@ native_required: not dispatched yet; the main agent calls the built-in tool name
 This handoff first waits for external dispatches to free that tool's slot and same-file writes; after the handoff it holds no slot and no file lock, and the main agent counts the built-in subagent toward the limit and same-file checks.
 not_started: waiting for a same-file write or a concurrency slot timed out, the dispatch was cancelled, or the background process did not take over, so no worker was started for this level; retry the same level with --outcome dispatch-failed.
 awaiting_review: the main agent reads the diff and verifies personally; the script does not adopt results automatically, run verification commands or write memory.
-An attempts item with skipped set to not_installed: the tool was previously confirmed absent by the main agent with --not-installed, was not started this time, and evidence is the verification content from then.
-The record lives in not-installed.cache in the state directory; it expires when PATH changes, the command becomes findable again, or 7 days pass; deleting that file clears it immediately.
+An attempts item with skipped set to command_not_found: that level's command was not on this process's PATH, so nothing was started and the next level was tried in the same call. It does not say the tool is not installed.
 cli_failed: an external CLI or model probe failed (non-zero exit, JSON error event, command could not launch, opencode stall), and the snapshot confirms no file changed.
 The script does not interpret the error content and does not take over automatically; after reading the raw output of attempts, the main agent continues to the next level with --outcome dispatch-failed.
 The snapshot covers every project file (including ignored files) and the sandbox; when the scan times out, review first. It moves to the next level automatically only when the actual model catalog has no compliant model.
@@ -1087,9 +1061,6 @@ exit 0: the above state was produced (not proof the result is good); exit 2: arg
                    help="required for a continuation. dispatch-failed is used for native_required, cli_failed (next level) and not_started (retry the same level); "
                         "verification failure requires checking the partial work first; completed means the main agent accepted the result")
     q.add_argument("--failure-reason", help="required for a failed outcome; provide the actual error or verification output")
-    q.add_argument("--not-installed", action="store_true",
-                   help="optional, only with dispatch-failed. Add it when the main agent has verified in references/dispatch-flow.md under \"CLI not installed\" that this tool really is absent; "
-                        "--failure-reason records the verification commands and results. While PATH is unchanged and the command is still missing, new dispatches within 7 days skip this tool and attach this evidence in attempts")
     q.add_argument("--feedback", help="optional; verified lessons, kept partial work and correction requests, accumulated into the next worker's prompt")
     q.add_argument("--partial-work-reviewed", action="store_true", help="required for verification-failed; the main agent has checked the process, the disk and the partial work")
     q.add_argument("--state-dir", help="optional; a dedicated private state directory outside the project, also the concurrency coordination scope for this dispatch group")

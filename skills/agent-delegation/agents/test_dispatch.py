@@ -297,73 +297,63 @@ print('completed')"""
                 self.assertEqual((payload["status"], payload["level"]), ("awaiting_review", 1))
                 self.assertNotIn("fatal_error", payload["attempts"][0])
 
-    def remove_copilot(self):
-        # Only the doubles and basic system tools, so no real copilot can stand in for the missing one.
+    def remove_cli(self, *tools):
+        # Only the doubles and basic system tools, so no real CLI can stand in for a missing one.
         self.env["PATH"] = os.pathsep.join([str(self.bin), os.path.dirname(sys.executable)] +
                                            ([os.environ["SystemRoot"] + "\\System32"] if os.name == "nt" else ["/usr/bin", "/bin"]))
-        (self.bin / ("copilot.py" if os.name == "nt" else "copilot")).unlink()
-        if os.name == "nt":
-            for suffix in (".js", ".cmd"):
-                (self.bin / ("copilot" + suffix)).unlink()
+        for tool in tools:
+            for suffix in ((".py", ".js", ".cmd") if os.name == "nt" else ("",)):
+                (self.bin / (tool + suffix)).unlink(missing_ok=True)
 
-    def confirm_not_installed(self, result, *extra):
-        return self.cli("dispatch", "--dispatch-id", result["dispatch_id"], "--state-dir", str(self.state),
-                        "--outcome", "dispatch-failed", "--not-installed",
-                        "--failure-reason", "which copilot: not found; npm ls -g: absent", *extra)
-
-    def test_missing_cli_is_handed_to_the_agent(self):
-        self.remove_copilot()
+    def test_missing_cli_is_skipped_in_the_same_call(self):
+        self.remove_cli("copilot")
         result = self.dispatch()
-        self.assertEqual((result["status"], result["level"]), ("cli_failed", 1))
-        self.assertTrue(result["attempts"][0]["launch_error"])
+        self.assertEqual((result["status"], result["level"]), ("native_required", 2))
+        self.assertEqual([item["tool"] for item in result["attempts"]], ["copilot", "codex"])
+        skipped = result["attempts"][0]
+        self.assertEqual((skipped["level"], skipped["tool"], skipped["skipped"]), (1, "copilot", "command_not_found"))
+        self.assertIn("shutil.which('copilot')", skipped["evidence"])
+        self.assertNotIn(str(self.bin), skipped["evidence"])
 
-    def test_confirmed_missing_cli_is_skipped_by_later_dispatches(self):
-        self.remove_copilot()
-        handed = self.confirm_not_installed(self.dispatch())
-        self.assertEqual(handed.returncode, 0, handed.stderr)
-        self.assertEqual(json.loads(handed.stdout)["level"], 2)
+    def test_missing_cli_before_the_host_level_needs_no_background_run(self):
+        self.remove_cli("copilot")
+        result = self.cli("dispatch", "--request", "-", "--state-dir", str(self.state),
+                          request=self.request(), background=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual((payload["status"], payload["level"]), ("native_required", 2))
+        self.assertEqual([item.get("skipped") for item in payload["attempts"]], ["command_not_found", None])
 
-        later = self.dispatch()
-        self.assertEqual((later["status"], later["level"]), ("native_required", 2))
-        skipped = later["attempts"][0]
-        self.assertEqual((skipped["tool"], skipped["skipped"]), ("copilot", "not_installed"))
-        self.assertIn("npm ls -g", skipped["evidence"])
-        self.assertTrue(skipped["verified_at"])
-
-    def test_missing_cli_record_is_dropped_when_the_command_appears(self):
-        self.remove_copilot()
-        self.confirm_not_installed(self.dispatch())
-        self.fake("copilot", "print('quota exceeded', file=sys.stderr); sys.exit(1)")
-        later = self.dispatch()
-        self.assertEqual((later["status"], later["level"]), ("cli_failed", 1))
-        self.assertFalse(later["attempts"][0]["launch_error"])
-
-    def test_missing_cli_record_does_not_apply_under_another_path(self):
-        self.remove_copilot()
-        self.confirm_not_installed(self.dispatch())
-        extra = self.root / "other-bin"
-        extra.mkdir()
-        self.env["PATH"] += os.pathsep + str(extra)
-        later = self.dispatch()
-        self.assertEqual((later["status"], later["level"]), ("cli_failed", 1))
-        self.assertTrue(later["attempts"][0]["launch_error"])
-
-    def test_missing_cli_record_expires(self):
-        self.remove_copilot()
-        self.confirm_not_installed(self.dispatch())
-        cache = self.state / "not-installed.cache"
-        data = json.loads(cache.read_text(encoding="utf-8"))
-        data["copilot"]["verified_at"] -= 8 * 86400
-        cache.write_text(json.dumps(data), encoding="utf-8")
-        later = self.dispatch()
-        self.assertEqual((later["status"], later["level"]), ("cli_failed", 1))
-
-    def test_not_installed_needs_a_launch_failure(self):
+    def test_present_but_failing_cli_is_not_skipped(self):
         failed = self.dispatch()
-        self.assertEqual(failed["status"], "cli_failed")
-        refused = self.confirm_not_installed(failed)
+        self.assertEqual((failed["status"], failed["level"]), ("cli_failed", 1))
+        self.assertNotIn("skipped", failed["attempts"][0])
+
+    def test_continuation_skips_a_missing_next_level(self):
+        self.remove_cli("codex")
+        handed = self.hand_off(self.dispatch(host="claude"))
+        self.assertEqual((handed["status"], handed["level"]), ("native_required", 3))
+        self.assertEqual([(item["tool"], item.get("skipped")) for item in handed["attempts"]],
+                         [("copilot", None), ("codex", "command_not_found"), ("claude", None)])
+
+    def test_every_level_missing_is_exhausted(self):
+        self.remove_cli("copilot", "codex", "claude")
+        result = self.dispatch(host="opencode")
+        self.assertEqual(result["status"], "exhausted")
+        self.assertIn("skipped", result["reason"])
+        self.assertEqual([item["skipped"] for item in result["attempts"]], ["command_not_found"] * 3)
+        self.assertIn("ask how to proceed", result["instruction"])
+
+    def test_exhausted_result_names_no_current_level(self):
+        self.remove_cli("codex", "claude")
+        handed = self.hand_off(self.dispatch(host="opencode"))
+        self.assertEqual((handed["status"], handed["level"], handed["tool"], handed["prompt"]), ("exhausted", None, None, ""))
+        self.assertEqual([item["tool"] for item in handed["attempts"]], ["copilot", "codex", "claude"])
+
+    def test_not_installed_flag_is_gone(self):
+        refused = self.resume(self.dispatch()["dispatch_id"], "--outcome", "dispatch-failed", "--not-installed",
+                              "--failure-reason", "which copilot: not found")
         self.assertEqual(refused.returncode, 2)
-        self.assertFalse((self.state / "not-installed.cache").exists())
 
     def test_cli_failure_resumes_only_to_the_next_level(self):
         failed = self.dispatch()
