@@ -8,7 +8,7 @@ allowed-tools:
   - Edit
   - AskUserQuestion
 metadata:
-  version: "1.18.1"
+  version: "1.19.0"
 ---
 
 ## Purpose and workflow

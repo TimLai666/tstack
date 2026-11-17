@@ -354,26 +354,18 @@ def add_reminder():
     """Remind the agent to record qualifying lessons before work ends."""
     return (
         "\n---\n"
-        "Before this session ends, save verified project-specific solutions found through\n"
-        "repeated failed attempts or costly searching, time or token use (confidence 7+).\n"
-        "Exclude routine work logs, open bugs and existing project guidance.\n"
-        "A lesson that holds on any machine goes into the project's AGENTS.md (engineering/architecture.md\n"
-        "for an architecture fact) as condition then what to do, story in the commit body, not into this store.\n"
-        "A stored lesson applied a second time goes there the same way, then: python3 %s promote --key <key> --to <file>\n"
-        "Verify suspected stale lessons before updating the same key; preserve conditions\n"
-        "where the old method still works and label any unknown replacement.\n"
-        "  python3 %s add --type <pitfall|pattern|preference|architecture|tool> "
+        "Before this session ends, save verified solutions found through repeated failed attempts or costly\n"
+        "searching (confidence 7+), without waiting to be asked. Not routine work logs, open bugs or existing guidance.\n"
+        "- A lesson that holds on any machine: write it into the project's AGENTS.md (engineering/architecture.md for an\n"
+        "  architecture fact), not into this store. A stored lesson applied a second time goes there too, then: promote --key <key> --to <file>\n"
+        "- This project only: python3 %s add --type <pitfall|pattern|preference|architecture|tool> "
         "--key <describes-the-lesson> --insight '<conditions, failed routes, verified method and evidence>' "
         "--confidence <7-10> --source '<agent-or-skill-name>'\n"
-        "What the user wants done in every project, not only this one, goes in the global store:\n"
-        "add --global. Do not write it into the user's own instruction files.\n"
-        "A fact about this machine or its tools that holds in every project (what is or is not\n"
-        "installed, a path that cannot run programs, where a credential is configured) goes in the\n"
-        "machine store instead: add --machine, at most %d characters, as condition then what to do.\n"
-        "The same kind of fact about a machine reached from here goes in that host's store: add --host <name>.\n"
-        "Draft the fields and save qualifying entries without waiting to be asked.\n"
+        "- Every project: add --global. This machine: add --machine (at most %d characters). "
+        "A host reached from here: add --host <name>.\n"
+        "The project-memory skill has the full criteria and how to update a stale lesson.\n"
         "Report saved entries; if nothing qualifies, no announcement is needed."
-        % (os.path.abspath(__file__), os.path.abspath(__file__), MACHINE_INSIGHT_LIMIT)
+        % (os.path.abspath(__file__), MACHINE_INSIGHT_LIMIT)
     )
 
 

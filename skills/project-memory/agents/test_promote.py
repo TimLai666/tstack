@@ -147,7 +147,8 @@ class Promote(unittest.TestCase):
     def test_reminder_names_promotion(self):
         self.add("node-18-only-here", "nvm use 20 here")
         shown = self.run_memory("load").stdout
-        self.assertIn("%s promote --key" % SCRIPT, shown)
+        self.assertIn("promote --key <key> --to <file>", shown)
+        self.assertEqual(shown.count(str(SCRIPT)), 1)
         self.assertIn("holds on any machine", shown)
 
 
